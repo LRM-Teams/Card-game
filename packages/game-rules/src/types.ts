@@ -77,5 +77,8 @@ export interface Hand {
   length: number;
 }
 
+/** 一次出牌即一个合法牌型；`Play` 是 `Hand` 的别名，语义更贴近"出牌"场景。 */
+export type Play = Hand;
+
 /** 玩家位置（地主 / 农民1 / 农民2）。 */
 export type Seat = 0 | 1 | 2;

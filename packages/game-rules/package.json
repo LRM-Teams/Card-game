@@ -1,5 +1,5 @@
 {
-  "name": "@card-game/game-rules",
+  "name": "@card-game/rules",
   "version": "0.1.0",
   "private": true,
   "description": "斗地主规则引擎：牌型识别、大小比较、合法判定、叫地主、结算（单一事实来源）",
