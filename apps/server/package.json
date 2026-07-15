@@ -1,0 +1,15 @@
+{
+  "name": "@card-game/server",
+  "version": "0.0.1",
+  "private": true,
+  "description": "斗地主后端：Node + Socket.IO（房间/对局状态机、服务端权威校验、机器人补位）",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"TODO: node + socket.io on :3000\"",
+    "build": "echo \"TODO: server build\"",
+    "typecheck": "echo \"TODO: server typecheck\""
+  },
+  "dependencies": {
+    "@card-game/rules": "workspace:*"
+  }
+}

@@ -8,6 +8,18 @@ importers:
 
   .: {}
 
+  apps/client:
+    dependencies:
+      '@card-game/rules':
+        specifier: workspace:*
+        version: link:../../packages/game-rules
+
+  apps/server:
+    dependencies:
+      '@card-game/rules':
+        specifier: workspace:*
+        version: link:../../packages/game-rules
+
   packages/game-rules:
     devDependencies:
       typescript:

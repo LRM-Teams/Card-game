@@ -9,3 +9,4 @@ export * from './deck';
 export * from './sort';
 export * from './identify';
 export * from './compare';
+export * from './protocol';

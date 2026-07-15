@@ -1,0 +1,15 @@
+{
+  "name": "@card-game/client",
+  "version": "0.0.1",
+  "private": true,
+  "description": "斗地主前端：React + Vite（牌桌 / 手牌 UI、出牌交互、实时状态展示）",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"TODO: vite on :5173\"",
+    "build": "echo \"TODO: client build\"",
+    "typecheck": "echo \"TODO: client typecheck\""
+  },
+  "dependencies": {
+    "@card-game/rules": "workspace:*"
+  }
+}
