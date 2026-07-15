@@ -20,6 +20,7 @@ export function CardView({ card, selected, onClick, small }: Props) {
       onClick={onClick}
       disabled={!onClick}
       title={card.display}
+      aria-label={card.display}
     >
       <span className="card-corner top">{card.display}</span>
       <span className="card-rank">{card.display}</span>

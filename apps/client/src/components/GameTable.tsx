@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { GamePhase, canPlay, identifyHand } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
@@ -24,6 +24,16 @@ export function GameTable() {
     () => myHand.filter((c) => selected.includes(c.id)),
     [myHand, selected],
   );
+  const [secondsLeft, setSecondsLeft] = useState(20);
+
+  useEffect(() => {
+    setSecondsLeft(20);
+    if (snapshot?.turnSeat == null || snapshot.phase === GamePhase.SETTLED) return;
+    const timer = window.setInterval(() => {
+      setSecondsLeft((n) => Math.max(0, n - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [snapshot?.phase, snapshot?.turnSeat, snapshot?.lastPlay?.seat, snapshot?.lastPlay?.hand.cards.length]);
 
   if (status !== 'connected') {
     return (
@@ -121,15 +131,26 @@ export function GameTable() {
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
-        {phase === GamePhase.BIDDING
-          ? isMyTurn
-            ? '👉 轮到你叫地主'
-            : `等待叫地主（座位 ${snapshot.turnSeat}）`
-          : phase === GamePhase.PLAYING
+        {snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING) && (
+          <span
+            className={`turn-timer ${secondsLeft <= 3 ? 'danger' : ''}`}
+            style={{ '--timer-deg': `${(secondsLeft / 20) * 360}deg` } as CSSProperties}
+            aria-label={`倒计时 ${secondsLeft} 秒`}
+          >
+            {secondsLeft}
+          </span>
+        )}
+        <span>
+          {phase === GamePhase.BIDDING
             ? isMyTurn
-              ? '👉 轮到你出牌'
-              : `等待出牌（座位 ${snapshot.turnSeat}）`
-            : phaseLabel(phase)}
+              ? '👉 轮到你叫地主'
+              : `等待叫地主（座位 ${snapshot.turnSeat}）`
+            : phase === GamePhase.PLAYING
+              ? isMyTurn
+                ? '👉 轮到你出牌'
+                : `等待出牌（座位 ${snapshot.turnSeat}）`
+              : phaseLabel(phase)}
+        </span>
         {me?.role === 'landlord' && <span className="badge">地主</span>}
         {me?.role === 'farmer' && <span className="badge farmer">农民</span>}
       </div>
