@@ -3,10 +3,11 @@ import { HandType, type Hand } from './types';
 /**
  * 倍数状态（纯数据，不可变更新）。
  *
- * MVP 倍数规则（@阿策 #110 已定）：
+ * 倍数规则（按腾讯"欢乐斗地主"，@caozs2 指示完全对齐）：
  * - 底分固定 1；
  * - 每出一个**炸弹 ×2**、**王炸 ×2**；
- * - **春天 / 反春 ×2**（按"欢乐斗地主"规则，@caozs2 指示纳入）。
+ * - **春天 / 反春 ×2**；
+ * - **明牌 ×2**（地主开局亮明手牌）。
  *
  * 服务端在每次出牌后调用 `applyPlay` 累积倍数；结算时用 `unitScore` 折算进 `settle`。
  */
@@ -52,5 +53,10 @@ export function applySpring(state: MultiplierState): MultiplierState {
 
 /** 反春（农民胜且地主底牌外只出一手）→ 倍数 ×2。是否触发由服务端按出牌历史判定后调用。 */
 export function applyAntiSpring(state: MultiplierState): MultiplierState {
+  return { ...state, multiplier: state.multiplier * 2 };
+}
+
+/** 明牌（地主开局亮明手牌）→ 倍数 ×2。是否明牌由地主选择（客户端 UI + 服务端流程触发）。 */
+export function applyReveal(state: MultiplierState): MultiplierState {
   return { ...state, multiplier: state.multiplier * 2 };
 }
