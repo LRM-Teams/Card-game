@@ -40,7 +40,7 @@ interface UiState {
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
   join: (name: string, roomId?: string) => void;
-  start: () => void;
+  start: (fillBots?: boolean) => void;
   bid: (choice: BidChoice) => void;
   play: () => void;
   pass: () => void;
@@ -111,7 +111,7 @@ export const useGameStore = create<UiState>((set, get) => ({
     send({ type: 'join', name, roomId: roomId?.trim() || undefined });
   },
 
-  start: () => send({ type: 'start' }),
+  start: (fillBots) => send({ type: 'start', fillBots }),
 
   bid: (choice) => send({ type: 'bid', choice }),
 

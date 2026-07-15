@@ -120,7 +120,7 @@ describe('DouZero adapter', () => {
       },
     });
 
-    expect(room.start().ok).toBe(true);
+    expect(room.start(true).ok).toBe(true);
     expect(room.phase).toBe('settled');
     expect(room.result).not.toBeNull();
     expect(room.playHistory.length).toBeGreaterThan(0);

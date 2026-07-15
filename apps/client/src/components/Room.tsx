@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
 
-/** 房间：显示座位，start 开局；进入发牌/叫地主/出牌后自动跳牌桌。 */
+/** 房间：显示座位与等人状态；3 真人可纯人对战，人数不足可选补机器人开局。 */
 export function Room() {
   const navigate = useNavigate();
   const snapshot = useGameStore((s) => s.snapshot);
@@ -24,6 +24,9 @@ export function Room() {
 
   const players = snapshot?.players ?? [];
   const seats = [0, 1, 2].map((seat) => players.find((p) => p.seat === seat));
+  const humans = players.filter((p) => !p.isBot).length;
+  const canStartPure = humans === 3; // 3 真人纯人对战
+  const canStartWithBots = humans >= 1 && humans < 3; // 人数不足，可选补机器人
 
   const copyRoomId = async () => {
     if (!roomId) return;
@@ -35,7 +38,7 @@ export function Room() {
   return (
     <div className="panel room">
       <h1 className="title">房间 {roomId ? `#${roomId.slice(0, 6)}` : ''}</h1>
-      <p className="subtitle">3 人桌 · 缺人自动补机器人</p>
+      <p className="subtitle">3 人桌 · 纯人对战 或 人数不足补机器人</p>
 
       {roomId && (
         <div className="room-code-card">
@@ -65,13 +68,18 @@ export function Room() {
         ))}
       </div>
 
-      <div className="actions">
-        <button className="btn primary big" onClick={start} disabled={!roomId}>
-          开始游戏
+      <div className="actions lobby-actions">
+        <button className="btn primary big" onClick={() => start(false)} disabled={!roomId || !canStartPure}>
+          开始游戏{canStartPure ? '' : `（等 ${3 - humans} 人）`}
+        </button>
+        <button className="btn big" onClick={() => start(true)} disabled={!roomId || !canStartWithBots}>
+          补机器人开始
         </button>
       </div>
       <p className="tips" style={{ paddingLeft: 0, marginTop: 12 }}>
-        凑齐 3 人即开局；真人不足服务端自动补机器人。
+        {humans < 3
+          ? `等待玩家加入（还差 ${3 - humans} 人）；把房间号发给好友，或选择「补机器人开始」。`
+          : '3 人已满，点击「开始游戏」纯人对战。'}
       </p>
     </div>
   );

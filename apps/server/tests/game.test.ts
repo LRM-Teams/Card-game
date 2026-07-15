@@ -30,13 +30,24 @@ function landlordAt0(): GameRoom {
 }
 
 describe('GameRoom · 房间 / 开局', () => {
-  it('1 真人开局自动补机器人到 3 人', () => {
+  it('1 真人 + fillBots 开局自动补机器人到 3 人', () => {
     const r = new GameRoom('r1');
     expect(r.addHuman('A').ok).toBe(true);
-    expect(r.start().ok).toBe(true);
+    expect(r.start(true).ok).toBe(true);
     expect(r.playerCount).toBe(3);
     expect(r.humanCount).toBe(1);
     expect(r.phase).toBe('bidding'); // 第一个叫牌者是真人 → 停在叫地主
+  });
+
+  it('不足 3 真人且不补机器人 → not_enough_players，不隐式补机器人', () => {
+    const r = new GameRoom('r-wait');
+    expect(r.addHuman('A').ok).toBe(true);
+    expect(r.addHuman('B').ok).toBe(true);
+    const res = r.start();
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.code).toBe('not_enough_players');
+    expect(r.playerCount).toBe(2); // 没补机器人
+    expect(r.phase).toBe('waiting');
   });
 
   it('3 真人开局：发牌 17/17/17 + 3 底牌', () => {
@@ -249,7 +260,7 @@ describe('GameRoom · 倍数与结算（规则在 game-rules.multiplier / settle
 describe('GameRoom · 全机器人局跑完整一局', () => {
   it('3 机器人自动行棋直到 SETTLED，结果自洽', () => {
     const r = new GameRoom('auto');
-    expect(r.start().ok).toBe(true); // 0 人 → 补 3 机器人 → 全自动到结算
+    expect(r.start(true).ok).toBe(true); // 0 人 → 补 3 机器人 → 全自动到结算
     expect(r.phase).toBe('settled');
     expect(r.result).not.toBeNull();
     const winner: Seat = r.result!.winnerSeat;
@@ -262,7 +273,7 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
   it('1 真人 + 2 机器人也能跑完整一局（真人用 bot 逻辑驱动）', () => {
     const r = new GameRoom('mixed');
     r.addHuman('真人');
-    r.start();
+    r.start(true);
     const human: Seat = 0;
     for (let guard = 0; guard < 500 && r.phase !== 'settled'; guard++) {
       if (r.phase === 'bidding' && r.bid && r.bid.order[r.bid.index] === human) {

@@ -150,9 +150,17 @@ export class GameRoom {
    * 开局：不足 3 人则补机器人，然后发牌 + 进入叫地主。
    * 产品上由真人触发（transport 层保证至少 1 名真人）；引擎允许全机器人局，便于联机/自动化测试。
    */
-  start(): ActionResult {
+  /**
+   * 开局：fillBots=true 时不足 3 人补机器人；默认 fillBots=false 要求 3 名真人（纯人对战）。
+   * 产品上由真人触发（transport 层保证至少 1 名真人）；引擎允许全机器人局，便于联机/自动化测试。
+   */
+  start(fillBots = false): ActionResult {
     if (this.phase !== GamePhase.WAITING) return err('invalid_action_for_phase', '当前阶段不能开局');
-    this.fillBots();
+    if (fillBots) {
+      this.fillBots();
+    } else if (this.humanCount < 3) {
+      return err('not_enough_players', '人数不足 3 人，等人加入或选择补机器人');
+    }
     return this.dealAndBeginBid();
   }
 
@@ -455,7 +463,7 @@ export class GameRoom {
       case 'pass':
         return this.handlePass(seat);
       case 'start':
-        return this.start();
+        return this.start(action.fillBots ?? false);
       default:
         return err('invalid_action_for_phase', `当前阶段不支持动作：${action.type}`);
     }

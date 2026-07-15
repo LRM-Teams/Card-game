@@ -33,7 +33,8 @@ export type ErrorCode =
   | 'not_your_turn' // 还没轮到你
   | 'illegal_play' // 出牌不合法（不是有效牌型 / 压不过上家 / 手里没这些牌）
   | 'invalid_bid' // 叫地主动作非法（choice 非 claim/pass）
-  | 'must_play_when_leading'; // 领出（自由出牌）时不能 pass
+  | 'must_play_when_leading' // 领出（自由出牌）时不能 pass
+  | 'not_enough_players'; // 不足 3 名真人且未选择补机器人，无法开局
 
 /** 牌桌上某玩家的公开视图（绝不含他人手牌）。 */
 export interface PlayerView {
@@ -89,7 +90,7 @@ export interface GameStateSnapshot {
 /** 客户端 → 服务端动作。 */
 export type ClientAction =
   | { type: 'join'; name: string; roomId?: string }
-  | { type: 'start' } // 凑齐则开局；真人不足自动补机器人到 3 人
+  | { type: 'start'; fillBots?: boolean } // fillBots=true：不足 3 真人时补机器人开局；默认 false：等人齐（3 真人）才开局
   | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫
   | { type: 'play'; cards: string[] } // 要出的牌 id 列表
   | { type: 'pass' };
