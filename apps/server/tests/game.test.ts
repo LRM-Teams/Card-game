@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { identifyHand, RANK } from '@card-game/rules';
 import type { Card, Seat } from '@card-game/rules';
 import { botBid, botChoosePlay } from '../src/game/bot';
+import {
+  douZeroPosition,
+  fromDouZeroAction,
+  listLegalActions,
+  toDouZeroCard,
+  toDouZeroCards,
+} from '../src/game/douzeroAdapter';
+import type { DouZeroBotAdapter, DouZeroPlayState } from '../src/game/douzeroAdapter';
 import { GameRoom } from '../src/game/GameRoom';
 
 /** 构造一张最小 Card（用于白盒构造判定场景）。 */
@@ -19,8 +27,13 @@ function threeHumans(): GameRoom {
 }
 
 /** 座位 0 叫(claim)、其余 pass → 地主为 0，进入出牌阶段、轮到 0。 */
-function landlordAt0(): GameRoom {
-  const r = threeHumans();
+function landlordAt0(adapter: DouZeroBotAdapter | null = null): GameRoom {
+  const r = adapter ? new GameRoom('room-test', adapter) : threeHumans();
+  if (adapter) {
+    r.addHuman('A');
+    r.addHuman('B');
+    r.addHuman('C');
+  }
   r.start();
   r.handleBid(0, 'claim');
   r.handleBid(1, 'pass');
@@ -236,6 +249,61 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
     }
     expect(r.phase).toBe('settled');
     expect(r.result).not.toBeNull();
+  });
+});
+
+describe('DouZero AI adapter', () => {
+  it('converts internal cards to DouZero rank-only actions and back', () => {
+    expect(toDouZeroCard(card(RANK.THREE))).toBe('3');
+    expect(toDouZeroCard(card(RANK.A))).toBe('A');
+    expect(toDouZeroCard(card(RANK.TWO))).toBe('2');
+    expect(toDouZeroCard(card(RANK.SMALL_JOKER))).toBe('X');
+    expect(toDouZeroCard(card(RANK.BIG_JOKER))).toBe('D');
+    const hand = [card(RANK.THREE, 'c3a'), card(RANK.THREE, 'c3b'), card(RANK.BIG_JOKER, 'jb')];
+    expect(toDouZeroCards(hand)).toEqual(['3', '3', 'D']);
+    expect(fromDouZeroAction(['3', 'D'], hand)?.map((c) => c.id)).toEqual(['c3a', 'jb']);
+    expect(fromDouZeroAction(['X'], hand)).toBeNull();
+  });
+
+  it('derives DouZero player position from landlord seat', () => {
+    expect(douZeroPosition(1, 1)).toBe('landlord');
+    expect(douZeroPosition(2, 1)).toBe('landlord_down');
+    expect(douZeroPosition(0, 1)).toBe('landlord_up');
+  });
+
+  it('filters current legal actions through the shared rule engine', () => {
+    const hand = [card(RANK.THREE, 'c3'), card(RANK.SEVEN, 'c7'), card(RANK.SEVEN, 'c7b')];
+    const prev = identifyHand([card(RANK.FIVE, 'prev5')])!;
+    const actions = listLegalActions(hand, prev).map((cards) => cards.map((c) => c.id));
+    expect(actions).toContainEqual(['c7']);
+    expect(actions).not.toContainEqual(['c3']);
+    expect(actions).not.toContainEqual(['c7', 'c7b']);
+  });
+
+  it('GameRoom validates adapter output and falls back when the model action is illegal', () => {
+    let captured: DouZeroPlayState | null = null;
+    const adapter: DouZeroBotAdapter = {
+      choosePlay(state) {
+        captured = state;
+        return ['3']; // illegal: cannot beat previous single 5
+      },
+    };
+    const r = landlordAt0(adapter);
+    r.players[0]!.hand = [card(RANK.FIVE, 'c5'), card(RANK.NINE, 'c9')];
+    r.players[1]!.isBot = true;
+    r.players[1]!.hand = [card(RANK.THREE, 'c3'), card(RANK.SEVEN, 'c7')];
+    r.players[2]!.isBot = false;
+
+    const res = r.handlePlay(0, ['c5']);
+    expect(res.ok).toBe(true);
+    expect(captured).not.toBeNull();
+    expect(captured!.position).toBe('landlord_down');
+    expect(captured!.canPass).toBe(true);
+    expect(captured!.hand).toEqual(['3', '7']);
+    expect(captured!.legalActions).toEqual([[], ['7']]);
+    expect(r.players[1]!.hand.map((c) => c.id)).toEqual(['c3']);
+    expect(r.lastPlay?.seat).toBe(1);
+    expect(r.lastPlay?.hand.cards.map((c) => c.id)).toEqual(['c7']);
   });
 });
 

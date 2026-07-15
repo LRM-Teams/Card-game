@@ -24,7 +24,9 @@ export interface DouZeroPlayState {
     action: DouZeroAction;
     isPass: boolean;
   }>;
+  /** Includes [] when passing is legal; concrete plays are still revalidated by rules before use. */
   legalActions: DouZeroAction[];
+  canPass: boolean;
 }
 
 export interface BotPlayContext {
@@ -112,6 +114,7 @@ export function listLegalActions(hand: readonly Card[], prev: Hand | null): Card
 export function buildDouZeroPlayState(ctx: BotPlayContext): DouZeroPlayState {
   const legalActions = listLegalActions(ctx.hand, ctx.prev);
   const lastMove = ctx.prev ? toDouZeroCards(ctx.prev.cards) : [];
+  const canPass = ctx.prev !== null;
   return {
     position: douZeroPosition(ctx.seat, ctx.landlordSeat),
     hand: toDouZeroCards(ctx.hand),
@@ -124,7 +127,8 @@ export function buildDouZeroPlayState(ctx: BotPlayContext): DouZeroPlayState {
       action: toDouZeroCards(entry.cards),
       isPass: entry.isPass,
     })),
-    legalActions: legalActions.map(toDouZeroCards),
+    legalActions: canPass ? [[], ...legalActions.map(toDouZeroCards)] : legalActions.map(toDouZeroCards),
+    canPass,
   };
 }
 
@@ -147,7 +151,8 @@ export function choosePlayWithDouZero(ctx: BotPlayContext, adapter?: DouZeroBotA
   const state = buildDouZeroPlayState(ctx);
   try {
     const action = adapter.choosePlay(state);
-    if (!action || action.length === 0) return botChoosePlay(ctx.hand, ctx.prev);
+    if (!action) return botChoosePlay(ctx.hand, ctx.prev);
+    if (action.length === 0) return state.canPass ? null : botChoosePlay(ctx.hand, ctx.prev);
     if (!state.legalActions.some((legal) => sameDouZeroAction(legal, action))) {
       return botChoosePlay(ctx.hand, ctx.prev);
     }
