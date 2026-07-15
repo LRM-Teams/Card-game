@@ -61,7 +61,7 @@ export interface GameResult {
   landlordSeat: Seat;
   /** 单注 = 底分 × 倍数（来自 multiplier.unitScore）。 */
   unit: number;
-  /** 倍数（每出一个炸弹 / 王炸 ×2，MVP 不计春天）。 */
+  /** 当前倍数（由 multiplier 规则累积；服务端按已触发的炸弹/王炸/春天等规则写入）。 */
   multiplier: number;
   /** 三家本局得分（+赢 / -输，来自 settlement.settle），按座位 [0,1,2]。 */
   scores: [number, number, number];
