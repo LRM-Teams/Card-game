@@ -12,16 +12,19 @@ interface Props {
 export function CardView({ card, selected, onClick, small }: Props) {
   const color = cardColor(card);
   const symbol = card.suit ? SUIT_SYMBOL[card.suit] : '';
+  const isJoker = !card.suit;
   return (
     <button
       type="button"
-      className={`card ${color} ${selected ? 'is-selected' : ''} ${small ? 'is-small' : ''}`}
+      className={`card ${color} ${isJoker ? 'is-joker' : ''} ${selected ? 'is-selected' : ''} ${small ? 'is-small' : ''}`}
       onClick={onClick}
       disabled={!onClick}
       title={card.display}
     >
+      <span className="card-corner top">{card.display}</span>
       <span className="card-rank">{card.display}</span>
       {symbol && <span className="card-suit">{symbol}</span>}
+      <span className="card-corner bottom">{symbol || '★'}</span>
     </button>
   );
 }
