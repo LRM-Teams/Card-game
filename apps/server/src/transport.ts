@@ -2,7 +2,7 @@
  * Socket.IO 传输层：把客户端动作接到 GameRoom，把 ServerEvent 下发回去。
  *
  * - 客户端发：socket.emit('action', <ClientAction>)
- * - 服务端收：socket.on('event', <ServerEvent>)  （'room' 事件广播全房；'dealt' 等私发到本人）
+ * - 客户端收：socket.on('event', <ServerEvent>)  （'room' 事件广播全房；'dealt' 等私发到本人）
  *
  * 传输层不做任何规则判定，只搬运；权威判定全在 GameRoom + @card-game/rules。
  */
