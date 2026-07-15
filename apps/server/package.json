@@ -2,14 +2,23 @@
   "name": "@card-game/server",
   "version": "0.0.1",
   "private": true,
-  "description": "斗地主后端：Node + Socket.IO（房间/对局状态机、服务端权威校验、机器人补位）",
   "type": "module",
+  "description": "斗地主后端：Node + Socket.IO（房间/匹配/对局状态机、服务端权威校验、真人不足自动补机器人）",
   "scripts": {
-    "dev": "echo \"TODO: node + socket.io on :3000\"",
-    "build": "echo \"TODO: server build\"",
-    "typecheck": "echo \"TODO: server typecheck\""
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@card-game/rules": "workspace:*"
+    "@card-game/rules": "workspace:*",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }
