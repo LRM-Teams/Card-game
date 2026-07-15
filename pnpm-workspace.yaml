@@ -2,6 +2,9 @@ packages:
   - 'packages/*'
   - 'apps/*'
 
+allowBuilds:
+  esbuild: set this to true or false
+
 # 允许 esbuild（vitest 依赖）执行构建脚本，避免 pnpm install 因 ignored builds 退出非 0
 onlyBuiltDependencies:
   - esbuild
