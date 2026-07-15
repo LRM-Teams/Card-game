@@ -1,3 +1,6 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { identifyHand, RANK } from '@card-game/rules';
 import type { Card } from '@card-game/rules';
@@ -112,6 +115,57 @@ describe('DouZero adapter', () => {
 
     expect(chosen?.map((c) => c.rank)).toEqual([RANK.FIVE]);
   });
+
+  it('端到端 mock：游戏状态→adapter→真实子进程→解析→应用回对局，全链路跑通', () => {
+    // 按 douzero-infer.example.py 的 stdin/stdout 契约写一个假推理子进程：
+    // 收 DouZeroPlayState JSON，回 legalActions[0]（合法动作），并按 env 记录被调用身份。
+    const mockSrc = [
+      "const { appendFileSync } = require('node:fs');",
+      "let raw = '';",
+      "process.stdin.setEncoding('utf8');",
+      "process.stdin.on('data', (c) => { raw += c; });",
+      "process.stdin.on('end', () => {",
+      "  let state;",
+      "  try { state = JSON.parse(raw); } catch { process.exit(2); }",
+      "  const legal = Array.isArray(state.legalActions) ? state.legalActions : [];",
+      "  const action = legal.length > 0 ? legal[0] : [];",
+      "  if (process.env.DOUMOCK_LOG) { try { appendFileSync(process.env.DOUMOCK_LOG, state.position + '\\n'); } catch {} }",
+      "  process.stdout.write(JSON.stringify(action));",
+      "  process.exit(0);",
+      "});",
+    ].join('\n');
+
+    const dir = mkdtempSync(join(tmpdir(), 'douzero-e2e-'));
+    const mockScript = join(dir, 'mock-infer.cjs');
+    const logPath = join(dir, 'calls.log');
+    writeFileSync(mockScript, mockSrc);
+    writeFileSync(logPath, '');
+    const prevLog = process.env.DOUMOCK_LOG;
+    process.env.DOUMOCK_LOG = logPath;
+
+    try {
+      const adapter = createDouZeroCommandAdapter(`node ${mockScript}`, { timeoutMs: 5000 });
+      const room = new GameRoom('e2e-mock', adapter);
+
+      expect(room.start(true).ok).toBe(true);
+      // 全机器人局，全部出牌都经真实子进程推理推进到结算
+      expect(room.phase).toBe('settled');
+      expect(room.result).not.toBeNull();
+      const sum = room.result!.scores.reduce((a, b) => a + b, 0);
+      expect(sum).toBe(0); // 零和
+      expect(room.playHistory.filter((h) => !h.isPass).length).toBeGreaterThan(0);
+
+      // 证明真实子进程被调用过，且跨身份（地主 + 农民）
+      const calls = readFileSync(logPath, 'utf8').trim().split('\n').filter(Boolean);
+      expect(calls.length).toBeGreaterThan(0);
+      expect(calls).toContain('landlord');
+      expect(calls.some((p) => p === 'landlord_up' || p === 'landlord_down')).toBe(true);
+    } finally {
+      if (prevLog === undefined) delete process.env.DOUMOCK_LOG;
+      else process.env.DOUMOCK_LOG = prevLog;
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 60000);
 
   it('GameRoom 机器人出牌可调用适配器，模型异常时仍能 fallback 跑完', () => {
     const room = new GameRoom('ai-fallback', {
