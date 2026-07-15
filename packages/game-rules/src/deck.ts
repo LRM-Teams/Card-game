@@ -1,4 +1,5 @@
 import { Card, RANK, SEQ_RANK_MAX, SEQ_RANK_MIN, Suit } from './types';
+import { sortCards } from './sort';
 
 const SUITS: Suit[] = ['spade', 'heart', 'club', 'diamond'];
 
@@ -77,6 +78,11 @@ export function deal(deck: Card[] = shuffle(createDeck())): DealResult {
   }
   const bottom = deck.slice(51, 54);
   return { hands, bottom };
+}
+
+/** 地主拿底牌：手牌 + 3 张底牌合并（共 20 张），返回按点数升序的新数组。 */
+export function withBottom(hand: readonly Card[], bottom: readonly Card[]): Card[] {
+  return sortCards([...hand, ...bottom]);
 }
 
 /** 判断点数能否参与连续序列（顺子/连对/飞机）：3..A。 */
