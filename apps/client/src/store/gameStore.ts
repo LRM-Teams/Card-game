@@ -77,10 +77,21 @@ export const useGameStore = create<UiState>((set, get) => ({
           set({ myHand: hand, selected: [] });
           break;
         }
+        case 'played': {
+          const mySeat = get().mySeat;
+          if (e.seat === mySeat) {
+            const playedIds = new Set(e.hand.cards.map((card) => card.id));
+            set((st) => ({
+              myHand: st.myHand.filter((card) => !playedIds.has(card.id)),
+              selected: st.selected.filter((id) => !playedIds.has(id)),
+            }));
+          }
+          break;
+        }
         case 'error':
           set({ lastError: { code: e.code, message: e.message, at: Date.now() } });
           break;
-        // phase / turn / played / passed / landlord / settled 均已被 snapshot 覆盖
+        // phase / turn / passed / landlord / settled 均已被 snapshot 覆盖
         default:
           break;
       }
