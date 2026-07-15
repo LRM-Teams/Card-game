@@ -31,6 +31,13 @@ export class RoomRegistry {
       room = new GameRoom(id, this.aiAdapter);
       this.rooms.set(id, room);
     }
+
+    const reconnect = room.reconnectHuman(name);
+    if (reconnect) {
+      this.bindSeat(room.roomId, reconnect.seat, socketId);
+      return { room, seat: reconnect.seat, result: reconnect.result };
+    }
+
     const seat = room.firstEmptySeat();
     if (seat === null) {
       return { room, seat: -1 as Seat, result: { ok: false, code: 'room_full', message: '房间已满（3/3）' } };
@@ -57,5 +64,13 @@ export class RoomRegistry {
   /** 某座位当前绑定的 socketId（机器人 / 未连接返回 undefined）。 */
   socketOf(roomId: string, seat: Seat): string | undefined {
     return this.seatSockets.get(roomId)?.get(seat);
+  }
+
+  disconnect(roomId: string, seat: Seat, socketId: string): ActionResult {
+    const sockets = this.seatSockets.get(roomId);
+    if (sockets?.get(seat) === socketId) sockets.delete(seat);
+    const room = this.rooms.get(roomId);
+    if (!room) return { ok: false, code: 'not_in_room', message: '房间不存在' };
+    return { ok: true, events: room.markDisconnected(seat) };
   }
 }

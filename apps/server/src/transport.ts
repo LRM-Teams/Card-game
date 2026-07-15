@@ -67,12 +67,9 @@ export function createGame(io: IoServer): RoomRegistry {
     });
 
     socket.on('disconnect', () => {
-      // MVP 仅标记连接状态；断线重连是 Phase 2。
-      if (binding) {
-        const room = registry.get(binding.roomId);
-        const p = room?.players[binding.seat];
-        if (p) p.connected = false;
-      }
+      if (!binding) return;
+      const result = registry.disconnect(binding.roomId, binding.seat, socket.id);
+      if (result.ok) apply(binding.roomId, result.events);
     });
   });
 

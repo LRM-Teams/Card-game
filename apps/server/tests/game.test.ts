@@ -3,6 +3,7 @@ import { identifyHand, RANK } from '@card-game/rules';
 import type { Card, Seat } from '@card-game/rules';
 import { botBid, botChoosePlay } from '../src/game/bot';
 import { GameRoom } from '../src/game/GameRoom';
+import { RoomRegistry } from '../src/registry';
 
 /** 构造一张最小 Card（用于白盒构造判定场景）。 */
 function card(rank: number, id?: string): Card {
@@ -110,6 +111,42 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
     const res = r.handleBid(0, 'maybe');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.code).toBe('invalid_bid');
+  });
+});
+
+describe('RoomRegistry · 断线重连', () => {
+  it('满房开局后同名玩家可用原 roomId 重连原座位并拿回私有手牌', () => {
+    const registry = new RoomRegistry();
+    const a = registry.join('A', 'socket-a');
+    registry.join('B', 'socket-b', a.room.roomId);
+    registry.join('C', 'socket-c', a.room.roomId);
+    a.room.start();
+
+    const beforeHand = a.room.players[0]!.hand.map((c) => c.id);
+    const disconnected = registry.disconnect(a.room.roomId, 0, 'socket-a');
+    expect(disconnected.ok).toBe(true);
+    expect(a.room.players[0]!.connected).toBe(false);
+
+    const reconnected = registry.join('A', 'socket-a2', a.room.roomId);
+    expect(reconnected.seat).toBe(0);
+    expect(a.room.players[0]!.connected).toBe(true);
+    expect(registry.socketOf(a.room.roomId, 0)).toBe('socket-a2');
+    if (reconnected.result.ok) {
+      expect(reconnected.result.events.some((e) => e.event.type === 'you_joined' && e.event.seat === 0)).toBe(true);
+      expect(reconnected.result.events.some((e) => e.event.type === 'dealt' && e.event.hand.join(',') === beforeHand.join(','))).toBe(true);
+      expect(reconnected.result.events.some((e) => e.event.type === 'snapshot')).toBe(true);
+    }
+  });
+
+  it('满房没有断线同名座位时仍拒绝新玩家加入', () => {
+    const registry = new RoomRegistry();
+    const a = registry.join('A', 'socket-a');
+    registry.join('B', 'socket-b', a.room.roomId);
+    registry.join('C', 'socket-c', a.room.roomId);
+
+    const res = registry.join('D', 'socket-d', a.room.roomId);
+    expect(res.result.ok).toBe(false);
+    if (!res.result.ok) expect(res.result.code).toBe('room_full');
   });
 });
 

@@ -98,6 +98,32 @@ export class GameRoom {
     return idx === -1 ? null : (idx as Seat);
   }
 
+  /** 断线真人用同房间 + 同昵称恢复原座位与私有手牌。 */
+  reconnectHuman(name: string): { seat: Seat; result: ActionResult } | null {
+    const trimmed = name.trim();
+    const idx = this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.name === trimmed);
+    if (idx === -1) return null;
+
+    const seat = idx as Seat;
+    const p = this.players[seat]!;
+    p.connected = true;
+    const events: RoomEvent[] = [
+      { scope: { seat }, event: { type: 'you_joined', seat, roomId: this.roomId } },
+      { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
+    ];
+    if (p.hand.length > 0) {
+      events.splice(1, 0, { scope: { seat }, event: { type: 'dealt', hand: p.hand.map((c) => c.id) } });
+    }
+    return { seat, result: ok(events) };
+  }
+
+  markDisconnected(seat: Seat): RoomEvent[] {
+    const p = this.players[seat];
+    if (!p || p.isBot || !p.connected) return [];
+    p.connected = false;
+    return [{ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } }];
+  }
+
   // ---------------- 房间 / 开局 ----------------
 
   /** 真人加入，占第一个空座位。 */
