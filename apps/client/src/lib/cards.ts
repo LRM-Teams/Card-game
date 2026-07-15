@@ -1,4 +1,11 @@
-import { HandType, RANK, type Card, type Suit } from '@card-game/rules';
+import { createDeck, HandType, RANK, type Card, type Suit } from '@card-game/rules';
+
+/** card id → Card 的全局查找表（dealt/played 里只传 id，这里还原成 Card 供渲染）。 */
+const CARD_BY_ID = new Map<string, Card>();
+for (const c of createDeck()) CARD_BY_ID.set(c.id, c);
+export function cardOf(id: string): Card | undefined {
+  return CARD_BY_ID.get(id);
+}
 
 /** 花色 → 符号（仅展示用）。 */
 export const SUIT_SYMBOL: Record<Suit, string> = {

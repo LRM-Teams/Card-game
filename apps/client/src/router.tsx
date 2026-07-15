@@ -2,13 +2,23 @@ import { createRouter, createRootRoute, createRoute, Outlet, Link } from '@tanst
 import { Lobby } from './components/Lobby';
 import { Room } from './components/Room';
 import { GameTable } from './components/GameTable';
+import { useGameStore } from './store/gameStore';
+
+const SERVER_URL = (import.meta.env.VITE_SERVER_URL as string | undefined) ?? 'http://localhost:3000';
+
+function ConnBadge() {
+  const status = useGameStore((s) => s.status);
+  const label = status === 'connected' ? '已连接' : status === 'connecting' ? '连接中…' : '未连接';
+  return <span className={`conn ${status}`}>● {label}</span>;
+}
 
 function RootLayout() {
   return (
     <div className="app">
       <nav className="topnav">
         <Link to="/" className="brand">♠ 斗地主</Link>
-        <span className="tag">客户端 · 静态原型（mock 数据 / 未联网）</span>
+        <ConnBadge />
+        <span className="tag">{SERVER_URL.replace(/^https?:\/\//, '')}</span>
       </nav>
       <main className="content">
         <Outlet />

@@ -178,6 +178,9 @@ body {
 .seat-card.me {
   border-color: var(--gold);
 }
+.seat-card.mine {
+  box-shadow: 0 0 0 2px rgba(245, 197, 66, 0.12) inset;
+}
 .seat-card .avatar {
   font-size: 28px;
 }
@@ -189,12 +192,69 @@ body {
   font-size: 12px;
   opacity: 0.7;
 }
+.seat-count {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #999;
+  display: inline-block;
+}
+.status-dot.connected {
+  background: #36d399;
+}
+.status-dot.connecting {
+  background: #f5c542;
+}
+.status-dot.disconnected,
+.status-dot.error {
+  background: #ff6b6b;
+}
+.status-error {
+  color: #ffb4b4;
+}
 
 /* ---------- 牌桌 ---------- */
 .table {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+.table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.table-head h2 {
+  margin: 0 0 2px;
+  font-size: 18px;
+}
+.table-head p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.76;
+}
+.head-actions {
+  margin: 0;
 }
 .opponents {
   display: grid;
@@ -250,6 +310,15 @@ body {
   justify-content: center;
   gap: 2px;
   flex-wrap: wrap;
+}
+.bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--gold);
 }
 
 .turn-line {
@@ -373,6 +442,9 @@ body {
   margin-top: 6px;
   font-size: 12px;
   opacity: 0.7;
+}
+.log.compact {
+  margin-top: 14px;
 }
 .log summary {
   cursor: pointer;

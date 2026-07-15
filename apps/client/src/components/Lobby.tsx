@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useGameStore } from '../store/gameStore';
 
-/** 大厅：昵称 + 快速匹配入口（静态原型）。 */
+/** 大厅：昵称 + 快速匹配入口。 */
 export function Lobby() {
   const navigate = useNavigate();
+  const connectAndJoin = useGameStore((s) => s.connectAndJoin);
   const [nick, setNick] = useState('');
 
   const enter = (to: '/room' | '/game') => {
-    if (!nick.trim()) setNick('游客');
+    const name = nick.trim() || '游客';
+    connectAndJoin(name);
     navigate({ to });
   };
 
@@ -32,14 +35,14 @@ export function Lobby() {
           快速匹配
         </button>
         <button className="btn big" onClick={() => enter('/game')}>
-          直接进牌桌（demo）
+          直接进牌桌（联网 demo）
         </button>
       </div>
 
       <ul className="tips">
         <li>点选手牌 → 出牌 / 不出；规则只做「能否成牌 / 压过」提示。</li>
         <li>合法性以服务端为准，客户端不裁决。</li>
-        <li>当前为静态原型，机器人暂不真实出牌。</li>
+        <li>本地联调：先起 server :3000，再起 client :5173。</li>
       </ul>
     </div>
   );
