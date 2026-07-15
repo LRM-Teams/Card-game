@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { HandType, type Hand } from '../src/types';
-import { createMultiplier, applyPlay, computeMultiplier, isDoublingPlay, unitScore } from '../src/multiplier';
+import { createMultiplier, applyPlay, computeMultiplier, isDoublingPlay, unitScore, applySpring, applyAntiSpring } from '../src/multiplier';
 
 const hand = (type: HandType): Hand => ({ type, cards: [], mainRank: 3, length: 1 });
 
@@ -31,6 +31,16 @@ describe('multiplier', () => {
   it('computeMultiplier 汇总 + unitScore', () => {
     const s = computeMultiplier([hand(HandType.BOMB), hand(HandType.BOMB), hand(HandType.PAIR)]);
     expect(s.multiplier).toBe(4);
+    expect(unitScore(s)).toBe(4);
+  });
+
+  it('春天 ×2', () => {
+    expect(applySpring(createMultiplier()).multiplier).toBe(2);
+  });
+
+  it('反春 ×2（与炸弹叠加）', () => {
+    let s = applyPlay(createMultiplier(), hand(HandType.BOMB)); // 2
+    s = applyAntiSpring(s); // 4
     expect(unitScore(s)).toBe(4);
   });
 

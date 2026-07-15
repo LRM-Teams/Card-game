@@ -6,7 +6,7 @@ import { HandType, type Hand } from './types';
  * MVP 倍数规则（@阿策 #110 已定）：
  * - 底分固定 1；
  * - 每出一个**炸弹 ×2**、**王炸 ×2**；
- * - 春天 / 反春 MVP 不计入。
+ * - **春天 / 反春 ×2**（按"欢乐斗地主"规则，@caozs2 指示纳入）。
  *
  * 服务端在每次出牌后调用 `applyPlay` 累积倍数；结算时用 `unitScore` 折算进 `settle`。
  */
@@ -43,4 +43,14 @@ export function computeMultiplier(plays: readonly Hand[], base = 1): MultiplierS
 /** 底分 × 倍数 = 单注结算单位，喂给 {@link settle}。 */
 export function unitScore(state: MultiplierState): number {
   return state.base * state.multiplier;
+}
+
+/** 春天（地主胜且农民一张未出）→ 倍数 ×2。是否触发由服务端按出牌历史判定后调用。 */
+export function applySpring(state: MultiplierState): MultiplierState {
+  return { ...state, multiplier: state.multiplier * 2 };
+}
+
+/** 反春（农民胜且地主底牌外只出一手）→ 倍数 ×2。是否触发由服务端按出牌历史判定后调用。 */
+export function applyAntiSpring(state: MultiplierState): MultiplierState {
+  return { ...state, multiplier: state.multiplier * 2 };
 }
