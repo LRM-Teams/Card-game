@@ -3,7 +3,7 @@
  *
  * - 管理 roomId → GameRoom。
  * - 维护 (roomId, seat) → socketId，用于把私发事件（如 dealt 手牌）送达对应真人。
- * - join：复用指定房间或新建；把真人落座到第一个空位。
+ * - join：无 roomId 时新建房间；有 roomId 时只加入已存在房间。
  */
 import type { Seat } from '@card-game/rules';
 import { GameRoom } from './game/GameRoom';
@@ -26,8 +26,15 @@ export class RoomRegistry {
   /** 真人加入；返回落座的房间/座位/事件流。失败时 seat=-1、result 为错误。 */
   join(name: string, socketId: string, roomId?: string): JoinOutcome {
     let room = roomId ? this.rooms.get(roomId) : undefined;
+    if (roomId && !room) {
+      return {
+        room: new GameRoom(roomId, this.aiAdapter),
+        seat: -1 as Seat,
+        result: { ok: false, code: 'not_in_room', message: '房间不存在，请检查房间号' },
+      };
+    }
     if (!room) {
-      const id = roomId ?? `room-${(++this.seq).toString(36)}`;
+      const id = `room-${(++this.seq).toString(36)}`;
       room = new GameRoom(id, this.aiAdapter);
       this.rooms.set(id, room);
     }

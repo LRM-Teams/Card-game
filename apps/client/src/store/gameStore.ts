@@ -39,7 +39,7 @@ interface UiState {
 
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
-  join: (name: string) => void;
+  join: (name: string, roomId?: string) => void;
   start: () => void;
   bid: (choice: BidChoice) => void;
   play: () => void;
@@ -98,9 +98,17 @@ export const useGameStore = create<UiState>((set, get) => ({
     });
   },
 
-  join: (name) => {
-    set({ myName: name });
-    send({ type: 'join', name });
+  join: (name, roomId) => {
+    set({
+      myName: name,
+      mySeat: null,
+      roomId: null,
+      myHand: [],
+      selected: [],
+      snapshot: null,
+      lastError: null,
+    });
+    send({ type: 'join', name, roomId: roomId?.trim() || undefined });
   },
 
   start: () => send({ type: 'start' }),

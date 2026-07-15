@@ -114,7 +114,15 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
   });
 });
 
-describe('RoomRegistry · 断线重连', () => {
+describe('RoomRegistry · 房间加入 / 断线重连', () => {
+  it('指定不存在的 roomId 时拒绝加入，不隐式创建好友房', () => {
+    const registry = new RoomRegistry();
+    const res = registry.join('A', 'socket-a', 'missing-room');
+    expect(res.result.ok).toBe(false);
+    if (!res.result.ok) expect(res.result.code).toBe('not_in_room');
+    expect(registry.get('missing-room')).toBeUndefined();
+  });
+
   it('满房开局后同名玩家可用原 roomId 重连原座位并拿回私有手牌', () => {
     const registry = new RoomRegistry();
     const a = registry.join('A', 'socket-a');
