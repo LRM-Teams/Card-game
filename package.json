@@ -1,0 +1,14 @@
+{
+  "name": "card-game",
+  "private": true,
+  "version": "0.0.0",
+  "description": "斗地主网络对战游戏 — monorepo（共享规则包 + server + client）",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
