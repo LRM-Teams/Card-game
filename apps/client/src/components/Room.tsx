@@ -3,7 +3,13 @@ import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
 
-/** 房间：显示座位与等人状态；3 真人可纯人对战，人数不足可选补机器人开局。 */
+/**
+ * 房间：展示 3 个座位（真人 / 空位 / 机器人补位）与等人状态。
+ * - 凑齐 3 真人：房主点「开始游戏」→ 纯人对战（0 机器人）。
+ * - 不足 3 真人：房主可选「补机器人开始」或继续等人。
+ * - 非房主：等待房主开局。
+ * 进入发牌/叫地主/出牌后自动跳牌桌。
+ */
 export function Room() {
   const navigate = useNavigate();
   const snapshot = useGameStore((s) => s.snapshot);
@@ -23,10 +29,11 @@ export function Room() {
   }, [phase, navigate]);
 
   const players = snapshot?.players ?? [];
-  const seats = [0, 1, 2].map((seat) => players.find((p) => p.seat === seat));
+  const seats = [0, 1, 2].map((seat) => players.find((p) => p.seat === seat) ?? null);
   const humans = players.filter((p) => !p.isBot).length;
-  const canStartPure = humans === 3; // 3 真人纯人对战
-  const canStartWithBots = humans >= 1 && humans < 3; // 人数不足，可选补机器人
+  const hostSeat = snapshot?.hostSeat ?? null;
+  const isHost = mySeat != null && mySeat === hostSeat;
+  const fullHouse = humans >= 3;
 
   const copyRoomId = async () => {
     if (!roomId) return;
@@ -35,10 +42,13 @@ export function Room() {
     window.setTimeout(() => setCopied(false), 1200);
   };
 
+  // 房主：凑齐 3 真人 → 纯人对战（fillBots=false）；不足 → 补机器人开始（fillBots=true）
+  const handleStart = () => start(!fullHouse);
+
   return (
     <div className="panel room">
       <h1 className="title">房间 {roomId ? `#${roomId.slice(0, 6)}` : ''}</h1>
-      <p className="subtitle">3 人桌 · 纯人对战 或 人数不足补机器人</p>
+      <p className="subtitle">3 人桌 · 真人对战 · 当前 {humans}/3 真人</p>
 
       {roomId && (
         <div className="room-code-card">
@@ -62,24 +72,36 @@ export function Room() {
             <div className="avatar">{!p ? '＋' : p.isBot ? '🤖' : '🙂'}</div>
             <div className="seat-name">{p ? p.name : '空位'}</div>
             <div className="seat-role">
-              {p ? (p.isBot ? '机器人' : p.seat === mySeat ? '你' : '玩家') : '等待加入'}
+              {!p
+                ? '等待玩家加入'
+                : p.isBot
+                  ? '机器人'
+                  : p.seat === mySeat
+                    ? '你'
+                    : '玩家'}
             </div>
+            {p && p.seat === hostSeat && <div className="seat-host">房主</div>}
           </div>
         ))}
       </div>
 
-      <div className="actions lobby-actions">
-        <button className="btn primary big" onClick={() => start(false)} disabled={!roomId || !canStartPure}>
-          开始游戏{canStartPure ? '' : `（等 ${3 - humans} 人）`}
-        </button>
-        <button className="btn big" onClick={() => start(true)} disabled={!roomId || !canStartWithBots}>
-          补机器人开始
-        </button>
+      <div className="actions">
+        {isHost ? (
+          <button className="btn primary big" onClick={handleStart} disabled={!roomId}>
+            {fullHouse ? '开始游戏（3 真人）' : '补机器人开始'}
+          </button>
+        ) : (
+          <button className="btn big" disabled>
+            等待房主开始游戏…
+          </button>
+        )}
       </div>
       <p className="tips" style={{ paddingLeft: 0, marginTop: 12 }}>
-        {humans < 3
-          ? `等待玩家加入（还差 ${3 - humans} 人）；把房间号发给好友，或选择「补机器人开始」。`
-          : '3 人已满，点击「开始游戏」纯人对战。'}
+        {isHost
+          ? fullHouse
+            ? '3 位真人都到齐，点「开始游戏」进入纯人对战。'
+            : `还差 ${3 - humans} 人：把房间号发给好友同桌，或点「补机器人开始」用机器人补齐空位。`
+          : `还差 ${3 - humans} 人：把房间号发给好友凑齐 3 人，等房主开局。`}
       </p>
     </div>
   );

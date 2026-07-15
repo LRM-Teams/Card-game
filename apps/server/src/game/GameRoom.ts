@@ -64,6 +64,8 @@ export class GameRoom {
   phase: GamePhase = GamePhase.WAITING;
   /** 三个座位；WAITING 时未占座位为 null，开局后全部填满（真人 + 机器人）。 */
   players: (PlayerState | null)[] = [null, null, null];
+  /** 房主座位（首位加入的真人）；WAITING 阶段由房主决定等人 / 补机器人 / 开局。 */
+  hostSeat: Seat | null = null;
   turnSeat: Seat | null = null;
   landlordSeat: Seat | null = null;
   bottom: Card[] = [];
@@ -140,6 +142,8 @@ export class GameRoom {
       role: undefined,
       hand: [],
     };
+    // 首位真人即为房主（创建房间者）
+    if (this.hostSeat === null) this.hostSeat = seat;
     return ok([
       { scope: { seat }, event: { type: 'you_joined', seat, roomId: this.roomId } },
       { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
@@ -490,6 +494,7 @@ export class GameRoom {
       players,
       turnSeat: this.turnSeat,
       landlordSeat: this.landlordSeat,
+      hostSeat: this.hostSeat,
       bottom: this.bottomRevealed ? this.bottom.map((c) => c.id) : [],
       bottomRevealed: this.bottomRevealed,
       lastPlay: this.lastPlay ? { seat: this.lastPlay.seat, hand: this.lastPlay.hand } : null,

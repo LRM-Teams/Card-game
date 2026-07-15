@@ -61,6 +61,17 @@ describe('GameRoom · 房间 / 开局', () => {
     expect(r.bottomRevealed).toBe(false);
   });
 
+  it('首位加入的真人即房主；snapshot 暴露 hostSeat（房主可决定等人/开局）', () => {
+    const r = new GameRoom('host');
+    r.addHuman('A');
+    r.addHuman('B');
+    expect(r.hostSeat).toBe(0); // 创建房间者 = 房主
+    const snap = r.snapshot();
+    expect(snap.hostSeat).toBe(0);
+    expect(snap.players).toHaveLength(2);
+    expect(snap.players.every((p) => !p.isBot)).toBe(true);
+  });
+
   it('房间满后再加人被拒', () => {
     const r = threeHumans();
     const res = r.addHuman('D');

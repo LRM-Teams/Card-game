@@ -75,6 +75,8 @@ export interface GameStateSnapshot {
   /** 轮到谁（BIDDING 时为当前叫牌者；PLAYING 时为当前出牌者）。 */
   turnSeat: Seat | null;
   landlordSeat: Seat | null;
+  /** 房主座位（创建房间的真人；WAITING 阶段房主可决定开局/补机器人）。 */
+  hostSeat: Seat | null;
   /** 3 张底牌 id；仅当 bottomRevealed 时有意义。 */
   bottom: string[];
   bottomRevealed: boolean;
