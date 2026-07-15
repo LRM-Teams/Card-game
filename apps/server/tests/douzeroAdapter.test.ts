@@ -16,14 +16,14 @@ function card(rank: number, id?: string): Card {
 }
 
 describe('DouZero adapter', () => {
-  it('转换内部牌到 DouZero 不带花色点数编码', () => {
+  it('转换内部牌到 DouZero 官方不带花色点数编码', () => {
     expect(toDouZeroCards([card(RANK.THREE), card(RANK.TEN), card(RANK.A), card(RANK.TWO)])).toEqual([
-      '3',
-      '10',
-      'A',
-      '2',
+      3,
+      10,
+      14,
+      17,
     ]);
-    expect(toDouZeroCards([card(RANK.SMALL_JOKER), card(RANK.BIG_JOKER)])).toEqual(['X', 'D']);
+    expect(toDouZeroCards([card(RANK.SMALL_JOKER), card(RANK.BIG_JOKER)])).toEqual([20, 30]);
   });
 
   it('按地主座位映射 DouZero 身份', () => {
@@ -34,17 +34,17 @@ describe('DouZero adapter', () => {
 
   it('从 DouZero action 回选真实手牌，重复点数按数量消费', () => {
     const hand = [card(RANK.FIVE, '5a'), card(RANK.FIVE, '5b'), card(RANK.SEVEN, '7a')];
-    expect(fromDouZeroAction(['5', '5'], hand)?.map((c) => c.id)).toEqual(['5a', '5b']);
-    expect(fromDouZeroAction(['5', '5', '5'], hand)).toBeNull();
+    expect(fromDouZeroAction([5, 5], hand)?.map((c) => c.id)).toEqual(['5a', '5b']);
+    expect(fromDouZeroAction([5, 5, 5], hand)).toBeNull();
   });
 
   it('生成当前可压过上家的合法动作列表', () => {
     const hand = [card(RANK.THREE), card(RANK.FIVE), card(RANK.FIVE, '5b'), card(RANK.SMALL_JOKER), card(RANK.BIG_JOKER)];
     const prev = identifyHand([card(RANK.FOUR)])!;
     const actions = listLegalActions(hand, prev).map(toDouZeroCards);
-    expect(actions).toContainEqual(['5']);
-    expect(actions).toContainEqual(['X', 'D']);
-    expect(actions).not.toContainEqual(['3']);
+    expect(actions).toContainEqual([5]);
+    expect(actions).toContainEqual([20, 30]);
+    expect(actions).not.toContainEqual([3]);
   });
 
   it('构造 DouZero 状态包含身份、底牌、手牌数、历史和合法动作', () => {
@@ -61,13 +61,14 @@ describe('DouZero adapter', () => {
     });
 
     expect(state.position).toBe('landlord_down');
-    expect(state.hand).toEqual(['5', '6']);
-    expect(state.lastMove).toEqual(['4']);
-    expect(state.bottom).toEqual(['A']);
+    expect(state.modelKey).toBe('landlord_down');
+    expect(state.hand).toEqual([5, 6]);
+    expect(state.lastMove).toEqual([4]);
+    expect(state.bottom).toEqual([14]);
     expect(state.handCounts[1]).toBe(20);
-    expect(state.playedCards).toEqual(['4']);
-    expect(state.playHistory[0]).toEqual({ position: 'landlord', action: ['4'], isPass: false });
-    expect(state.legalActions).toContainEqual(['5']);
+    expect(state.playedCards).toEqual([4]);
+    expect(state.playHistory[0]).toEqual({ position: 'landlord', action: [4], isPass: false });
+    expect(state.legalActions).toContainEqual([5]);
   });
 
   it('非法模型输出会 fallback 到当前最小合法 bot 行为', () => {
@@ -83,7 +84,7 @@ describe('DouZero adapter', () => {
         handCounts: { 0: 2, 1: 17, 2: 17 },
         history: [],
       },
-      { choosePlay: () => ['3'] },
+      { choosePlay: () => [3] },
     );
 
     expect(chosen?.map((c) => c.rank)).toEqual([RANK.FIVE]);

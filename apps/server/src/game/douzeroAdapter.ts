@@ -3,7 +3,8 @@ import type { Card, Hand, Seat } from '@card-game/rules';
 import { botChoosePlay } from './bot';
 
 export type DouZeroPosition = 'landlord' | 'landlord_up' | 'landlord_down';
-export type DouZeroCard = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A' | '2' | 'X' | 'D';
+/** DouZero official rank encoding: 3..14(A), 17(2), 20(small joker), 30(big joker). */
+export type DouZeroCard = 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 17 | 20 | 30;
 export type DouZeroAction = DouZeroCard[];
 
 export interface BotPlayHistoryEntry {
@@ -13,7 +14,10 @@ export interface BotPlayHistoryEntry {
 }
 
 export interface DouZeroPlayState {
+  /** Determines which independent DouZero checkpoint to load. */
   position: DouZeroPosition;
+  /** Alias kept explicit for external model loaders. */
+  modelKey: DouZeroPosition;
   hand: DouZeroCard[];
   lastMove: DouZeroAction;
   bottom: DouZeroCard[];
@@ -42,21 +46,21 @@ export interface DouZeroBotAdapter {
 }
 
 const RANK_TO_DOUZERO = new Map<number, DouZeroCard>([
-  [3, '3'],
-  [4, '4'],
-  [5, '5'],
-  [6, '6'],
-  [7, '7'],
-  [8, '8'],
-  [9, '9'],
-  [10, '10'],
-  [11, 'J'],
-  [12, 'Q'],
-  [13, 'K'],
-  [14, 'A'],
-  [15, '2'],
-  [16, 'X'],
-  [17, 'D'],
+  [3, 3],
+  [4, 4],
+  [5, 5],
+  [6, 6],
+  [7, 7],
+  [8, 8],
+  [9, 9],
+  [10, 10],
+  [11, 11],
+  [12, 12],
+  [13, 13],
+  [14, 14],
+  [15, 17],
+  [16, 20],
+  [17, 30],
 ]);
 
 const DOUZERO_TO_RANK = new Map<DouZeroCard, number>([...RANK_TO_DOUZERO.entries()].map(([rank, code]) => [code, rank]));
@@ -112,8 +116,10 @@ export function listLegalActions(hand: readonly Card[], prev: Hand | null): Card
 export function buildDouZeroPlayState(ctx: BotPlayContext): DouZeroPlayState {
   const legalActions = listLegalActions(ctx.hand, ctx.prev);
   const lastMove = ctx.prev ? toDouZeroCards(ctx.prev.cards) : [];
+  const position = douZeroPosition(ctx.seat, ctx.landlordSeat);
   return {
-    position: douZeroPosition(ctx.seat, ctx.landlordSeat),
+    position,
+    modelKey: position,
     hand: toDouZeroCards(ctx.hand),
     lastMove,
     bottom: toDouZeroCards(ctx.bottom),
