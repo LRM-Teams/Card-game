@@ -35,7 +35,7 @@ export function createGame(io: IoServer): RoomRegistry {
     };
 
     socket.on('action', (action: ClientAction) => {
-      // join：落座并加入房间
+      // join：新玩家落座；reconnect：恢复既有真人座位并替换旧 socket。
       if (action.type === 'join') {
         const { room, seat, result } = registry.join(action.name, socket.id, action.roomId);
         if (!result.ok) {
@@ -48,6 +48,25 @@ export function createGame(io: IoServer): RoomRegistry {
         return;
       }
 
+      if (action.type === 'reconnect') {
+        const { room, previousSocketId, result } = registry.reconnect(action.roomId, action.seat, socket.id);
+        if (!result.ok) {
+          fail(result.code, result.message);
+          return;
+        }
+        if (!room) {
+          fail('invalid_reconnect', '房间不存在');
+          return;
+        }
+        if (previousSocketId && previousSocketId !== socket.id) {
+          io.sockets.sockets.get(previousSocketId)?.leave(room.roomId);
+        }
+        binding = { roomId: room.roomId, seat: action.seat };
+        socket.join(room.roomId);
+        apply(room.roomId, result.events);
+        return;
+      }
+
       if (!binding) {
         fail('not_in_room', '请先 join 房间');
         return;
@@ -55,6 +74,11 @@ export function createGame(io: IoServer): RoomRegistry {
       const room = registry.get(binding.roomId);
       if (!room) {
         fail('not_in_room', '房间不存在');
+        return;
+      }
+
+      if (registry.socketOf(binding.roomId, binding.seat) !== socket.id) {
+        fail('not_in_room', '此连接已被新的重连连接替换');
         return;
       }
 

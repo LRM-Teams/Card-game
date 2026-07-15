@@ -29,6 +29,7 @@ export type Role = 'landlord' | 'farmer' | undefined;
 export type ErrorCode =
   | 'not_in_room' // 玩家不在任何房间里
   | 'room_full' // 房间已满（3/3）
+  | 'invalid_reconnect' // 断线重连参数无效或座位不可恢复
   | 'invalid_action_for_phase' // 当前阶段不接受该动作
   | 'not_your_turn' // 还没轮到你
   | 'illegal_play' // 出牌不合法（不是有效牌型 / 压不过上家 / 手里没这些牌）
@@ -89,6 +90,7 @@ export interface GameStateSnapshot {
 /** 客户端 → 服务端动作。 */
 export type ClientAction =
   | { type: 'join'; name: string; roomId?: string }
+  | { type: 'reconnect'; roomId: string; seat: Seat } // 恢复已占用的真人座位；服务器会替换旧 socket
   | { type: 'start' } // 凑齐则开局；真人不足自动补机器人到 3 人
   | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫
   | { type: 'play'; cards: string[] } // 要出的牌 id 列表

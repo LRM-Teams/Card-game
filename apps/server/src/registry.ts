@@ -10,9 +10,19 @@ import { GameRoom } from './game/GameRoom';
 import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
 
+function isSeat(value: unknown): value is Seat {
+  return value === 0 || value === 1 || value === 2;
+}
+
 export interface JoinOutcome {
   room: GameRoom;
   seat: Seat;
+  result: ActionResult;
+}
+
+export interface ReconnectOutcome {
+  room?: GameRoom;
+  previousSocketId?: string;
   result: ActionResult;
 }
 
@@ -32,7 +42,7 @@ export class RoomRegistry {
       this.rooms.set(id, room);
     }
 
-    const reconnect = room.reconnectHuman(name);
+    const reconnect = room.reconnectHumanByName(name);
     if (reconnect) {
       this.bindSeat(room.roomId, reconnect.seat, socketId);
       return { room, seat: reconnect.seat, result: reconnect.result };
@@ -52,6 +62,17 @@ export class RoomRegistry {
     return this.rooms.get(roomId);
   }
 
+  reconnect(roomId: string, seat: Seat, socketId: string): ReconnectOutcome {
+    const room = this.rooms.get(roomId);
+    if (!room || !isSeat(seat)) {
+      return { result: { ok: false, code: 'invalid_reconnect', message: '房间或座位不存在' } };
+    }
+    const previousSocketId = this.socketOf(roomId, seat);
+    const result = room.reconnectHuman(seat);
+    if (result.ok) this.bindSeat(roomId, seat, socketId);
+    return { room, previousSocketId, result };
+  }
+
   bindSeat(roomId: string, seat: Seat, socketId: string): void {
     let m = this.seatSockets.get(roomId);
     if (!m) {
@@ -59,6 +80,11 @@ export class RoomRegistry {
       this.seatSockets.set(roomId, m);
     }
     m.set(seat, socketId);
+  }
+
+  unbindSeat(roomId: string, seat: Seat, socketId: string): void {
+    const m = this.seatSockets.get(roomId);
+    if (m?.get(seat) === socketId) m.delete(seat);
   }
 
   /** 某座位当前绑定的 socketId（机器人 / 未连接返回 undefined）。 */
@@ -71,6 +97,6 @@ export class RoomRegistry {
     if (sockets?.get(seat) === socketId) sockets.delete(seat);
     const room = this.rooms.get(roomId);
     if (!room) return { ok: false, code: 'not_in_room', message: '房间不存在' };
-    return { ok: true, events: room.markDisconnected(seat) };
+    return room.markDisconnected(seat);
   }
 }

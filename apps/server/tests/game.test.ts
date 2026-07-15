@@ -56,6 +56,41 @@ describe('GameRoom · 房间 / 开局', () => {
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.code).toBe('room_full');
   });
+
+  it('断线座位进入托管，当前轮不会卡住', () => {
+    const r = threeHumans();
+    r.start();
+    expect(r.turnSeat).toBe(0);
+    const res = r.markDisconnected(0);
+    expect(res.ok).toBe(true);
+    expect(r.players[0]!.connected).toBe(false);
+    expect(r.turnSeat).toBe(1);
+  });
+
+  it('真人可按 roomId + seat 重连回原座位并拿到当前手牌', () => {
+    const r = threeHumans();
+    r.start();
+    const before = r.players[0]!.hand.map((c) => c.id);
+    r.markDisconnected(0);
+    const res = r.reconnectHuman(0);
+    expect(res.ok).toBe(true);
+    expect(r.players[0]!.connected).toBe(true);
+    if (res.ok) {
+      expect(res.events).toContainEqual({ scope: { seat: 0 }, event: { type: 'you_joined', seat: 0, roomId: 'room-test' } });
+      expect(res.events).toContainEqual({ scope: { seat: 0 }, event: { type: 'dealt', hand: before } });
+    }
+  });
+
+  it('重复 socket 重连会替换座位绑定，旧 socket 断开不会踢掉新连接', () => {
+    const registry = new RoomRegistry();
+    const joined = registry.join('A', 'socket-old', 'room-reconnect');
+    expect(joined.result.ok).toBe(true);
+    const resumed = registry.reconnect('room-reconnect', joined.seat, 'socket-new');
+    expect(resumed.result.ok).toBe(true);
+    expect(resumed.previousSocketId).toBe('socket-old');
+    registry.unbindSeat('room-reconnect', joined.seat, 'socket-old');
+    expect(registry.socketOf('room-reconnect', joined.seat)).toBe('socket-new');
+  });
 });
 
 describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidding）', () => {
@@ -192,6 +227,20 @@ describe('GameRoom · 出牌权威校验（规则不另写，全走 @card-game/r
     expect(r.players[0]!.hand.length).toBe(before - 1);
     expect(r.turnSeat).toBe(1);
     expect(r.lastPlay).not.toBeNull();
+  });
+
+  it('非法 / 重复动作只返回错误，不修改当前牌局状态', () => {
+    const r = landlordAt0();
+    const id = r.players[0]!.hand[0]!.id;
+    expect(r.handlePlay(0, [id]).ok).toBe(true);
+    const handAfterPlay = r.players[0]!.hand.map((c) => c.id);
+    const lastPlay = r.lastPlay;
+    const duplicate = r.handlePlay(0, [id]);
+    expect(duplicate.ok).toBe(false);
+    if (!duplicate.ok) expect(duplicate.code).toBe('not_your_turn');
+    expect(r.players[0]!.hand.map((c) => c.id)).toEqual(handAfterPlay);
+    expect(r.turnSeat).toBe(1);
+    expect(r.lastPlay).toBe(lastPlay);
   });
 
   it('压不过上家 → 拒；能压过 → 通过', () => {

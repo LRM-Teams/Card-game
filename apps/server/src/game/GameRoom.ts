@@ -98,32 +98,6 @@ export class GameRoom {
     return idx === -1 ? null : (idx as Seat);
   }
 
-  /** 断线真人用同房间 + 同昵称恢复原座位与私有手牌。 */
-  reconnectHuman(name: string): { seat: Seat; result: ActionResult } | null {
-    const trimmed = name.trim();
-    const idx = this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.name === trimmed);
-    if (idx === -1) return null;
-
-    const seat = idx as Seat;
-    const p = this.players[seat]!;
-    p.connected = true;
-    const events: RoomEvent[] = [
-      { scope: { seat }, event: { type: 'you_joined', seat, roomId: this.roomId } },
-      { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
-    ];
-    if (p.hand.length > 0) {
-      events.splice(1, 0, { scope: { seat }, event: { type: 'dealt', hand: p.hand.map((c) => c.id) } });
-    }
-    return { seat, result: ok(events) };
-  }
-
-  markDisconnected(seat: Seat): RoomEvent[] {
-    const p = this.players[seat];
-    if (!p || p.isBot || !p.connected) return [];
-    p.connected = false;
-    return [{ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } }];
-  }
-
   // ---------------- 房间 / 开局 ----------------
 
   /** 真人加入，占第一个空座位。 */
@@ -154,6 +128,35 @@ export class GameRoom {
     if (this.phase !== GamePhase.WAITING) return err('invalid_action_for_phase', '当前阶段不能开局');
     this.fillBots();
     return this.dealAndBeginBid();
+  }
+
+  reconnectHumanByName(name: string): { seat: Seat; result: ActionResult } | null {
+    const trimmed = name.trim();
+    const seat = this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.name === trimmed);
+    if (seat === -1) return null;
+    return { seat: seat as Seat, result: this.reconnectHuman(seat as Seat) };
+  }
+
+  /** 断线仅让座位进入托管；真人重连后仍取回同一座位和当前手牌。 */
+  markDisconnected(seat: Seat): ActionResult {
+    const p = this.players[seat];
+    if (!p || p.isBot) return ok([]);
+    p.connected = false;
+    const events: RoomEvent[] = [{ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } }];
+    events.push(...this.autoBots());
+    return ok(events);
+  }
+
+  reconnectHuman(seat: Seat): ActionResult {
+    const p = this.players[seat];
+    if (!p || p.isBot) return err('invalid_reconnect', '该座位不能恢复');
+    p.connected = true;
+    const events: RoomEvent[] = [
+      { scope: { seat }, event: { type: 'you_joined', seat, roomId: this.roomId } },
+      { scope: { seat }, event: { type: 'dealt', hand: p.hand.map((c) => c.id) } },
+      { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
+    ];
+    return ok(events);
   }
 
   private fillBots(): void {
@@ -403,7 +406,7 @@ export class GameRoom {
       if (this.phase === GamePhase.BIDDING && this.bid) {
         const seat = this.bid.order[this.bid.index]!;
         const p = this.players[seat];
-        if (!p || !p.isBot) break;
+        if (!p || (!p.isBot && p.connected)) break;
         events.push(...this.iBid(seat, botBid(p.hand)));
         continue;
       }
@@ -412,7 +415,7 @@ export class GameRoom {
         const seat = this.turnSeat;
         if (seat === null) break;
         const p = this.players[seat];
-        if (!p || !p.isBot) break;
+        if (!p || (!p.isBot && p.connected)) break;
         const prev = this.lastPlay ? this.lastPlay.hand : null;
         const cards = choosePlayWithDouZero(
           {
