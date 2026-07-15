@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="720" viewBox="0 0 1100 720" role="img" aria-labelledby="title desc">
+  <title id="title">斗地主 P0 牌桌视觉预览</title>
+  <desc id="desc">喜庆金绿牌桌方向，包含台呢背景、三人座位、地主标识、手牌、出牌区、按钮和结算倍数位置。</desc>
+  <defs>
+    <radialGradient id="felt" cx="50%" cy="36%" r="72%">
+      <stop offset="0" stop-color="#1b7a4b"/>
+      <stop offset="0.58" stop-color="#0f5132"/>
+      <stop offset="1" stop-color="#06281a"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffe27a"/>
+      <stop offset="1" stop-color="#d99a1e"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f05252"/>
+      <stop offset="1" stop-color="#a82020"/>
+    </linearGradient>
+    <pattern id="cloth" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M0 10H20M10 0V20" stroke="rgba(255,255,255,.045)" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity=".32"/>
+    </filter>
+  </defs>
+
+  <rect width="1100" height="720" rx="34" fill="url(#felt)"/>
+  <rect width="1100" height="720" rx="34" fill="url(#cloth)" opacity=".8"/>
+  <rect x="42" y="42" width="1016" height="636" rx="36" fill="none" stroke="url(#gold)" stroke-width="6" opacity=".9"/>
+  <rect x="64" y="64" width="972" height="592" rx="30" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="2" stroke-dasharray="14 10"/>
+
+  <g filter="url(#shadow)">
+    <rect x="392" y="246" width="316" height="128" rx="28" fill="rgba(0,0,0,.22)" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+    <text x="550" y="298" text-anchor="middle" fill="#fff3c4" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="700">中央出牌区</text>
+    <text x="550" y="334" text-anchor="middle" fill="rgba(255,255,255,.72)" font-family="Microsoft YaHei, sans-serif" font-size="15">cards fly in / pass bubble / combo hint</text>
+  </g>
+
+  <g id="opponent-left" filter="url(#shadow)">
+    <circle cx="178" cy="212" r="46" fill="#173d31" stroke="url(#gold)" stroke-width="3"/>
+    <text x="178" y="226" text-anchor="middle" font-size="38">🙂</text>
+    <rect x="112" y="268" width="132" height="34" rx="17" fill="rgba(0,0,0,.35)"/>
+    <text x="178" y="291" text-anchor="middle" fill="#fff" font-family="Microsoft YaHei" font-size="16" font-weight="700">上家</text>
+  </g>
+
+  <g id="opponent-right" filter="url(#shadow)">
+    <circle cx="922" cy="212" r="46" fill="#173d31" stroke="rgba(255,255,255,.24)" stroke-width="3"/>
+    <text x="922" y="226" text-anchor="middle" font-size="38">🤖</text>
+    <path d="M952 167l38 8-12 35-34-10z" fill="url(#red)" stroke="#ffe27a" stroke-width="2"/>
+    <text x="966" y="193" text-anchor="middle" fill="#fff3c4" font-family="Microsoft YaHei" font-size="13" font-weight="700" transform="rotate(12 966 193)">地主</text>
+    <rect x="856" y="268" width="132" height="34" rx="17" fill="rgba(0,0,0,.35)"/>
+    <text x="922" y="291" text-anchor="middle" fill="#fff" font-family="Microsoft YaHei" font-size="16" font-weight="700">下家</text>
+  </g>
+
+  <g id="me" filter="url(#shadow)">
+    <circle cx="550" cy="560" r="52" fill="#173d31" stroke="url(#gold)" stroke-width="4"/>
+    <circle cx="550" cy="560" r="62" fill="none" stroke="rgba(245,197,66,.35)" stroke-width="6"/>
+    <text x="550" y="576" text-anchor="middle" font-size="42">🙂</text>
+    <text x="550" y="638" text-anchor="middle" fill="#fff" font-family="Microsoft YaHei" font-size="18" font-weight="700">我方手牌 / 当前行动高亮</text>
+  </g>
+
+  <g id="cards" filter="url(#shadow)">
+    <rect x="368" y="454" width="52" height="74" rx="8" fill="#fbfbf6" stroke="#d8cfa8"/>
+    <text x="382" y="482" fill="#d63031" font-size="22" font-family="Arial" font-weight="700">A</text>
+    <text x="384" y="512" fill="#d63031" font-size="24">♥</text>
+    <rect x="432" y="444" width="52" height="74" rx="8" fill="#fbfbf6" stroke="#d8cfa8"/>
+    <text x="446" y="472" fill="#1c1c1c" font-size="22" font-family="Arial" font-weight="700">K</text>
+    <text x="448" y="502" fill="#1c1c1c" font-size="24">♠</text>
+    <rect x="496" y="454" width="52" height="74" rx="8" fill="#fbfbf6" stroke="#d8cfa8"/>
+    <text x="510" y="482" fill="#d63031" font-size="22" font-family="Arial" font-weight="700">Q</text>
+    <text x="512" y="512" fill="#d63031" font-size="24">♦</text>
+    <rect x="560" y="444" width="52" height="74" rx="8" fill="#fbfbf6" stroke="#d8cfa8"/>
+    <text x="574" y="472" fill="#1c1c1c" font-size="22" font-family="Arial" font-weight="700">J</text>
+    <text x="576" y="502" fill="#1c1c1c" font-size="24">♣</text>
+    <rect x="624" y="454" width="52" height="74" rx="8" fill="#8b1e24" stroke="#ffe27a"/>
+    <path d="M636 468h28v46h-28z" fill="none" stroke="#ffe27a" stroke-width="2" opacity=".9"/>
+    <text x="650" y="499" text-anchor="middle" fill="#ffe27a" font-size="18" font-family="Microsoft YaHei" font-weight="700">背</text>
+  </g>
+
+  <g id="hud">
+    <rect x="72" y="88" width="126" height="42" rx="21" fill="rgba(0,0,0,.32)" stroke="rgba(255,255,255,.16)"/>
+    <text x="135" y="116" text-anchor="middle" fill="#ffe27a" font-family="Arial" font-size="22" font-weight="700">×2</text>
+    <circle cx="988" cy="108" r="28" fill="none" stroke="#f5c542" stroke-width="6"/>
+    <text x="988" y="116" text-anchor="middle" fill="#fff" font-family="Arial" font-size="22" font-weight="700">15</text>
+  </g>
+
+  <g id="actions" filter="url(#shadow)">
+    <rect x="742" y="548" width="108" height="44" rx="14" fill="url(#gold)"/>
+    <text x="796" y="576" text-anchor="middle" fill="#2a2200" font-family="Microsoft YaHei" font-size="17" font-weight="700">出牌</text>
+    <rect x="862" y="548" width="108" height="44" rx="14" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.22)"/>
+    <text x="916" y="576" text-anchor="middle" fill="#fff" font-family="Microsoft YaHei" font-size="17" font-weight="700">不出</text>
+  </g>
+</svg>
