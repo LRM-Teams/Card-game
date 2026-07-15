@@ -40,7 +40,9 @@ import type {
   PlayerView,
   Seat,
 } from '@card-game/rules';
-import { botBid, botChoosePlay, botName } from './bot';
+import { botBid, botName } from './bot';
+import { choosePlayWithDouZero } from './douzeroAdapter';
+import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
 import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
 
 const SEATS: readonly Seat[] = [0, 1, 2];
@@ -74,10 +76,12 @@ export class GameRoom {
   /** 倍数状态（底分 1，每出一个炸弹/王炸 ×2）。 */
   mult: MultiplierState = createMultiplier();
   result: GameResult | null = null;
+  /** 出牌/过牌历史，供 DouZero 适配层构造观测状态。 */
+  playHistory: BotPlayHistoryEntry[] = [];
 
   private botCounter = 0;
 
-  constructor(roomId: string) {
+  constructor(roomId: string, private readonly aiAdapter?: DouZeroBotAdapter) {
     this.roomId = roomId;
   }
 
@@ -157,6 +161,7 @@ export class GameRoom {
     this.landlordSeat = null;
     this.result = null;
     this.mult = createMultiplier();
+    this.playHistory = [];
 
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'phase', phase: GamePhase.DEALING } }];
     for (const seat of SEATS) {
@@ -296,6 +301,7 @@ export class GameRoom {
     this.lastPlay = { seat, hand };
     this.leaderSeat = seat;
     this.passCount = 0;
+    this.playHistory.push({ seat, cards: [...cards], isPass: false });
     this.mult = applyPlay(this.mult, hand); // 炸弹 / 王炸 ×2
 
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'played', seat, hand } }];
@@ -322,6 +328,7 @@ export class GameRoom {
 
   private iPass(seat: Seat): RoomEvent[] {
     this.passCount += 1;
+    this.playHistory.push({ seat, cards: [], isPass: true });
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'passed', seat } }];
     if (this.passCount >= 2) {
       // 两人连过 → 本轮结束，领出者继续领出
@@ -381,7 +388,22 @@ export class GameRoom {
         const p = this.players[seat];
         if (!p || !p.isBot) break;
         const prev = this.lastPlay ? this.lastPlay.hand : null;
-        const cards = botChoosePlay(p.hand, prev);
+        const cards = choosePlayWithDouZero(
+          {
+            seat,
+            landlordSeat: this.landlordSeat!,
+            hand: p.hand,
+            prev,
+            bottom: this.bottom,
+            handCounts: {
+              0: this.players[0]!.hand.length,
+              1: this.players[1]!.hand.length,
+              2: this.players[2]!.hand.length,
+            },
+            history: this.playHistory,
+          },
+          this.aiAdapter,
+        );
         if (cards && cards.length > 0) events.push(...this.iPlay(seat, cards));
         else if (this.lastPlay === null) {
           events.push(...this.iPlay(seat, smallestFallback(p.hand))); // 领出兜底
