@@ -58,6 +58,24 @@ describe('GameRoom · 房间 / 开局', () => {
 });
 
 describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidding）', () => {
+  it('叫地主阶段公开 turnSeat，客户端可按 snapshot/turn 渲染当前叫牌者', () => {
+    const r = threeHumans();
+    const start = r.start();
+    expect(start.ok).toBe(true);
+    expect(r.phase).toBe('bidding');
+    expect(r.turnSeat).toBe(0);
+    if (start.ok) {
+      expect(start.events.some((e) => e.event.type === 'turn' && e.event.seat === 0)).toBe(true);
+    }
+
+    const bid = r.handleBid(0, 'pass');
+    expect(bid.ok).toBe(true);
+    expect(r.turnSeat).toBe(1);
+    if (bid.ok) {
+      expect(bid.events.some((e) => e.event.type === 'turn' && e.event.seat === 1)).toBe(true);
+    }
+  });
+
   it('最后一个 claim 者为地主、拿底牌共 20 张，其他人农民', () => {
     const r = threeHumans();
     r.start();

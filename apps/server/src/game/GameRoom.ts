@@ -167,7 +167,11 @@ export class GameRoom {
     // 进入叫地主（抢地主 A 方案，按座位顺序单轮线性收集 BidEntry）
     this.phase = GamePhase.BIDDING;
     this.bid = { order: [0, 1, 2], index: 0, entries: [], redeals: 0 };
+    this.turnSeat = this.bid.order[this.bid.index] ?? null;
     events.push({ scope: 'room', event: { type: 'phase', phase: GamePhase.BIDDING } });
+    if (this.turnSeat !== null) {
+      events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat } });
+    }
     events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
 
     events.push(...this.autoBots());
@@ -195,6 +199,10 @@ export class GameRoom {
     if (b.index >= b.order.length) {
       events.push(...this.finishBidding());
     } else {
+      this.turnSeat = b.order[b.index] ?? null;
+      if (this.turnSeat !== null) {
+        events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat } });
+      }
       events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
     }
     return events;
