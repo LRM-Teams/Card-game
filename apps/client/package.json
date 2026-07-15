@@ -2,14 +2,28 @@
   "name": "@card-game/client",
   "version": "0.0.1",
   "private": true,
-  "description": "斗地主前端：React + Vite（牌桌 / 手牌 UI、出牌交互、实时状态展示）",
+  "description": "斗地主前端：React + Vite（牌桌 / 手牌 UI、选牌出牌交互、实时状态展示）",
   "type": "module",
   "scripts": {
-    "dev": "echo \"TODO: vite on :5173\"",
-    "build": "echo \"TODO: client build\"",
-    "typecheck": "echo \"TODO: client typecheck\""
+    "dev": "vite --port 5173 --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 5173",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@card-game/rules": "workspace:*"
+    "@card-game/rules": "workspace:*",
+    "@tanstack/react-query": "^5.59.16",
+    "@tanstack/react-router": "^1.81.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
   }
 }
