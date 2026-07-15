@@ -7,6 +7,7 @@
  */
 import type { Seat } from '@card-game/rules';
 import { GameRoom } from './game/GameRoom';
+import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
 
 export interface JoinOutcome {
@@ -20,13 +21,14 @@ export class RoomRegistry {
   /** roomId → (seat → socketId) */
   private seatSockets = new Map<string, Map<Seat, string>>();
   private seq = 0;
+  private readonly aiAdapter = createConfiguredDouZeroAdapter();
 
   /** 真人加入；返回落座的房间/座位/事件流。失败时 seat=-1、result 为错误。 */
   join(name: string, socketId: string, roomId?: string): JoinOutcome {
     let room = roomId ? this.rooms.get(roomId) : undefined;
     if (!room) {
       const id = roomId ?? `room-${(++this.seq).toString(36)}`;
-      room = new GameRoom(id);
+      room = new GameRoom(id, this.aiAdapter);
       this.rooms.set(id, room);
     }
     const seat = room.firstEmptySeat();

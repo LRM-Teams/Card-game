@@ -4,6 +4,8 @@ import type { Card } from '@card-game/rules';
 import {
   buildDouZeroPlayState,
   choosePlayWithDouZero,
+  createConfiguredDouZeroAdapter,
+  createDouZeroCommandAdapter,
   douZeroPosition,
   fromDouZeroAction,
   listLegalActions,
@@ -69,6 +71,27 @@ describe('DouZero adapter', () => {
     expect(state.playedCards).toEqual([4]);
     expect(state.playHistory[0]).toEqual({ position: 'landlord', action: [4], isPass: false });
     expect(state.legalActions).toContainEqual([5]);
+  });
+
+  it('命令适配器可通过 JSON stdin/stdout 返回 DouZero action', () => {
+    const adapter = createDouZeroCommandAdapter(
+      `node -e "process.stdin.resume();process.stdin.on('data',()=>process.stdout.write(JSON.stringify({action:[5]})))"`,
+    );
+    const state = buildDouZeroPlayState({
+      seat: 0,
+      landlordSeat: 0,
+      hand: [card(RANK.FIVE)],
+      prev: null,
+      bottom: [],
+      handCounts: { 0: 1, 1: 17, 2: 17 },
+      history: [],
+    });
+
+    expect(adapter.choosePlay(state)).toEqual([5]);
+  });
+
+  it('配置缺失时不启用 DouZero 外部推理适配器', () => {
+    expect(createConfiguredDouZeroAdapter({})).toBeUndefined();
   });
 
   it('非法模型输出会 fallback 到当前最小合法 bot 行为', () => {

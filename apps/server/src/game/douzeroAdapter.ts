@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { canPlay } from '@card-game/rules';
 import type { Card, Hand, Seat } from '@card-game/rules';
 import { botChoosePlay } from './bot';
@@ -43,6 +44,53 @@ export interface BotPlayContext {
 
 export interface DouZeroBotAdapter {
   choosePlay(state: DouZeroPlayState): DouZeroAction | null;
+}
+
+export interface DouZeroCommandAdapterOptions {
+  timeoutMs?: number;
+}
+
+export function createConfiguredDouZeroAdapter(env: NodeJS.ProcessEnv = process.env): DouZeroBotAdapter | undefined {
+  const command = env.DOUZERO_INFER_COMMAND?.trim();
+  if (!command) return undefined;
+  const parsedTimeout = Number(env.DOUZERO_INFER_TIMEOUT_MS ?? '1500');
+  const timeoutMs = Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 1500;
+  return createDouZeroCommandAdapter(command, { timeoutMs });
+}
+
+export function createDouZeroCommandAdapter(
+  command: string,
+  options: DouZeroCommandAdapterOptions = {},
+): DouZeroBotAdapter {
+  const timeoutMs = options.timeoutMs ?? 1500;
+  return {
+    choosePlay(state) {
+      const child = spawnSync(command, {
+        input: JSON.stringify(state),
+        encoding: 'utf8',
+        shell: true,
+        timeout: timeoutMs,
+        maxBuffer: 1024 * 1024,
+      });
+      if (child.error || child.status !== 0) return null;
+      try {
+        const payload: unknown = JSON.parse(child.stdout.trim());
+        const action = Array.isArray(payload)
+          ? payload
+          : typeof payload === 'object' && payload !== null && Array.isArray((payload as { action?: unknown }).action)
+            ? (payload as { action: unknown[] }).action
+            : null;
+        return isDouZeroAction(action) ? action : null;
+      } catch {
+        return null;
+      }
+    },
+  };
+}
+
+function isDouZeroAction(action: unknown): action is DouZeroAction {
+  if (!Array.isArray(action)) return false;
+  return action.every((code) => typeof code === 'number' && DOUZERO_TO_RANK.has(code as DouZeroCard));
 }
 
 const RANK_TO_DOUZERO = new Map<number, DouZeroCard>([
