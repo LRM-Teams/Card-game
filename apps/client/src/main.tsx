@@ -1,16 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { router } from './router';
+import { useGameStore } from './store/gameStore';
 import './styles.css';
 
 const queryClient = new QueryClient();
 
+function App() {
+  useEffect(() => {
+    // 建立 Socket.IO 连接并订阅服务端事件（幂等）
+    useGameStore.getState().init();
+  }, []);
+  return <RouterProvider router={router} />;
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <App />
     </QueryClientProvider>
   </React.StrictMode>,
 );

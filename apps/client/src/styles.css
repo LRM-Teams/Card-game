@@ -489,3 +489,89 @@ body {
     order: -1;
   }
 }
+
+/* ---------- 连接徽标 / 顶栏 / 提示 ---------- */
+.conn { font-size: 12px; margin-left: auto; opacity: 0.85; }
+.conn.connected { color: #7ef0a8; }
+.conn.connecting { color: #ffd166; }
+.conn.idle, .conn.error { color: #ff8e8e; }
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.error-banner {
+  background: rgba(214, 48, 49, 0.18);
+  border: 1px solid rgba(214, 48, 49, 0.5);
+  color: #ff9b9b;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.tip-line { font-size: 12px; opacity: 0.7; text-align: center; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  margin: 12px auto;
+  max-width: 320px;
+  font-size: 14px;
+}
+.score-list {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 8px 0 14px;
+  font-size: 14px;
+}
+
+/* ---------- 联网相关 ---------- */
+.conn {
+  font-size: 12px;
+  margin-left: auto;
+}
+.conn.connected { color: #7ef0a8; }
+.conn.connecting { color: #ffd166; }
+.conn.disconnected { color: #ff6b6b; }
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  opacity: 0.85;
+  padding: 0 6px 4px;
+}
+.bottom-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.badge.farmer {
+  background: #2d6cdf;
+}
+.err-toast {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 13px;
+  background: rgba(214, 48, 49, 0.18);
+  border: 1px solid rgba(214, 48, 49, 0.5);
+  color: #ffd0d0;
+  padding: 7px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.scores {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 8px;
+}
+.seat-card.empty {
+  opacity: 0.6;
+}

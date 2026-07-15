@@ -4,11 +4,11 @@ import type { ClientAction, ServerEvent } from '@card-game/rules';
 /**
  * Socket.IO 客户端传输层（与 apps/server 对接）。
  *
- * - 客户端发：socket.emit('action', <ClientAction>)
- * - 服务端推：socket.on('event', <ServerEvent>)
+ * - 客户端发：socket.emit('action', ClientAction)
+ * - 服务端推：socket.on('event', ServerEvent)
  *
- * 服务端地址来自 VITE_SERVER_URL，默认 http://localhost:3000（apps/server dev 端口）。
- * 本模块只搬运，不做任何判定；权威在服务端。
+ * 本模块只搬运，不做判定；权威在服务端。
+ * store/gameStore.ts 负责订阅事件并镜像成 UI 状态。
  */
 
 export const SERVER_URL =
@@ -24,30 +24,39 @@ const statusHandlers = new Set<StatusHandler>();
 
 let socket: Socket | null = null;
 
-function emitStatus(s: ConnStatus): void {
+function setStatus(s: ConnStatus): void {
   statusHandlers.forEach((h) => h(s));
 }
 
-function ensureSocket(): Socket {
+function ensure(): Socket {
   if (socket) return socket;
-  socket = io(SERVER_URL, { autoConnect: true, reconnection: true });
-  socket.on('connect', () => emitStatus('connected'));
-  socket.on('disconnect', () => emitStatus('disconnected'));
-  socket.on('connect_error', () => emitStatus('disconnected'));
+  socket = io(SERVER_URL, { autoConnect: false, transports: ['websocket', 'polling'] });
+  socket.on('connect', () => setStatus('connected'));
+  socket.on('disconnect', () => setStatus('disconnected'));
+  socket.on('connect_error', () => setStatus('disconnected'));
   socket.on('event', (e: ServerEvent) => {
     eventHandlers.forEach((h) => h(e));
   });
   return socket;
 }
 
-/** 触发连接（幂等）。 */
-export function connect(): Socket {
-  return ensureSocket();
+/** 建立连接（幂等）。先 onEvent/onStatus 订阅，再 connect，避免漏首个事件。 */
+export function connect(): void {
+  ensure().connect();
 }
 
-/** 发送一个客户端动作。 */
+/** 断开并重连（用于「再来一局」进入新房间）。 */
+export function reconnect(): void {
+  const sk = ensure();
+  if (sk.connected) {
+    sk.disconnect();
+  }
+  sk.connect();
+}
+
+/** 发送一个客户端动作。未连接时 socket.io 会缓冲，连上后补发。 */
 export function send(action: ClientAction): void {
-  connect().emit('action', action);
+  ensure().emit('action', action);
 }
 
 /** 订阅服务端事件，返回取消订阅函数。 */
