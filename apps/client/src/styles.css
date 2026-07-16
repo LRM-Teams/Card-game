@@ -32,7 +32,7 @@
   --ddz-card-h: 82px;
   --ddz-card-small-w: 42px;
   --ddz-card-small-h: 60px;
-  --ddz-avatar-size: 56px;
+  --ddz-avatar-size: 64px;
   --ddz-button-h: 40px;
   --ddz-button-h-lg: 48px;
   --ddz-shadow-card: 0 6px 12px rgba(0, 0, 0, 0.24);
@@ -79,7 +79,7 @@ body::before {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  max-width: 1240px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 16px;
 }
@@ -419,7 +419,7 @@ body::before {
 }
 .seat-badge {
   padding: var(--ddz-space-3);
-  min-height: 112px;
+  min-height: 140px;
 }
 .seat-badge::after {
   content: '';
@@ -430,7 +430,8 @@ body::before {
   pointer-events: none;
 }
 .center {
-  min-width: 180px;
+  min-width: 260px;
+  min-height: 168px;
 }
 .meta-row {
   display: flex;
@@ -441,7 +442,7 @@ body::before {
   padding: 0 6px 6px;
 }
 .last-play {
-  min-height: 104px;
+  min-height: 168px;
   text-align: center;
   padding: var(--ddz-space-3);
   border-radius: var(--ddz-radius-lg);
@@ -628,10 +629,10 @@ body::before {
   margin-left: 0;
 }
 .card.is-small .card-rank {
-  font-size: 13px;
+  font-size: 15px;
 }
 .card.is-small .card-suit {
-  font-size: 11px;
+  font-size: 13px;
 }
 .card.is-small .card-corner {
   display: none;
