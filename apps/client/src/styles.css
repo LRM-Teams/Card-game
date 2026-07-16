@@ -340,12 +340,30 @@ body::before {
 }
 .role-icon {
   position: absolute;
-  top: -16px;
-  right: -18px;
-  width: 50px;
-  height: 50px;
+  top: -10px;
+  right: -14px;
+  width: 44px;
+  height: 44px;
   filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.62));
   pointer-events: none;
+}
+.seat-badge.landlord .role-icon {
+  width: 48px;
+  height: 48px;
+  top: -11px;
+  right: -15px;
+}
+.seat-badge.farmer .role-icon {
+  width: 40px;
+  height: 40px;
+  top: -8px;
+  right: -12px;
+}
+.seat-badge.landlord .avatar {
+  box-shadow: 0 0 0 4px rgba(245, 197, 66, 0.22), 0 0 26px rgba(214, 48, 49, 0.42), inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+}
+.seat-badge.farmer .avatar {
+  box-shadow: 0 0 0 3px rgba(126, 240, 168, 0.18), 0 0 18px rgba(126, 240, 168, 0.22), inset 0 0 0 1px rgba(0, 0, 0, 0.16);
 }
 .role-plate {
   display: inline-flex;
@@ -425,36 +443,39 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: var(--ddz-space-3);
-  min-height: 66vh;
-  padding: 28px 44px 20px;
+  width: min(1180px, 96vw);
+  min-height: clamp(420px, 56vh, 590px);
+  margin-inline: auto;
+  padding: 30px 46px 22px;
   border: 0;
-  border-radius: 999px / 54%;
+  border-radius: 50% / 34%;
   background:
-    radial-gradient(ellipse at 50% 38%, rgba(31, 132, 83, 0.98) 0%, rgba(12, 82, 50, 0.98) 58%, rgba(5, 31, 20, 0.98) 100%);
+    radial-gradient(ellipse at 50% 36%, rgba(37, 142, 91, 0.98) 0%, rgba(12, 82, 50, 0.98) 57%, rgba(5, 31, 20, 0.98) 100%);
   box-shadow:
-    0 0 0 10px rgba(128, 66, 21, 0.58),
-    0 0 0 16px rgba(245, 197, 66, 0.34),
+    0 0 0 9px rgba(116, 58, 18, 0.62),
+    0 0 0 15px rgba(245, 197, 66, 0.34),
     inset 0 0 0 5px rgba(255, 243, 196, 0.16),
-    inset 0 -26px 56px rgba(0, 0, 0, 0.22),
+    inset 0 26px 44px rgba(255, 255, 255, 0.05),
+    inset 0 -32px 64px rgba(0, 0, 0, 0.26),
     0 28px 70px rgba(0, 0, 0, 0.42);
   overflow: visible;
 }
 .table::before {
   content: '';
   position: absolute;
-  inset: 20px 32px 18px;
-  border-radius: 999px / 56%;
-  border: 2px solid rgba(245, 197, 66, 0.22);
-  box-shadow: inset 0 0 40px rgba(245, 197, 66, 0.08);
+  inset: 18px 30px 20px;
+  border-radius: 50% / 34%;
+  border: 2px solid rgba(245, 197, 66, 0.24);
+  box-shadow: inset 0 0 46px rgba(245, 197, 66, 0.08);
   pointer-events: none;
 }
 .table::after {
   content: '';
   position: absolute;
-  inset: 42px 54px 38px;
-  border-radius: 999px / 58%;
+  inset: 40px 56px 42px;
+  border-radius: 50% / 34%;
   border: 1px solid rgba(255, 243, 196, 0.14);
-  background: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.04), transparent 62%);
+  background: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.04), transparent 64%);
   pointer-events: none;
 }
 .table-head {
@@ -862,8 +883,10 @@ body::before {
 
 @media (max-width: 680px) {
   .table {
+    width: min(100%, 96vw);
+    min-height: 520px;
     padding: 20px 16px 14px;
-    border-radius: 42px;
+    border-radius: 46px;
     box-shadow:
       0 0 0 6px rgba(128, 66, 21, 0.58),
       0 0 0 10px rgba(245, 197, 66, 0.3),
@@ -873,7 +896,7 @@ body::before {
   .table::before,
   .table::after {
     inset: 12px;
-    border-radius: 34px;
+    border-radius: 38px;
   }
   .content {
     padding-top: var(--ddz-space-4);
