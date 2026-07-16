@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
+import { copyText } from '../lib/clipboard';
 
 /**
  * 房间：展示 3 个座位（真人 / 空位 / 机器人补位）与等人状态。
@@ -37,9 +38,9 @@ export function Room() {
 
   const copyRoomId = async () => {
     if (!roomId) return;
-    await navigator.clipboard.writeText(roomId);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1200);
+    const ok = await copyText(roomId);
+    setCopied(ok);
+    if (ok) window.setTimeout(() => setCopied(false), 1200);
   };
 
   // 房主：凑齐 3 真人 → 纯人对战（fillBots=false）；不足 → 补机器人开始（fillBots=true）
