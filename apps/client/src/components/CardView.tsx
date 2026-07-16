@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { Card } from '@card-game/rules';
 import { SUIT_SYMBOL, cardColor } from '../lib/cards';
 
@@ -7,9 +8,10 @@ interface Props {
   onClick?: () => void;
   /** 小尺寸（用于对手 / 牌桌展示）。 */
   small?: boolean;
+  style?: CSSProperties;
 }
 
-export function CardView({ card, selected, onClick, small }: Props) {
+export function CardView({ card, selected, onClick, small, style }: Props) {
   const color = cardColor(card);
   const symbol = card.suit ? SUIT_SYMBOL[card.suit] : '';
   const isJoker = !card.suit;
@@ -21,6 +23,7 @@ export function CardView({ card, selected, onClick, small }: Props) {
       disabled={!onClick}
       title={card.display}
       aria-label={card.display}
+      style={style}
     >
       <span className="card-corner top">{card.display}</span>
       <span className="card-rank">{card.display}</span>
