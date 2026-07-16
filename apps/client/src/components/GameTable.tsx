@@ -93,7 +93,9 @@ export function GameTable() {
             得分：{r.scores.map((sc, i) => `${nameOf(i)} ${sc >= 0 ? '+' : ''}${sc}`).join('　')}
           </p>
           <div className="btn-row">
-            <button className="btn primary" onClick={() => start(false)}>再来一局</button>
+            <button className="btn primary" onClick={() => start(false)}>
+              <img src="/badges/restart.svg" alt="" className="btn-icon" />再来一局
+            </button>
             <button className="btn" onClick={() => navigate({ to: '/' })}>返回大厅</button>
           </div>
         </div>
@@ -211,14 +213,15 @@ function SeatBadge({
   active: boolean;
 }) {
   if (!p) return <div className="seat-badge" />;
-  const roleIcon = p.role === 'landlord' ? '👑' : p.role === 'farmer' ? '🌾' : null;
+  const badgeSrc = p.role === 'landlord' ? '/badges/landlord.svg' : p.role === 'farmer' ? '/badges/farmer.svg' : null;
+  const roleLabel = p.role === 'landlord' ? '地主' : p.role === 'farmer' ? '农民' : null;
   return (
     <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
       <div className="avatar">
         <span>{p.isBot ? '🤖' : '🙂'}</span>
-        {roleIcon && <span className="role-icon" title={p.role === 'landlord' ? '地主' : '农民'}>{roleIcon}</span>}
+        {badgeSrc && <img className="role-icon" src={badgeSrc} alt={roleLabel ?? ''} title={roleLabel ?? ''} />}
       </div>
-      <div className="seat-name">{p.name}{roleIcon ? `（${p.role === 'landlord' ? '地主' : '农民'}）` : ''}</div>
+      <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
     </div>
   );
