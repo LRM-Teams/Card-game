@@ -221,6 +221,7 @@ function SeatBadge({
         <span>{p.isBot ? '🤖' : '🙂'}</span>
         {badgeSrc && <img className="role-icon" src={badgeSrc} alt={roleLabel ?? ''} title={roleLabel ?? ''} />}
       </div>
+      {badgeSrc && <div className="role-plate"><img src={badgeSrc} alt="" />{roleLabel}</div>}
       <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
     </div>

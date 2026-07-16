@@ -335,17 +335,38 @@ body::before {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16), 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 .seat-name {
-  font-weight: 800;
+  font-weight: 900;
   font-size: var(--ddz-text-sm);
 }
 .role-icon {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 34px;
-  height: 34px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.55));
+  top: -16px;
+  right: -18px;
+  width: 50px;
+  height: 50px;
+  filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.62));
   pointer-events: none;
+}
+.role-plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+  justify-content: center;
+  margin: -4px auto 7px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 243, 196, 0.38);
+  background: rgba(0, 0, 0, 0.32);
+  color: #fff8dc;
+  font-family: var(--ddz-font-display);
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+}
+.role-plate img {
+  width: 22px;
+  height: 22px;
 }
 .btn-icon {
   width: 18px;
@@ -405,29 +426,35 @@ body::before {
   flex-direction: column;
   gap: var(--ddz-space-3);
   min-height: 66vh;
-  padding: 22px 22px 18px;
-  border: 1px solid rgba(255, 243, 196, 0.16);
-  border-radius: 34px;
+  padding: 28px 44px 20px;
+  border: 0;
+  border-radius: 999px / 54%;
   background:
-    radial-gradient(ellipse at center, rgba(26, 120, 76, 0.98) 0%, rgba(10, 61, 38, 0.98) 66%, rgba(5, 23, 15, 0.98) 100%),
-    radial-gradient(circle at 50% 44%, rgba(245, 197, 66, 0.1), transparent 42%);
-  box-shadow: inset 0 0 0 4px rgba(217, 154, 30, 0.2), 0 24px 60px rgba(0, 0, 0, 0.36);
+    radial-gradient(ellipse at 50% 38%, rgba(31, 132, 83, 0.98) 0%, rgba(12, 82, 50, 0.98) 58%, rgba(5, 31, 20, 0.98) 100%);
+  box-shadow:
+    0 0 0 10px rgba(128, 66, 21, 0.58),
+    0 0 0 16px rgba(245, 197, 66, 0.34),
+    inset 0 0 0 5px rgba(255, 243, 196, 0.16),
+    inset 0 -26px 56px rgba(0, 0, 0, 0.22),
+    0 28px 70px rgba(0, 0, 0, 0.42);
+  overflow: visible;
 }
 .table::before {
   content: '';
   position: absolute;
-  inset: 16px;
-  border-radius: 30px;
-  border: 2px solid rgba(245, 197, 66, 0.12);
+  inset: 20px 32px 18px;
+  border-radius: 999px / 56%;
+  border: 2px solid rgba(245, 197, 66, 0.22);
+  box-shadow: inset 0 0 40px rgba(245, 197, 66, 0.08);
   pointer-events: none;
 }
 .table::after {
   content: '';
   position: absolute;
-  inset: 38px 10px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 243, 196, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  inset: 42px 54px 38px;
+  border-radius: 999px / 58%;
+  border: 1px solid rgba(255, 243, 196, 0.14);
+  background: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.04), transparent 62%);
   pointer-events: none;
 }
 .table-head {
@@ -462,7 +489,8 @@ body::before {
 }
 .seat-badge {
   padding: 16px 14px 14px;
-  min-height: 154px;
+  min-height: 172px;
+  z-index: 1;
 }
 .seat-badge.landlord {
   background:
@@ -833,6 +861,20 @@ body::before {
 }
 
 @media (max-width: 680px) {
+  .table {
+    padding: 20px 16px 14px;
+    border-radius: 42px;
+    box-shadow:
+      0 0 0 6px rgba(128, 66, 21, 0.58),
+      0 0 0 10px rgba(245, 197, 66, 0.3),
+      inset 0 0 0 3px rgba(255, 243, 196, 0.14),
+      0 20px 52px rgba(0, 0, 0, 0.36);
+  }
+  .table::before,
+  .table::after {
+    inset: 12px;
+    border-radius: 34px;
+  }
   .content {
     padding-top: var(--ddz-space-4);
   }
