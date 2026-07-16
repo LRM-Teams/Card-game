@@ -218,8 +218,6 @@ def build_infoset(st):
 
 
 def act(info, legal):
-    if len(legal) == 1:
-        return legal[0]
     model = get_model(info.player_position)
     obs = get_obs(info)
     z = torch.from_numpy(obs["z_batch"]).float()
@@ -227,8 +225,17 @@ def act(info, legal):
     with torch.no_grad():
         y = model.forward(z, x, return_value=True)["values"]
     y = y.detach().cpu().numpy()
-    best = int(np.argmax(y, axis=0)[0])
-    return legal[best]
+    vals = [float(round(float(v), 6)) for v in y.reshape(-1)]
+    best = int(np.argmax(y, axis=0)[0]) if len(legal) > 1 else 0
+    dbg = {
+        "position": info.player_position,
+        "num_legal_actions": len(legal),
+        "obs_z_shape": list(obs["z_batch"].shape),
+        "obs_x_shape": list(obs["x_batch"].shape),
+        "values": vals,
+        "legal_actions": [[int(c) for c in a] for a in legal],
+    }
+    return legal[best], dbg
 
 
 def main():
@@ -240,11 +247,14 @@ def main():
         return 2
     try:
         info, legal = build_infoset(st)
-        action = act(info, legal)
+        action, dbg = act(info, legal)
     except Exception as e:  # noqa: BLE001
         import traceback
         traceback.print_exc(file=sys.stderr)
         return 3  # non-zero -> TS adapter falls back
+    if os.environ.get("DOUZERO_DEBUG"):
+        sys.stderr.write(json.dumps(dbg, separators=(",", ":")) + "\n")
+        sys.stderr.flush()
     sys.stdout.write(json.dumps([int(c) for c in action]))
     return 0
 
