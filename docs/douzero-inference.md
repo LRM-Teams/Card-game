@@ -76,6 +76,46 @@ Output validation is intentionally defensive:
 3. The result is revalidated by `canPlay`.
 4. Any invalid output, timeout, non-zero exit, or missing command falls back to the minimal legal bot.
 
+## Real wrapper
+
+`apps/server/scripts/douzero-infer.py` is the real inference wrapper (replaces the
+`.example.py` placeholder). It reconstructs a DouZero `InfoSet` purely from public
+info + the acting player's hand (`other_hand_cards = full_deck - my_hand - all_played`),
+generates canonical legal actions via DouZero's own `MovesGener`, runs the official
+`DeepAgent` forward pass, and prints the best action. Required env on the inference
+host:
+
+```bash
+export DOUZERO_DOUZERO_REPO=/path/to/kwai/DouZero          # douzero.* imports
+export DOUZERO_LANDLORD_CKPT=.../landlord_weights.ckpt
+export DOUZERO_LANDLORD_UP_CKPT=.../landlord_up_weights.ckpt
+export DOUZERO_LANDLORD_DOWN_CKPT=.../landlord_down_weights.ckpt
+export DOUZERO_INFER_COMMAND='python /path/to/douzero-infer.py'
+```
+
+Runtime deps on the inference host: Python 3, `torch`, `numpy`, `gitpython` (the
+`douzero.dmc` package import pulls `git`). CPU torch works (~2s/move for one
+forward pass); GPU is preferred for production.
+
+### Known caveats (2026-07-16 smoke on 146)
+
+1. **Process-per-move cost.** The TS adapter `spawnSync`s this command once per
+   robot move, so each move pays torch import + ckpt load (~2s on CPU). Fine for a
+   smoke / low concurrency; for production use a long-lived inference server that
+   loads the three models once.
+2. **Rule-grammar alignment (must fix before AI plays well).** DouZero's move
+   grammar is a strict superset of common 斗地主体 rules in places — e.g. it allows
+   plane (飞机) wings of the same rank, which our `@card-game/rules` engine rejects
+   (wings must be distinct ranks). A 0.77亿-frame ckpt smoke returned
+   `[3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,7]`, which `identifyHand` flags invalid. The
+   adapter's `canPlay` safety net will reject such moves and fall back, so the AI
+   would frequently revert to the minimal bot until the rule grammars are aligned
+   (relax our wing rule, or filter DouZero's legal actions through our engine).
+3. **Adapter `legalActions`.** The adapter currently enumerates legal actions via a
+   power set, which is infeasible for real 17–20 card hands (2^n + huge JSON). For
+   the real-model path this must be replaced with structured legal-action
+   generation; the wrapper already recomputes canonical legal actions itself.
+
 ## Minimal Validation
 
 Without official checkpoints, verify fallback and adapter contract:
