@@ -60,10 +60,10 @@
 
 | Token | 值 | 用途 |
 |---|---|---|
-| `--ddz-card-w` | `46px` | 手牌逻辑宽度 |
-| `--ddz-card-h` | `64px` | 手牌逻辑高度 |
-| `--ddz-card-small-w` | `34px` | 对手/桌面小牌宽度 |
-| `--ddz-card-small-h` | `48px` | 对手/桌面小牌高度 |
+| `--ddz-card-w` | `58px` | 手牌逻辑宽度 |
+| `--ddz-card-h` | `82px` | 手牌逻辑高度 |
+| `--ddz-card-small-w` | `42px` | 对手/桌面小牌宽度 |
+| `--ddz-card-small-h` | `60px` | 对手/桌面小牌高度 |
 | `--ddz-avatar-size` | `56px` | 牌桌玩家头像 |
 | `--ddz-avatar-lg` | `96px` | 房间/资料头像资源尺寸 |
 | `--ddz-button-h` | `40px` | 常规按钮高度 |

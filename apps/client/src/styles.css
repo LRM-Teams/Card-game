@@ -28,10 +28,10 @@
   --ddz-radius-md: 12px;
   --ddz-radius-lg: 18px;
   --ddz-radius-card: 8px;
-  --ddz-card-w: 46px;
-  --ddz-card-h: 64px;
-  --ddz-card-small-w: 34px;
-  --ddz-card-small-h: 48px;
+  --ddz-card-w: 58px;
+  --ddz-card-h: 82px;
+  --ddz-card-small-w: 42px;
+  --ddz-card-small-h: 60px;
   --ddz-avatar-size: 56px;
   --ddz-button-h: 40px;
   --ddz-button-h-lg: 48px;
@@ -79,9 +79,9 @@ body::before {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  max-width: 1120px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0 14px;
+  padding: 0 16px;
 }
 
 .topnav {
@@ -544,7 +544,7 @@ body::before {
   position: relative;
   width: var(--ddz-card-w);
   height: var(--ddz-card-h);
-  margin-left: -16px;
+  margin-left: -18px;
   border: 1px solid rgba(28, 28, 28, 0.18);
   border-radius: var(--ddz-radius-card);
   background:
@@ -594,13 +594,13 @@ body::before {
   background: linear-gradient(145deg, #fffef5, #f6e9b8 70%, #dfbd63);
 }
 .card-rank {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 .card-suit {
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1;
 }
 .card-corner {
@@ -622,7 +622,7 @@ body::before {
 .card.is-small {
   width: var(--ddz-card-small-w);
   height: var(--ddz-card-small-h);
-  margin-left: -12px;
+  margin-left: -14px;
 }
 .card.is-small:first-child {
   margin-left: 0;
