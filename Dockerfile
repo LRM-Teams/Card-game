@@ -10,7 +10,9 @@ COPY apps/server/package.json apps/server/package.json
 COPY apps/client/package.json apps/client/package.json
 RUN pnpm install --frozen-lockfile || pnpm install
 COPY . .
-# 生产构建：VITE_SERVER_URL 留空 → socket.io-client 同源（浏览器 origin → nginx → 本服务）
+# 生产构建：VITE_SERVER_URL 显式置空 → socket.io-client 同源（浏览器 origin → nginx → 本服务）
+# 必须显式设置，否则客户端会回落到写死的 http://localhost:3000，跨机部署时连不上
+ENV VITE_SERVER_URL=""
 RUN pnpm --filter @card-game/client build
 # server 无独立编译步骤（tsx 直跑源码，规则包是 workspace 源码包）
 
