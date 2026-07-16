@@ -159,6 +159,7 @@ export class GameRoom {
    * 产品上由真人触发（transport 层保证至少 1 名真人）；引擎允许全机器人局，便于联机/自动化测试。
    */
   start(fillBots = false): ActionResult {
+    if (this.phase === GamePhase.SETTLED) return this.dealAndBeginBid(); // 再来一局：保留座位重新发牌
     if (this.phase !== GamePhase.WAITING) return err('invalid_action_for_phase', '当前阶段不能开局');
     if (fillBots) {
       this.fillBots();

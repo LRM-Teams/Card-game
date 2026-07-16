@@ -266,6 +266,24 @@ describe('GameRoom · 倍数与结算（规则在 game-rules.multiplier / settle
       expect(sum).toBe(0);
     }
   });
+
+  it('结算后 start 可再来一局：同一批玩家重新发牌回到叫地主', () => {
+    const r = landlordAt0();
+    // seat0 直接出完所有牌 → 结算
+    for (const seat of [0, 1, 2] as const) {
+      r.players[seat]!.hand = [];
+    }
+    r.players[0]!.hand = [card(3, 'C3')];
+    expect(r.handlePlay(0, ['C3']).ok).toBe(true);
+    expect(r.phase).toBe('settled');
+    expect(r.result).toBeTruthy();
+    // 再来一局
+    const restart = r.start();
+    expect(restart.ok).toBe(true);
+    expect(r.phase).toBe('bidding');
+    expect(r.result).toBeNull();
+    expect(r.players[0]!.hand).toHaveLength(17);
+  });
 });
 
 describe('GameRoom · 全机器人局跑完整一局', () => {

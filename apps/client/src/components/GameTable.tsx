@@ -4,6 +4,7 @@ import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
+import { useNavigate } from '@tanstack/react-router';
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
 export function GameTable() {
@@ -18,7 +19,9 @@ export function GameTable() {
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
+  const start = useGameStore((s) => s.start);
   const dismissError = useGameStore((s) => s.dismissError);
+  const navigate = useNavigate();
 
   const selectedCards = useMemo(
     () => myHand.filter((c) => selected.includes(c.id)),
@@ -58,6 +61,8 @@ export function GameTable() {
   const me = snapshot.players.find((p) => p.seat === mySeat);
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
   const lastPlay = snapshot.lastPlay;
+  const nameOf = (seat: number | null | undefined) =>
+    seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
 
   const identified = selectedCards.length > 0 ? identifyHand(selectedCards) : null;
   const beats = identified != null && canPlay(lastPlay?.hand ?? null, selectedCards);
@@ -85,8 +90,12 @@ export function GameTable() {
             {r.winnerSide === 'landlord' ? '地主' : '农民'}胜 · 倍数 ×{r.multiplier} · 单注 {r.unit}
           </p>
           <p className="scores">
-            得分：{r.scores.map((sc, i) => `座位${i} ${sc >= 0 ? '+' : ''}${sc}`).join('　')}
+            得分：{r.scores.map((sc, i) => `${nameOf(i)} ${sc >= 0 ? '+' : ''}${sc}`).join('　')}
           </p>
+          <div className="btn-row">
+            <button className="btn primary" onClick={() => start(false)}>再来一局</button>
+            <button className="btn" onClick={() => navigate({ to: '/' })}>返回大厅</button>
+          </div>
         </div>
       </div>
     );
@@ -105,7 +114,8 @@ export function GameTable() {
             {lastPlay ? (
               <>
                 <div className="last-label">
-                  座位 {lastPlay.seat} 出：<b>{HAND_TYPE_LABEL[lastPlay.hand.type]}</b>
+                  <b className="last-player">{nameOf(lastPlay.seat)}</b> 出了
+                  <b>{HAND_TYPE_LABEL[lastPlay.hand.type]}</b>
                 </div>
                 <div className="last-cards">
                   {lastPlay.hand.cards.map((c) => (
@@ -144,11 +154,11 @@ export function GameTable() {
           {phase === GamePhase.BIDDING
             ? isMyTurn
               ? '👉 轮到你叫地主'
-              : `等待叫地主（座位 ${snapshot.turnSeat}）`
+              : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
             : phase === GamePhase.PLAYING
               ? isMyTurn
                 ? '👉 轮到你出牌'
-                : `等待出牌（座位 ${snapshot.turnSeat}）`
+                : `等待 ${nameOf(snapshot.turnSeat ?? null)} 出牌`
               : phaseLabel(phase)}
         </span>
         {me?.role === 'landlord' && <span className="badge">地主</span>}
@@ -201,10 +211,14 @@ function SeatBadge({
   active: boolean;
 }) {
   if (!p) return <div className="seat-badge" />;
+  const roleIcon = p.role === 'landlord' ? '👑' : p.role === 'farmer' ? '🌾' : null;
   return (
-    <div className={`seat-badge ${active ? 'active' : ''}`}>
-      <div className="avatar">{p.isBot ? '🤖' : '🙂'}</div>
-      <div className="seat-name">{p.name}</div>
+    <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
+      <div className="avatar">
+        <span>{p.isBot ? '🤖' : '🙂'}</span>
+        {roleIcon && <span className="role-icon" title={p.role === 'landlord' ? '地主' : '农民'}>{roleIcon}</span>}
+      </div>
+      <div className="seat-name">{p.name}{roleIcon ? `（${p.role === 'landlord' ? '地主' : '农民'}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
     </div>
   );
