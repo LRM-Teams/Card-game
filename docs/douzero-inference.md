@@ -103,18 +103,18 @@ forward pass); GPU is preferred for production.
    robot move, so each move pays torch import + ckpt load (~2s on CPU). Fine for a
    smoke / low concurrency; for production use a long-lived inference server that
    loads the three models once.
-2. **Rule-grammar alignment (must fix before AI plays well).** DouZero's move
-   grammar is a strict superset of common 斗地主体 rules in places — e.g. it allows
-   plane (飞机) wings of the same rank, which our `@card-game/rules` engine rejects
-   (wings must be distinct ranks). A 0.77亿-frame ckpt smoke returned
+2. **Rule-grammar alignment.** DouZero's move grammar is a strict superset of
+   common 斗地主体 rules in places — e.g. it allows plane (飞机) wings of the same
+   rank, which our `@card-game/rules` engine rejects (wings must be distinct
+   ranks). A 0.77亿-frame ckpt smoke returned
    `[3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,7]`, which `identifyHand` flags invalid. The
-   adapter's `canPlay` safety net will reject such moves and fall back, so the AI
-   would frequently revert to the minimal bot until the rule grammars are aligned
-   (relax our wing rule, or filter DouZero's legal actions through our engine).
-3. **Adapter `legalActions`.** The adapter currently enumerates legal actions via a
-   power set, which is infeasible for real 17–20 card hands (2^n + huge JSON). For
-   the real-model path this must be replaced with structured legal-action
-   generation; the wrapper already recomputes canonical legal actions itself.
+   adapter's filter remains defensive: it only feeds model scoring with actions
+   that pass our engine's legality check, so AI output stays legal while the rule
+   engine remains the single source of truth.
+3. **Adapter `legalActions`.** The adapter now generates structured legal actions
+   from rank patterns instead of enumerating the full power set. This keeps the
+   server payload tractable for real 17–20 card hands and matches the rule-engine
+   candidate set expected by the wrapper.
 
 ## Minimal Validation
 
@@ -133,6 +133,10 @@ printf '%s' '{"modelKey":"landlord","position":"landlord","hand":[3,4,5],"lastMo
 ```
 
 Then replace `apps/server/scripts/douzero-infer.example.py` with the official DouZero loader/inference implementation, start the server with the same environment, and play a bot turn. If the wrapper fails, the game must still proceed via fallback.
+
+### 2026-07-16 smoke result
+
+A live smoke on 146 with `ground_truth_seed123_frame77430400.json` turn0 confirmed the wrapper now matches the training-side fixture on all 61 scored actions. The worst per-action value delta was below `5e-7`, and the wrapper produced the same best action `[3,3,4,4,5,5,6,6]`.
 
 ## Current Blocker
 

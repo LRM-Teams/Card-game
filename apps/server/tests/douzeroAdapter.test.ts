@@ -52,6 +52,19 @@ describe('DouZero adapter', () => {
     expect(actions).not.toContainEqual([3]);
   });
 
+  it('按我方规则过滤 DouZero 超集牌型，不生成飞机同点翅', () => {
+    const hand = [
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.THREE, `3-${i}`)),
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.FOUR, `4-${i}`)),
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.FIVE, `5-${i}`)),
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.SIX, `6-${i}`)),
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.SEVEN, `7-${i}`)),
+    ];
+    const actions = listLegalActions(hand, null).map(toDouZeroCards);
+
+    expect(actions).not.toContainEqual([3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 7]);
+  });
+
   it('构造 DouZero 状态包含身份、底牌、手牌数、历史和合法动作', () => {
     const hand = [card(RANK.FIVE), card(RANK.SIX)];
     const prev = identifyHand([card(RANK.FOUR)])!;
@@ -74,6 +87,7 @@ describe('DouZero adapter', () => {
     expect(state.playedCards).toEqual([4]);
     expect(state.playHistory[0]).toEqual({ position: 'landlord', action: [4], isPass: false });
     expect(state.legalActions).toContainEqual([5]);
+    expect(state.legalActions).toContainEqual([]);
   });
 
   it('命令适配器可通过 JSON stdin/stdout 返回 DouZero action', () => {
@@ -114,6 +128,23 @@ describe('DouZero adapter', () => {
     );
 
     expect(chosen?.map((c) => c.rank)).toEqual([RANK.FIVE]);
+  });
+
+  it('模型选择空 action 时按过牌处理而不是强制 fallback 出牌', () => {
+    const chosen = choosePlayWithDouZero(
+      {
+        seat: 0,
+        landlordSeat: 0,
+        hand: [card(RANK.THREE), card(RANK.FIVE)],
+        prev: identifyHand([card(RANK.FOUR)])!,
+        bottom: [],
+        handCounts: { 0: 2, 1: 17, 2: 17 },
+        history: [],
+      },
+      { choosePlay: () => [] },
+    );
+
+    expect(chosen).toBeNull();
   });
 
   it('端到端 mock：游戏状态→adapter→真实子进程→解析→应用回对局，全链路跑通', () => {

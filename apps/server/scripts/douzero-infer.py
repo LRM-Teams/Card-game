@@ -166,7 +166,29 @@ class InfoSet:
     pass
 
 
+def build_infoset_from_fixture(raw):
+    info = InfoSet()
+    info.player_position = raw["player_position"]
+    info.player_hand_cards = [int(c) for c in raw["player_hand_cards"]]
+    info.other_hand_cards = [int(c) for c in raw["other_hand_cards"]]
+    info.legal_actions = [[int(c) for c in a] for a in raw["legal_actions"]]
+    info.last_move = [int(c) for c in raw.get("last_move", [])]
+    info.last_two_moves = [[int(c) for c in a] for a in raw.get("last_two_moves", [[], []])]
+    info.last_move_dict = raw.get("last_move_dict", {"landlord": [], "landlord_up": [], "landlord_down": []})
+    info.played_cards = raw.get("played_cards", {"landlord": [], "landlord_up": [], "landlord_down": []})
+    info.num_cards_left_dict = raw["num_cards_left_dict"]
+    info.three_landlord_cards = [int(c) for c in raw.get("three_landlord_cards", [])]
+    info.card_play_action_seq = [[int(c) for c in a] for a in raw.get("card_play_action_seq", [])]
+    info.bomb_num = int(raw.get("bomb_num", 0))
+    info.all_handcards = raw.get("all_handcards", {p: [] for p in INITIAL})
+    info.last_pid = raw.get("last_pid", "landlord")
+    return info, info.legal_actions
+
+
 def build_infoset(st):
+    if "infoset" in st:
+        return build_infoset_from_fixture(st["infoset"])
+
     pos = st["position"]
     hand = [int(c) for c in st["hand"]]
     seq = [[int(x) for x in e.get("action", [])] for e in st.get("playHistory", [])]
@@ -184,7 +206,11 @@ def build_infoset(st):
             last_pid = p
 
     rival = last_move_of(seq)
-    legal = gen_legal_moves(hand, rival)
+    provided_legal = st.get("legalActions")
+    if isinstance(provided_legal, list) and provided_legal:
+        legal = [[int(c) for c in action] for action in provided_legal]
+    else:
+        legal = gen_legal_moves(hand, rival)
     all_played = []
     for v in played.values():
         all_played += v
