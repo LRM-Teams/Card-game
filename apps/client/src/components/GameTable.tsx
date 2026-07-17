@@ -4,6 +4,7 @@ import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
+import { PlayerAvatar } from './PlayerAvatar';
 import { useNavigate } from '@tanstack/react-router';
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
@@ -189,7 +190,7 @@ export function GameTable() {
             >
               不出
             </button>
-            <button className="btn primary" onClick={play} disabled={!canPlayNow}>
+            <button className="btn primary cta" onClick={play} disabled={!canPlayNow}>
               出牌
             </button>
           </div>
@@ -218,7 +219,7 @@ function SeatBadge({
   return (
     <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
       <div className="avatar">
-        <span>{p.isBot ? '🤖' : '🙂'}</span>
+        <PlayerAvatar kind="player" />
         {badgeSrc && <img className="role-icon" src={badgeSrc} alt={roleLabel ?? ''} title={roleLabel ?? ''} />}
       </div>
       {badgeSrc && <div className="role-plate"><img src={badgeSrc} alt="" />{roleLabel}</div>}

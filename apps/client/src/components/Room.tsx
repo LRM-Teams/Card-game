@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
 import { copyText } from '../lib/clipboard';
+import { PlayerAvatar } from './PlayerAvatar';
 
 /**
  * 房间：展示 3 个座位（真人 / 空位 / 机器人补位）与等人状态。
@@ -70,7 +71,7 @@ export function Room() {
       <div className="seats-preview">
         {seats.map((p, i) => (
           <div className={`seat-card ${p ? (p.isBot ? 'bot' : 'me') : 'empty'}`} key={i}>
-            <div className="avatar">{!p ? '＋' : p.isBot ? '🤖' : '🙂'}</div>
+            <div className="avatar"><PlayerAvatar kind={!p ? 'empty' : 'player'} /></div>
             <div className="seat-name">{p ? p.name : '空位'}</div>
             <div className="seat-role">
               {!p
