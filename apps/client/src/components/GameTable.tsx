@@ -1,5 +1,5 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { GamePhase, canPlay, identifyHand } from '@card-game/rules';
+import { GamePhase, canPlay, identifyHand, type TrickAction } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
@@ -25,6 +25,7 @@ export function GameTable() {
   const requestHint = useGameStore((s) => s.requestHint);
   const hintMessage = useGameStore((s) => s.hintMessage);
   const hints = useGameStore((s) => s.hints);
+  const botThinking = useGameStore((s) => s.botThinking);
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
@@ -69,7 +70,14 @@ export function GameTable() {
   const isMyTurn = snapshot.turnSeat === mySeat;
   const me = snapshot.players.find((p) => p.seat === mySeat);
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
+  const leftPlayer = opponents[0];
+  const rightPlayer = opponents[1];
   const lastPlay = snapshot.lastPlay;
+  const currentTrick = snapshot.currentTrick.length > 0
+    ? snapshot.currentTrick
+    : lastPlay
+      ? [{ seat: lastPlay.seat, type: 'play' as const, hand: lastPlay.hand }]
+      : [];
   const nameOf = (seat: number | null | undefined) =>
     seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
 
@@ -115,28 +123,23 @@ export function GameTable() {
   return (
     <div className="table">
       <div className="opponents">
-        <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
+        <div className="seat-stack left">
+          <SeatBadge p={leftPlayer} active={snapshot.turnSeat === leftPlayer?.seat} />
+          <PlayZone
+            action={actionForSeat(currentTrick, leftPlayer?.seat)}
+            name={nameOf(leftPlayer?.seat)}
+            thinking={botThinking?.seat === leftPlayer?.seat}
+            side="left"
+          />
+        </div>
         <div className="center">
           <div className="meta-row">
             <span>倍数 ×{snapshot.multiplier}</span>
             <span>阶段：{phaseLabel(phase)}</span>
           </div>
-          <div className="last-play">
-            {lastPlay ? (
-              <>
-                <div className="last-label">
-                  <b className="last-player">{nameOf(lastPlay.seat)}</b> 出了
-                  <b>{HAND_TYPE_LABEL[lastPlay.hand.type]}</b>
-                </div>
-                <div className="last-cards">
-                  {lastPlay.hand.cards.map((c) => (
-                    <CardView key={c.id} card={c} small />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="last-label muted">桌面空空，自由出牌</div>
-            )}
+          <div className="round-panel">
+            <b>{lastPlay ? `${nameOf(lastPlay.seat)} 领出 ${HAND_TYPE_LABEL[lastPlay.hand.type]}` : '新一轮，自由出牌'}</b>
+            <span>当前轮会保留三家最近出牌 / 不出，下一轮再清理。</span>
           </div>
           {snapshot.bottomRevealed && snapshot.bottom.length > 0 && (
             <div className="bottom-row">
@@ -148,7 +151,15 @@ export function GameTable() {
             </div>
           )}
         </div>
-        <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
+        <div className="seat-stack right">
+          <SeatBadge p={rightPlayer} active={snapshot.turnSeat === rightPlayer?.seat} />
+          <PlayZone
+            action={actionForSeat(currentTrick, rightPlayer?.seat)}
+            name={nameOf(rightPlayer?.seat)}
+            thinking={botThinking?.seat === rightPlayer?.seat}
+            side="right"
+          />
+        </div>
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
@@ -175,6 +186,13 @@ export function GameTable() {
         {me?.role === 'landlord' && <span className="badge">地主</span>}
         {me?.role === 'farmer' && <span className="badge farmer">农民</span>}
       </div>
+
+      <PlayZone
+        action={actionForSeat(currentTrick, me?.seat)}
+        name={me?.name ?? '我'}
+        thinking={botThinking?.seat === me?.seat}
+        side="mine"
+      />
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
 
@@ -220,6 +238,46 @@ export function GameTable() {
       )}
     </div>
   );
+}
+
+
+function PlayZone({
+  action,
+  name,
+  thinking,
+  side,
+}: {
+  action: TrickAction | undefined;
+  name: string;
+  thinking: boolean;
+  side: 'left' | 'right' | 'mine';
+}) {
+  return (
+    <div className={`play-zone ${side} ${thinking ? 'thinking' : ''} ${action ? action.type : 'empty'}`}>
+      <div className="play-zone-label">
+        <span>{side === 'mine' ? '我的出牌区' : `${name || '空位'} 出牌区`}</span>
+        {thinking && <b>思考中…</b>}
+      </div>
+      {action?.type === 'play' ? (
+        <>
+          <div className="play-zone-type">{HAND_TYPE_LABEL[action.hand.type]}</div>
+          <div className="last-cards">
+            {action.hand.cards.map((c) => (
+              <CardView key={c.id} card={c} small />
+            ))}
+          </div>
+        </>
+      ) : action?.type === 'pass' ? (
+        <div className="pass-bubble">不出</div>
+      ) : (
+        <div className="play-placeholder">等待动作</div>
+      )}
+    </div>
+  );
+}
+
+function actionForSeat(actions: readonly TrickAction[], seat: number | null | undefined): TrickAction | undefined {
+  return seat == null ? undefined : actions.find((action) => action.seat === seat);
 }
 
 function SeatBadge({

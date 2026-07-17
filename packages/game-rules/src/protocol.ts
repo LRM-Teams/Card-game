@@ -54,6 +54,11 @@ export interface PlayRecord {
   hand: Hand;
 }
 
+/** 当前轮某座位最近一次动作，用于客户端分座位展示出牌 / 不出。 */
+export type TrickAction =
+  | { seat: Seat; type: 'play'; hand: Hand }
+  | { seat: Seat; type: 'pass' };
+
 /** 结算结果（得分口径与 game-rules 的 settlement 完全一致）。 */
 export interface GameResult {
   /** 赢方阵营（来自 settle；Side = 'landlord' | 'farmer'）。 */
@@ -85,6 +90,8 @@ export interface GameStateSnapshot {
   lastPlay: PlayRecord | null;
   /** 当前轮连续 pass 次数（达到 2 则本轮结束、领出者继续）。 */
   passCount: number;
+  /** 当前轮三方最近动作；新一轮开始时清空。 */
+  currentTrick: TrickAction[];
   /** 当前倍数（炸弹/王炸累积），便于客户端展示。 */
   multiplier: number;
   result: GameResult | null;
@@ -114,6 +121,7 @@ export type ServerEvent =
   | { type: 'landlord'; seat: Seat; bottom: string[] } // 地主敲定 + 底牌公开
   // —— 出牌回合 ——
   | { type: 'turn'; seat: Seat }
+  | { type: 'bot_thinking'; seat: Seat; delayMs: number }
   | { type: 'played'; seat: Seat; hand: Hand }
   | { type: 'passed'; seat: Seat }
   // —— 结算 ——

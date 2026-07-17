@@ -6,6 +6,7 @@ import type {
   GameResult,
   GameStateSnapshot,
   PlayRecord,
+  TrickAction,
 } from '@card-game/rules';
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
@@ -36,6 +37,7 @@ interface UiState {
   selected: string[];
   snapshot: GameStateSnapshot | null;
   lastError: UiError | null;
+  botThinking: { seat: number; delayMs: number; at: number } | null;
   /** AI 出牌提示：按模型分从高到低的合法出牌建议（每组 card id）；为空表示无建议。 */
   hints: string[][];
   /** 当前选用的提示组下标；点「提示」时循环切换。 */
@@ -68,6 +70,7 @@ export const useGameStore = create<UiState>((set, get) => ({
   selected: [],
   snapshot: null,
   lastError: null,
+  botThinking: null,
   hints: [],
   hintIndex: 0,
   hintMessage: null,
@@ -85,6 +88,7 @@ export const useGameStore = create<UiState>((set, get) => ({
           const turnChanged = prevTurn !== undefined && prevTurn !== e.state.turnSeat;
           set({
             snapshot: e.state,
+            botThinking: null,
             ...(turnChanged ? { hints: [], hintIndex: 0, hintMessage: null } : {}),
           });
           break;
@@ -107,6 +111,9 @@ export const useGameStore = create<UiState>((set, get) => ({
           }
           break;
         }
+        case 'bot_thinking':
+          set({ botThinking: { seat: e.seat, delayMs: e.delayMs, at: Date.now() } });
+          break;
         case 'hint': {
           // 服务端按模型分从高到低返回合法出牌建议；空表示建议不出。
           const groups = e.suggestions;
@@ -136,6 +143,7 @@ export const useGameStore = create<UiState>((set, get) => ({
       selected: [],
       snapshot: null,
       lastError: null,
+      botThinking: null,
       hints: [],
       hintIndex: 0,
       hintMessage: null,
@@ -195,6 +203,9 @@ export function selectPhase(s: UiState): GamePhase | undefined {
 }
 export function selectLastPlay(s: UiState): PlayRecord | null {
   return s.snapshot?.lastPlay ?? null;
+}
+export function selectCurrentTrick(s: UiState): TrickAction[] {
+  return s.snapshot?.currentTrick ?? [];
 }
 export function selectResult(s: UiState): GameResult | null {
   return s.snapshot?.result ?? null;

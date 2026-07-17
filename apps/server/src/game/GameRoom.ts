@@ -39,6 +39,7 @@ import type {
   MultiplierState,
   PlayerView,
   Seat,
+  TrickAction,
 } from '@card-game/rules';
 import { botBid, botName } from './bot';
 import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
@@ -48,6 +49,8 @@ import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from '.
 const SEATS: readonly Seat[] = [0, 1, 2];
 const MAX_REDEALS = 5;
 const BOT_LOOP_GUARD = 2000;
+const BOT_THINK_MIN_MS = 500;
+const BOT_THINK_MAX_MS = 1000;
 /** AI 出牌提示一次返回的建议条数（按模型分从高到低，前端可循环切换）。 */
 const HINT_TOP_N = 3;
 
@@ -82,6 +85,8 @@ export class GameRoom {
   result: GameResult | null = null;
   /** 出牌/过牌历史，供 DouZero 适配层构造观测状态。 */
   playHistory: BotPlayHistoryEntry[] = [];
+  /** 当前轮三方最近动作；新一轮领出时清空，客户端按座位展示。 */
+  currentTrick: TrickAction[] = [];
 
   private botCounter = 0;
 
@@ -203,6 +208,7 @@ export class GameRoom {
     this.result = null;
     this.mult = createMultiplier();
     this.playHistory = [];
+    this.currentTrick = [];
 
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'phase', phase: GamePhase.DEALING } }];
     for (const seat of SEATS) {
@@ -272,6 +278,7 @@ export class GameRoom {
     const { hands, bottom } = deal();
     for (const seat of SEATS) this.players[seat]!.hand = sortCards(hands[seat]);
     this.bottom = bottom;
+    this.currentTrick = [];
     const b = this.bid!;
     b.index = 0;
     b.entries = [];
@@ -296,6 +303,7 @@ export class GameRoom {
     this.leaderSeat = seat;
     this.lastPlay = null;
     this.passCount = 0;
+    this.currentTrick = [];
     return [
       // 地主的新手牌（20 张）私发
       { scope: { seat }, event: { type: 'dealt', hand: this.players[seat]!.hand.map((c) => c.id) } },
@@ -343,6 +351,7 @@ export class GameRoom {
     this.leaderSeat = seat;
     this.passCount = 0;
     this.playHistory.push({ seat, cards: [...cards], isPass: false });
+    this.currentTrick = upsertTrickAction(this.currentTrick, { seat, type: 'play', hand });
     this.mult = applyPlay(this.mult, hand); // 炸弹 / 王炸 ×2
 
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'played', seat, hand } }];
@@ -370,11 +379,13 @@ export class GameRoom {
   private iPass(seat: Seat): RoomEvent[] {
     this.passCount += 1;
     this.playHistory.push({ seat, cards: [], isPass: true });
+    this.currentTrick = upsertTrickAction(this.currentTrick, { seat, type: 'pass' });
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'passed', seat } }];
     if (this.passCount >= 2) {
       // 两人连过 → 本轮结束，领出者继续领出
       this.lastPlay = null;
       this.passCount = 0;
+      this.currentTrick = [];
       this.turnSeat = this.leaderSeat;
       events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat! } });
     } else {
@@ -445,12 +456,15 @@ export class GameRoom {
           },
           this.aiAdapter,
         );
-        if (cards && cards.length > 0) events.push(...this.iPlay(seat, cards));
-        else if (this.lastPlay === null) {
-          events.push(...this.iPlay(seat, smallestFallback(p.hand))); // 领出兜底
-        } else {
-          events.push(...this.iPass(seat));
-        }
+        const delayMs = botThinkDelayMs();
+        events.push({ scope: 'room', event: { type: 'bot_thinking', seat, delayMs } });
+        const botEvents = cards && cards.length > 0
+          ? this.iPlay(seat, cards)
+          : this.lastPlay === null
+            ? this.iPlay(seat, smallestFallback(p.hand)) // 领出兜底
+            : this.iPass(seat);
+        if (botEvents[0]) botEvents[0] = { ...botEvents[0], delayBeforeMs: delayMs };
+        events.push(...botEvents);
         continue;
       }
       break;
@@ -536,6 +550,7 @@ export class GameRoom {
       bottomRevealed: this.bottomRevealed,
       lastPlay: this.lastPlay ? { seat: this.lastPlay.seat, hand: this.lastPlay.hand } : null,
       passCount: this.passCount,
+      currentTrick: this.currentTrick,
       multiplier: this.mult.multiplier,
       result: this.result,
     };
@@ -547,6 +562,14 @@ function smallestFallback(hand: readonly Card[]): Card[] {
   const sorted = [...hand].sort((a, b) => a.rank - b.rank);
   const c = sorted[0];
   return c ? [c] : [];
+}
+
+function botThinkDelayMs(): number {
+  return Math.floor(BOT_THINK_MIN_MS + Math.random() * (BOT_THINK_MAX_MS - BOT_THINK_MIN_MS + 1));
+}
+
+function upsertTrickAction(actions: readonly TrickAction[], next: TrickAction): TrickAction[] {
+  return [...actions.filter((action) => action.seat !== next.seat), next].slice(-3);
 }
 
 export type { Hand };

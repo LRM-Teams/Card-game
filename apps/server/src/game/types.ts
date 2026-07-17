@@ -42,6 +42,8 @@ export interface LastPlay {
 export interface RoomEvent {
   scope: 'room' | { seat: Seat };
   event: ServerEvent;
+  /** Optional transport pause before this event is emitted (used for bot thinking cadence). */
+  delayBeforeMs?: number;
 }
 
 /** 状态机动作的统一返回：成功带事件流，失败带错误码。 */

@@ -559,9 +559,23 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.06);
   pointer-events: none;
 }
+.seat-stack {
+  display: grid;
+  gap: var(--ddz-space-2);
+  min-width: 0;
+}
+.seat-stack.left {
+  justify-items: start;
+}
+.seat-stack.right {
+  justify-items: end;
+}
+.seat-stack .seat-badge {
+  width: min(100%, 210px);
+}
 .center {
   min-width: 280px;
-  min-height: 190px;
+  min-height: 150px;
   position: relative;
   z-index: 1;
 }
@@ -651,6 +665,105 @@ body::before {
 .last-cards .card:nth-child(3) { animation-delay: 36ms; }
 .last-cards .card:nth-child(4) { animation-delay: 54ms; }
 .last-cards .card:nth-child(n + 5) { animation-delay: 72ms; }
+.round-panel {
+  display: grid;
+  gap: 6px;
+  min-height: 88px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  text-align: center;
+  color: rgba(255, 243, 196, 0.78);
+  background:
+    radial-gradient(circle at center, rgba(245, 197, 66, 0.1), transparent 62%),
+    rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(245, 197, 66, 0.14);
+}
+.round-panel b {
+  color: var(--ddz-gold-500);
+  font-family: var(--ddz-font-display);
+  font-size: var(--ddz-text-lg);
+}
+.round-panel span {
+  font-size: var(--ddz-text-xs);
+  opacity: 0.75;
+}
+.play-zone {
+  width: min(100%, 260px);
+  min-height: 104px;
+  padding: 10px 12px 12px;
+  border-radius: 20px;
+  color: var(--ddz-cream);
+  background:
+    linear-gradient(135deg, rgba(255, 243, 196, 0.08), rgba(0, 0, 0, 0.16)),
+    rgba(2, 31, 20, 0.7);
+  border: 1px solid rgba(255, 243, 196, 0.14);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.18);
+}
+.play-zone.mine {
+  width: min(620px, 92%);
+  min-height: 96px;
+  margin: 0 auto -6px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245, 197, 66, 0.14), transparent 58%),
+    rgba(3, 45, 29, 0.82);
+}
+.play-zone.left {
+  text-align: left;
+}
+.play-zone.right {
+  text-align: right;
+}
+.play-zone.right .last-cards {
+  justify-content: flex-end;
+}
+.play-zone.left .last-cards {
+  justify-content: flex-start;
+}
+.play-zone-label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ddz-space-2);
+  margin-bottom: 6px;
+  font-size: var(--ddz-text-xs);
+  color: rgba(255, 243, 196, 0.72);
+}
+.play-zone-label b {
+  color: var(--ddz-gold-500);
+  animation: ddz-thinking-pulse 760ms ease-in-out infinite;
+}
+.play-zone-type {
+  margin-bottom: 4px;
+  color: var(--ddz-gold-500);
+  font-family: var(--ddz-font-display);
+  font-weight: 900;
+}
+.pass-bubble,
+.play-placeholder {
+  display: inline-grid;
+  place-items: center;
+  min-width: 82px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-family: var(--ddz-font-display);
+  font-weight: 900;
+}
+.pass-bubble {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(58, 73, 92, 0.95), rgba(28, 39, 53, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.play-placeholder {
+  color: rgba(255, 243, 196, 0.5);
+  border: 1px dashed rgba(255, 243, 196, 0.16);
+}
+.play-zone.thinking {
+  border-color: rgba(245, 197, 66, 0.42);
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 0.18),
+    0 0 18px rgba(245, 197, 66, 0.18);
+}
 .bottom-row {
   align-items: center;
   gap: var(--ddz-space-1);
@@ -921,6 +1034,11 @@ body::before {
     box-shadow: 0 0 18px rgba(214, 48, 49, 0.48);
   }
 }
+@keyframes ddz-thinking-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
 
 @media (max-width: 680px) {
   .table {
@@ -948,6 +1066,7 @@ body::before {
   .seats-preview,
   .opponents {
     grid-template-columns: 1fr 1fr;
+    align-items: start;
   }
   .room-code-card {
     grid-template-columns: 1fr;
@@ -956,6 +1075,24 @@ body::before {
   .center {
     grid-column: 1 / -1;
     order: -1;
+    min-height: 112px;
+  }
+  .seat-stack .seat-badge,
+  .play-zone {
+    width: 100%;
+  }
+  .play-zone {
+    min-height: 86px;
+    padding: 8px 10px;
+  }
+  .play-zone.mine {
+    width: 100%;
+    min-height: 82px;
+    margin-bottom: -8px;
+  }
+  .round-panel {
+    min-height: 64px;
+    padding: 12px;
   }
   .card {
     width: 40px;

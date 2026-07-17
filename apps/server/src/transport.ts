@@ -32,8 +32,9 @@ export function createGame(io: IoServer): RoomRegistry {
       socket.emit('event', ev);
     };
 
-    const apply = (roomId: string, events: RoomEvent[]): void => {
+    const apply = async (roomId: string, events: RoomEvent[]): Promise<void> => {
       for (const re of events) {
+        if (re.delayBeforeMs && re.delayBeforeMs > 0) await sleep(re.delayBeforeMs);
         if (re.scope === 'room') {
           io.to(roomId).emit('event', re.event);
         } else {
@@ -54,7 +55,7 @@ export function createGame(io: IoServer): RoomRegistry {
         }
         binding = { roomId: room.roomId, seat };
         socket.join(room.roomId);
-        apply(room.roomId, result.events);
+        await apply(room.roomId, result.events);
         return;
       }
 
@@ -77,16 +78,20 @@ export function createGame(io: IoServer): RoomRegistry {
           fail(result.code, result.message);
           return;
         }
-        apply(roomId, result.events);
+        await apply(roomId, result.events);
       });
     });
 
     socket.on('disconnect', () => {
       if (!binding) return;
       const result = registry.disconnect(binding.roomId, binding.seat, socket.id);
-      if (result.ok) apply(binding.roomId, result.events);
+      if (result.ok) void apply(binding.roomId, result.events);
     });
   });
 
   return registry;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
