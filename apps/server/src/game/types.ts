@@ -42,6 +42,8 @@ export interface LastPlay {
 export interface RoomEvent {
   scope: 'room' | { seat: Seat };
   event: ServerEvent;
+  /** Optional client-visible pacing before this event is emitted. */
+  delayMs?: number;
 }
 
 /** 状态机动作的统一返回：成功带事件流，失败带错误码。 */

@@ -1,5 +1,5 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { GamePhase, canPlay, identifyHand } from '@card-game/rules';
+import { GamePhase, canPlay, identifyHand, type PlayRecord, type PlayerView, type Seat } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
@@ -65,6 +65,7 @@ export function GameTable() {
   const me = snapshot.players.find((p) => p.seat === mySeat);
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
   const lastPlay = snapshot.lastPlay;
+  const recentPlayOf = (seat: Seat | undefined): PlayRecord | null => (seat == null ? null : snapshot.recentPlays[seat]);
   const nameOf = (seat: number | null | undefined) =>
     seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
 
@@ -112,27 +113,25 @@ export function GameTable() {
   return (
     <div className="table">
       <div className="opponents">
-        <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
+        <PlayerColumn
+          p={opponents[0]}
+          active={snapshot.turnSeat === opponents[0]?.seat}
+          play={recentPlayOf(opponents[0]?.seat)}
+          nameOf={nameOf}
+        />
         <div className="center">
           <div className="meta-row">
             <span>倍数 ×{snapshot.multiplier}</span>
             <span>阶段：{phaseLabel(phase)}</span>
           </div>
-          <div className="last-play">
+          <div className="table-summary">
             {lastPlay ? (
-              <>
-                <div className="last-label">
-                  <b className="last-player">{nameOf(lastPlay.seat)}</b> 出了
-                  <b>{HAND_TYPE_LABEL[lastPlay.hand.type]}</b>
-                </div>
-                <div className="last-cards">
-                  {lastPlay.hand.cards.map((c) => (
-                    <CardView key={c.id} card={c} small />
-                  ))}
-                </div>
-              </>
+              <div className="last-label">
+                当前要压：<b className="last-player">{nameOf(lastPlay.seat)}</b>
+                <b>{HAND_TYPE_LABEL[lastPlay.hand.type]}</b>
+              </div>
             ) : (
-              <div className="last-label muted">桌面空空，自由出牌</div>
+              <div className="last-label muted">新一轮，当前玩家自由出牌</div>
             )}
           </div>
           {snapshot.bottomRevealed && snapshot.bottom.length > 0 && (
@@ -145,7 +144,12 @@ export function GameTable() {
             </div>
           )}
         </div>
-        <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
+        <PlayerColumn
+          p={opponents[1]}
+          active={snapshot.turnSeat === opponents[1]?.seat}
+          play={recentPlayOf(opponents[1]?.seat)}
+          nameOf={nameOf}
+        />
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
@@ -172,6 +176,13 @@ export function GameTable() {
         {me?.role === 'landlord' && <RoleBadge role="landlord" />}
         {me?.role === 'farmer' && <RoleBadge role="farmer" />}
       </div>
+
+      <PlayerPlayZone
+        className="my-play-zone"
+        play={recentPlayOf(mySeat == null ? undefined : (mySeat as Seat))}
+        nameOf={nameOf}
+        emptyLabel="你还没出牌"
+      />
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
 
@@ -214,6 +225,56 @@ export function GameTable() {
         <div className="err-toast" onClick={dismissError}>
           ⚠️ {lastError.message}（{lastError.code}）— 点击关闭
         </div>
+      )}
+    </div>
+  );
+}
+
+function PlayerColumn({
+  p,
+  active,
+  play,
+  nameOf,
+}: {
+  p: PlayerView | undefined;
+  active: boolean;
+  play: PlayRecord | null;
+  nameOf: (seat: number | null | undefined) => string;
+}) {
+  return (
+    <div className="player-column">
+      <SeatBadge p={p} active={active} />
+      <PlayerPlayZone play={play} nameOf={nameOf} emptyLabel="等待出牌" />
+    </div>
+  );
+}
+
+function PlayerPlayZone({
+  play,
+  nameOf,
+  emptyLabel,
+  className = '',
+}: {
+  play: PlayRecord | null;
+  nameOf: (seat: number | null | undefined) => string;
+  emptyLabel: string;
+  className?: string;
+}) {
+  return (
+    <div className={`play-zone ${className} ${play ? 'has-play' : ''}`}>
+      {play ? (
+        <>
+          <div className="play-zone-label">
+            <b>{nameOf(play.seat)}</b> · {HAND_TYPE_LABEL[play.hand.type]}
+          </div>
+          <div className="play-zone-cards">
+            {play.hand.cards.map((c) => (
+              <CardView key={c.id} card={c} small />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="play-zone-empty">{emptyLabel}</div>
       )}
     </div>
   );

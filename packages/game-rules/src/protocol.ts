@@ -83,6 +83,8 @@ export interface GameStateSnapshot {
   bottomRevealed: boolean;
   /** 当前这一轮最后一次有效出牌；领出/新轮时为 null。 */
   lastPlay: PlayRecord | null;
+  /** 三个座位各自最近一次有效出牌；用于按玩家区域保留桌面出牌展示。 */
+  recentPlays: [PlayRecord | null, PlayRecord | null, PlayRecord | null];
   /** 当前轮连续 pass 次数（达到 2 则本轮结束、领出者继续）。 */
   passCount: number;
   /** 当前倍数（炸弹/王炸累积），便于客户端展示。 */

@@ -48,6 +48,8 @@ import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from '.
 const SEATS: readonly Seat[] = [0, 1, 2];
 const MAX_REDEALS = 5;
 const BOT_LOOP_GUARD = 2000;
+/** 机器人行动前的拟人化思考停顿，避免 AI 瞬间连出导致玩家看不清。 */
+const BOT_THINK_DELAY_MS = 700;
 /** AI 出牌提示一次返回的建议条数（按模型分从高到低，前端可循环切换）。 */
 const HINT_TOP_N = 3;
 
@@ -59,6 +61,11 @@ function err(code: ErrorCode, message: string): ActionResult {
 }
 function nextSeat(seat: Seat): Seat {
   return ((seat + 1) % 3) as Seat;
+}
+
+function withFirstDelay(events: RoomEvent[], delayMs: number): RoomEvent[] {
+  if (events.length === 0) return events;
+  return [{ ...events[0]!, delayMs }, ...events.slice(1)];
 }
 
 export class GameRoom {
@@ -73,6 +80,7 @@ export class GameRoom {
   bottom: Card[] = [];
   bottomRevealed = false;
   lastPlay: LastPlay | null = null;
+  recentPlays: [LastPlay | null, LastPlay | null, LastPlay | null] = [null, null, null];
   passCount = 0;
   /** 当前轮的领出者（赢得上一轮 / 本轮起始）。 */
   leaderSeat: Seat | null = null;
@@ -197,6 +205,7 @@ export class GameRoom {
     this.bottom = bottom;
     this.bottomRevealed = false;
     this.lastPlay = null;
+    this.recentPlays = [null, null, null];
     this.passCount = 0;
     this.leaderSeat = null;
     this.landlordSeat = null;
@@ -272,6 +281,8 @@ export class GameRoom {
     const { hands, bottom } = deal();
     for (const seat of SEATS) this.players[seat]!.hand = sortCards(hands[seat]);
     this.bottom = bottom;
+    this.lastPlay = null;
+    this.recentPlays = [null, null, null];
     const b = this.bid!;
     b.index = 0;
     b.entries = [];
@@ -295,6 +306,7 @@ export class GameRoom {
     this.turnSeat = seat;
     this.leaderSeat = seat;
     this.lastPlay = null;
+    this.recentPlays = [null, null, null];
     this.passCount = 0;
     return [
       // 地主的新手牌（20 张）私发
@@ -340,6 +352,7 @@ export class GameRoom {
     p.hand = p.hand.filter((c) => !ids.has(c.id));
     const hand = identifyHand(cards)!; // 已由 handlePlay 校验合法
     this.lastPlay = { seat, hand };
+    this.recentPlays[seat] = { seat, hand };
     this.leaderSeat = seat;
     this.passCount = 0;
     this.playHistory.push({ seat, cards: [...cards], isPass: false });
@@ -419,7 +432,7 @@ export class GameRoom {
         const seat = this.bid.order[this.bid.index]!;
         const p = this.players[seat];
         if (!p || !p.isBot) break;
-        events.push(...this.iBid(seat, botBid(p.hand)));
+        events.push(...withFirstDelay(this.iBid(seat, botBid(p.hand)), BOT_THINK_DELAY_MS));
         continue;
       }
 
@@ -445,11 +458,11 @@ export class GameRoom {
           },
           this.aiAdapter,
         );
-        if (cards && cards.length > 0) events.push(...this.iPlay(seat, cards));
+        if (cards && cards.length > 0) events.push(...withFirstDelay(this.iPlay(seat, cards), BOT_THINK_DELAY_MS));
         else if (this.lastPlay === null) {
-          events.push(...this.iPlay(seat, smallestFallback(p.hand))); // 领出兜底
+          events.push(...withFirstDelay(this.iPlay(seat, smallestFallback(p.hand)), BOT_THINK_DELAY_MS)); // 领出兜底
         } else {
-          events.push(...this.iPass(seat));
+          events.push(...withFirstDelay(this.iPass(seat), BOT_THINK_DELAY_MS));
         }
         continue;
       }
@@ -535,6 +548,7 @@ export class GameRoom {
       bottom: this.bottomRevealed ? this.bottom.map((c) => c.id) : [],
       bottomRevealed: this.bottomRevealed,
       lastPlay: this.lastPlay ? { seat: this.lastPlay.seat, hand: this.lastPlay.hand } : null,
+      recentPlays: this.recentPlays.map((play) => (play ? { seat: play.seat, hand: play.hand } : null)) as [LastPlay | null, LastPlay | null, LastPlay | null],
       passCount: this.passCount,
       multiplier: this.mult.multiplier,
       result: this.result,

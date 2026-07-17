@@ -11,6 +11,10 @@ import type { ClientAction, ErrorCode, Seat, ServerEvent } from '@card-game/rule
 import type { ActionResult, RoomEvent } from './game/types';
 import { RoomRegistry } from './registry';
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function createGame(io: IoServer): RoomRegistry {
   const registry = new RoomRegistry();
   /** 按房间串行化异步动作：机器人推理期间，同房间的真人动作排队，避免状态竞态。 */
@@ -32,8 +36,9 @@ export function createGame(io: IoServer): RoomRegistry {
       socket.emit('event', ev);
     };
 
-    const apply = (roomId: string, events: RoomEvent[]): void => {
+    const apply = async (roomId: string, events: RoomEvent[]): Promise<void> => {
       for (const re of events) {
+        if (re.delayMs && re.delayMs > 0) await sleep(re.delayMs);
         if (re.scope === 'room') {
           io.to(roomId).emit('event', re.event);
         } else {
@@ -54,7 +59,7 @@ export function createGame(io: IoServer): RoomRegistry {
         }
         binding = { roomId: room.roomId, seat };
         socket.join(room.roomId);
-        apply(room.roomId, result.events);
+        void apply(room.roomId, result.events);
         return;
       }
 
@@ -77,14 +82,14 @@ export function createGame(io: IoServer): RoomRegistry {
           fail(result.code, result.message);
           return;
         }
-        apply(roomId, result.events);
+        await apply(roomId, result.events);
       });
     });
 
     socket.on('disconnect', () => {
       if (!binding) return;
       const result = registry.disconnect(binding.roomId, binding.seat, socket.id);
-      if (result.ok) apply(binding.roomId, result.events);
+      if (result.ok) void apply(binding.roomId, result.events);
     });
   });
 
