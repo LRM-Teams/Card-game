@@ -13,6 +13,16 @@ import { RoomRegistry } from './registry';
 
 export function createGame(io: IoServer): RoomRegistry {
   const registry = new RoomRegistry();
+  /** 按房间串行化异步动作：机器人推理期间，同房间的真人动作排队，避免状态竞态。 */
+  const roomLocks = new Map<string, Promise<void>>();
+  const runRoomAction = (roomId: string, task: () => Promise<void>): void => {
+    const prev = roomLocks.get(roomId) ?? Promise.resolve();
+    const next = prev.then(task, task).then(
+      () => undefined,
+      () => undefined,
+    );
+    roomLocks.set(roomId, next);
+  };
 
   io.on('connection', (socket) => {
     let binding: { roomId: string; seat: Seat } | null = null;
@@ -34,8 +44,8 @@ export function createGame(io: IoServer): RoomRegistry {
       }
     };
 
-    socket.on('action', (action: ClientAction) => {
-      // join：落座并加入房间
+    socket.on('action', async (action: ClientAction) => {
+      // join：落座并加入房间（同步，不触发机器人推进）
       if (action.type === 'join') {
         const { room, seat, result } = registry.join(action.name, socket.id, action.roomId);
         if (!result.ok) {
@@ -52,18 +62,23 @@ export function createGame(io: IoServer): RoomRegistry {
         fail('not_in_room', '请先 join 房间');
         return;
       }
-      const room = registry.get(binding.roomId);
+      const roomId = binding.roomId;
+      const room = registry.get(roomId);
       if (!room) {
         fail('not_in_room', '房间不存在');
         return;
       }
 
-      const result: ActionResult = room.handleAction(binding.seat, action);
-      if (!result.ok) {
-        fail(result.code, result.message);
-        return;
-      }
-      apply(binding.roomId, result.events);
+      const seat = binding.seat;
+      // 按房间串行：机器人异步推理期间，同一房间的动作排队处理。
+      runRoomAction(roomId, async () => {
+        const result: ActionResult = await room.handleAction(seat, action);
+        if (!result.ok) {
+          fail(result.code, result.message);
+          return;
+        }
+        apply(roomId, result.events);
+      });
     });
 
     socket.on('disconnect', () => {

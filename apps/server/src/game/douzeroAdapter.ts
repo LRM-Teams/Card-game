@@ -43,19 +43,11 @@ export interface BotPlayContext {
 }
 
 export interface DouZeroBotAdapter {
-  choosePlay(state: DouZeroPlayState): DouZeroAction | null;
+  choosePlay(state: DouZeroPlayState): Promise<DouZeroAction | null>;
 }
 
 export interface DouZeroCommandAdapterOptions {
   timeoutMs?: number;
-}
-
-export function createConfiguredDouZeroAdapter(env: NodeJS.ProcessEnv = process.env): DouZeroBotAdapter | undefined {
-  const command = env.DOUZERO_INFER_COMMAND?.trim();
-  if (!command) return undefined;
-  const parsedTimeout = Number(env.DOUZERO_INFER_TIMEOUT_MS ?? '1500');
-  const timeoutMs = Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 1500;
-  return createDouZeroCommandAdapter(command, { timeoutMs });
 }
 
 export function createDouZeroCommandAdapter(
@@ -64,7 +56,7 @@ export function createDouZeroCommandAdapter(
 ): DouZeroBotAdapter {
   const timeoutMs = options.timeoutMs ?? 1500;
   return {
-    choosePlay(state) {
+    async choosePlay(state) {
       const child = spawnSync(command, {
         input: JSON.stringify(state),
         encoding: 'utf8',
@@ -86,6 +78,63 @@ export function createDouZeroCommandAdapter(
       }
     },
   };
+}
+
+export interface DouZeroHttpAdapterOptions {
+  timeoutMs?: number;
+}
+
+/**
+ * Resident DouZero inference client (LRM-136). Talks to the long-lived
+ * `douzero-server.py` HTTP service that loads the three models once, so each
+ * move is a single forward pass instead of a process cold start.
+ *
+ * Configured via `DOUZERO_INFER_URL` (e.g. http://127.0.0.1:8080). Any network
+ * error, non-2xx response, timeout, or invalid payload resolves to `null`, and
+ * the caller falls back to the minimal legal bot.
+ */
+export function createDouZeroHttpAdapter(url: string, options: DouZeroHttpAdapterOptions = {}): DouZeroBotAdapter {
+  const timeoutMs = options.timeoutMs ?? 1500;
+  const base = url.replace(/\/+$/, '');
+  return {
+    async choosePlay(state) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(`${base}/infer`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(state),
+          signal: controller.signal,
+        });
+        if (!res.ok) return null;
+        const payload: unknown = await res.json();
+        const action = Array.isArray(payload)
+          ? payload
+          : typeof payload === 'object' && payload !== null && Array.isArray((payload as { action?: unknown }).action)
+            ? (payload as { action: unknown[] }).action
+            : null;
+        return isDouZeroAction(action) ? action : null;
+      } catch {
+        return null;
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+  };
+}
+
+export function createConfiguredDouZeroAdapter(env: NodeJS.ProcessEnv = process.env): DouZeroBotAdapter | undefined {
+  const url = env.DOUZERO_INFER_URL?.trim();
+  if (url) return createDouZeroHttpAdapter(url, { timeoutMs: resolveDouZeroTimeout(env) });
+  const command = env.DOUZERO_INFER_COMMAND?.trim();
+  if (!command) return undefined;
+  return createDouZeroCommandAdapter(command, { timeoutMs: resolveDouZeroTimeout(env) });
+}
+
+function resolveDouZeroTimeout(env: NodeJS.ProcessEnv): number {
+  const parsed = Number(env.DOUZERO_INFER_TIMEOUT_MS ?? '1500');
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1500;
 }
 
 function isDouZeroAction(action: unknown): action is DouZeroAction {
@@ -332,12 +381,15 @@ function sameDouZeroAction(a: readonly DouZeroCard[], b: readonly DouZeroCard[])
   return counts.size === 0;
 }
 
-export function choosePlayWithDouZero(ctx: BotPlayContext, adapter?: DouZeroBotAdapter): Card[] | null {
+export async function choosePlayWithDouZero(
+  ctx: BotPlayContext,
+  adapter?: DouZeroBotAdapter,
+): Promise<Card[] | null> {
   if (!adapter) return botChoosePlay(ctx.hand, ctx.prev);
 
   const state = buildDouZeroPlayState(ctx);
   try {
-    const action = adapter.choosePlay(state);
+    const action = await adapter.choosePlay(state);
     if (!action) return botChoosePlay(ctx.hand, ctx.prev);
     if (action.length === 0) return ctx.prev ? null : botChoosePlay(ctx.hand, ctx.prev);
     if (!state.legalActions.some((legal) => sameDouZeroAction(legal, action))) {

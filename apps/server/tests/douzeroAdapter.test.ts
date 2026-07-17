@@ -1,4 +1,6 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -9,6 +11,7 @@ import {
   choosePlayWithDouZero,
   createConfiguredDouZeroAdapter,
   createDouZeroCommandAdapter,
+  createDouZeroHttpAdapter,
   douZeroPosition,
   fromDouZeroAction,
   listLegalActions,
@@ -18,6 +21,22 @@ import { GameRoom } from '../src/game/GameRoom';
 
 function card(rank: number, id?: string): Card {
   return { id: id ?? `c${rank}`, rank, display: String(rank), suit: 'spade' };
+}
+
+/** 起一个本地 HTTP mock 服务跑完回调后关闭，用于测试常驻推理客户端。 */
+async function withMockServer(
+  listener: (req: IncomingMessage, res: ServerResponse) => void,
+  fn: (base: string) => Promise<void>,
+): Promise<void> {
+  const server = createServer(listener);
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const addr = server.address();
+  const port = typeof addr === 'object' && addr ? addr.port : 0;
+  try {
+    await fn(`http://127.0.0.1:${port}`);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
 }
 
 describe('DouZero adapter', () => {
@@ -90,7 +109,7 @@ describe('DouZero adapter', () => {
     expect(state.legalActions).toContainEqual([]);
   });
 
-  it('命令适配器可通过 JSON stdin/stdout 返回 DouZero action', () => {
+  it('命令适配器可通过 JSON stdin/stdout 返回 DouZero action', async () => {
     const adapter = createDouZeroCommandAdapter(
       `node -e "process.stdin.resume();process.stdin.on('data',()=>process.stdout.write(JSON.stringify({action:[5]})))"`,
     );
@@ -104,17 +123,17 @@ describe('DouZero adapter', () => {
       history: [],
     });
 
-    expect(adapter.choosePlay(state)).toEqual([5]);
+    expect(await adapter.choosePlay(state)).toEqual([5]);
   });
 
   it('配置缺失时不启用 DouZero 外部推理适配器', () => {
     expect(createConfiguredDouZeroAdapter({})).toBeUndefined();
   });
 
-  it('非法模型输出会 fallback 到当前最小合法 bot 行为', () => {
+  it('非法模型输出会 fallback 到当前最小合法 bot 行为', async () => {
     const hand = [card(RANK.THREE), card(RANK.FIVE)];
     const prev = identifyHand([card(RANK.FOUR)])!;
-    const chosen = choosePlayWithDouZero(
+    const chosen = await choosePlayWithDouZero(
       {
         seat: 0,
         landlordSeat: 0,
@@ -124,14 +143,14 @@ describe('DouZero adapter', () => {
         handCounts: { 0: 2, 1: 17, 2: 17 },
         history: [],
       },
-      { choosePlay: () => [3] },
+      { choosePlay: async () => [3] },
     );
 
     expect(chosen?.map((c) => c.rank)).toEqual([RANK.FIVE]);
   });
 
-  it('模型选择空 action 时按过牌处理而不是强制 fallback 出牌', () => {
-    const chosen = choosePlayWithDouZero(
+  it('模型选择空 action 时按过牌处理而不是强制 fallback 出牌', async () => {
+    const chosen = await choosePlayWithDouZero(
       {
         seat: 0,
         landlordSeat: 0,
@@ -141,13 +160,13 @@ describe('DouZero adapter', () => {
         handCounts: { 0: 2, 1: 17, 2: 17 },
         history: [],
       },
-      { choosePlay: () => [] },
+      { choosePlay: async () => [] },
     );
 
     expect(chosen).toBeNull();
   });
 
-  it('端到端 mock：游戏状态→adapter→真实子进程→解析→应用回对局，全链路跑通', () => {
+  it('端到端 mock：游戏状态→adapter→真实子进程→解析→应用回对局，全链路跑通', async () => {
     // 按 douzero-infer.example.py 的 stdin/stdout 契约写一个假推理子进程：
     // 收 DouZeroPlayState JSON，回 legalActions[0]（合法动作），并按 env 记录被调用身份。
     const mockSrc = [
@@ -178,7 +197,7 @@ describe('DouZero adapter', () => {
       const adapter = createDouZeroCommandAdapter(`node ${mockScript}`, { timeoutMs: 5000 });
       const room = new GameRoom('e2e-mock', adapter);
 
-      expect(room.start(true).ok).toBe(true);
+      expect((await room.start(true)).ok).toBe(true);
       // 全机器人局，全部出牌都经真实子进程推理推进到结算
       expect(room.phase).toBe('settled');
       expect(room.result).not.toBeNull();
@@ -198,14 +217,88 @@ describe('DouZero adapter', () => {
     }
   }, 60000);
 
-  it('GameRoom 机器人出牌可调用适配器，模型异常时仍能 fallback 跑完', () => {
+  it('配置 DOUZERO_INFER_URL 时启用常驻 HTTP 适配器，空配置仍不启用', () => {
+    expect(createConfiguredDouZeroAdapter({ DOUZERO_INFER_URL: 'http://127.0.0.1:8080' })).toBeDefined();
+    expect(createConfiguredDouZeroAdapter({ DOUZERO_INFER_URL: '   ' })).toBeUndefined();
+  });
+
+  it('HTTP 适配器调用常驻 /infer 返回 DouZero action（200 + {action}）', async () => {
+    await withMockServer((req, res) => {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        const st = JSON.parse(body);
+        res.setHeader('content-type', 'application/json');
+        // 回传 legalActions 里的一个动作，证明会进入合法过滤
+        res.end(JSON.stringify({ action: st.legalActions?.[0] ?? [5] }));
+      });
+    }, async (base) => {
+      const adapter = createDouZeroHttpAdapter(base, { timeoutMs: 2000 });
+      const state = buildDouZeroPlayState({
+        seat: 0,
+        landlordSeat: 0,
+        hand: [card(RANK.FIVE)],
+        prev: null,
+        bottom: [],
+        handCounts: { 0: 1, 1: 17, 2: 17 },
+        history: [],
+      });
+      expect(await adapter.choosePlay(state)).toEqual([5]);
+    });
+  });
+
+  it('HTTP 服务 500 / 解析失败 → choosePlay 返回 null，上层可 fallback', async () => {
+    await withMockServer((_req, res) => {
+      res.statusCode = 500;
+      res.end('{}');
+    }, async (base) => {
+      const adapter = createDouZeroHttpAdapter(base, { timeoutMs: 2000 });
+      const state = buildDouZeroPlayState({
+        seat: 0,
+        landlordSeat: 0,
+        hand: [card(RANK.FIVE)],
+        prev: null,
+        bottom: [],
+        handCounts: { 0: 1, 1: 17, 2: 17 },
+        history: [],
+      });
+      expect(await adapter.choosePlay(state)).toBeNull();
+    });
+  });
+
+  it('choosePlayWithDouZero 经 HTTP 返回的合法动作会被采用', async () => {
+    await withMockServer((req, res) => {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ action: [5] }));
+      });
+    }, async (base) => {
+      const chosen = await choosePlayWithDouZero(
+        {
+          seat: 0,
+          landlordSeat: 0,
+          hand: [card(RANK.FIVE, '5a')],
+          prev: identifyHand([card(RANK.FOUR)])!,
+          bottom: [],
+          handCounts: { 0: 1, 1: 17, 2: 17 },
+          history: [],
+        },
+        createDouZeroHttpAdapter(base, { timeoutMs: 2000 }),
+      );
+      expect(chosen?.map((c) => c.rank)).toEqual([RANK.FIVE]);
+    });
+  });
+
+  it('GameRoom 机器人出牌可调用适配器，模型异常时仍能 fallback 跑完', async () => {
     const room = new GameRoom('ai-fallback', {
-      choosePlay: () => {
+      choosePlay: async () => {
         throw new Error('DouZero service unavailable');
       },
     });
 
-    expect(room.start(true).ok).toBe(true);
+    expect((await room.start(true)).ok).toBe(true);
     expect(room.phase).toBe('settled');
     expect(room.result).not.toBeNull();
     expect(room.playHistory.length).toBeGreaterThan(0);

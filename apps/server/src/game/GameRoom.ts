@@ -158,7 +158,7 @@ export class GameRoom {
    * 开局：fillBots=true 时不足 3 人补机器人；默认 fillBots=false 要求 3 名真人（纯人对战）。
    * 产品上由真人触发（transport 层保证至少 1 名真人）；引擎允许全机器人局，便于联机/自动化测试。
    */
-  start(fillBots = false): ActionResult {
+  async start(fillBots = false): Promise<ActionResult> {
     if (this.phase === GamePhase.SETTLED) return this.dealAndBeginBid(); // 再来一局：保留座位重新发牌
     if (this.phase !== GamePhase.WAITING) return err('invalid_action_for_phase', '当前阶段不能开局');
     if (fillBots) {
@@ -185,7 +185,7 @@ export class GameRoom {
     }
   }
 
-  private dealAndBeginBid(): ActionResult {
+  private async dealAndBeginBid(): Promise<ActionResult> {
     const { hands, bottom } = deal();
     for (const seat of SEATS) {
       const p = this.players[seat]!;
@@ -218,20 +218,20 @@ export class GameRoom {
     }
     events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
 
-    events.push(...this.autoBots());
+    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
   // ---------------- 叫地主（抢地主，规则在 game-rules.resolveBidding） ----------------
 
-  handleBid(seat: Seat, choice: BidChoice): ActionResult {
+  async handleBid(seat: Seat, choice: BidChoice): Promise<ActionResult> {
     if (this.phase !== GamePhase.BIDDING || !this.bid) return err('invalid_action_for_phase', '当前不是叫地主阶段');
     const b = this.bid;
     if (seat !== b.order[b.index]) return err('not_your_turn', '还没轮到你叫');
     if (choice !== 'claim' && choice !== 'pass') return err('invalid_bid', '叫地主动作必须是 claim 或 pass');
 
     const events: RoomEvent[] = this.iBid(seat, choice);
-    events.push(...this.autoBots());
+    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
@@ -306,7 +306,7 @@ export class GameRoom {
 
   // ---------------- 出牌回合（合法性走 game-rules，倍数走 multiplier） ----------------
 
-  handlePlay(seat: Seat, cardIds: readonly string[]): ActionResult {
+  async handlePlay(seat: Seat, cardIds: readonly string[]): Promise<ActionResult> {
     if (this.phase !== GamePhase.PLAYING) return err('invalid_action_for_phase', '当前不是出牌阶段');
     if (this.turnSeat !== seat) return err('not_your_turn', '还没轮到你出');
     const p = this.players[seat]!;
@@ -328,7 +328,7 @@ export class GameRoom {
     }
 
     const events: RoomEvent[] = this.iPlay(seat, cards);
-    events.push(...this.autoBots());
+    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
@@ -355,13 +355,13 @@ export class GameRoom {
     return events;
   }
 
-  handlePass(seat: Seat): ActionResult {
+  async handlePass(seat: Seat): Promise<ActionResult> {
     if (this.phase !== GamePhase.PLAYING) return err('invalid_action_for_phase', '当前不是出牌阶段');
     if (this.turnSeat !== seat) return err('not_your_turn', '还没轮到你');
     if (this.lastPlay === null) return err('must_play_when_leading', '你领出，必须出牌，不能 pass');
 
     const events: RoomEvent[] = this.iPass(seat);
-    events.push(...this.autoBots());
+    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
@@ -408,7 +408,7 @@ export class GameRoom {
   // ---------------- 机器人自动行棋 ----------------
 
   /** 当轮到机器人（叫牌/出牌）时自动推进，直到轮到真人或局面终结。 */
-  private autoBots(): RoomEvent[] {
+  private async autoBots(): Promise<RoomEvent[]> {
     const events: RoomEvent[] = [];
     for (let guard = 0; guard < BOT_LOOP_GUARD; guard++) {
       if (this.phase === GamePhase.SETTLED) break;
@@ -427,7 +427,7 @@ export class GameRoom {
         const p = this.players[seat];
         if (!p || !p.isBot) break;
         const prev = this.lastPlay ? this.lastPlay.hand : null;
-        const cards = choosePlayWithDouZero(
+        const cards = await choosePlayWithDouZero(
           {
             seat,
             landlordSeat: this.landlordSeat!,
@@ -459,7 +459,7 @@ export class GameRoom {
   // ---------------- 路由 / 视图 ----------------
 
   /** 按动作类型路由（join 由 registry 处理，这里只处理座位绑定的动作）。 */
-  handleAction(seat: Seat, action: ClientAction): ActionResult {
+  async handleAction(seat: Seat, action: ClientAction): Promise<ActionResult> {
     switch (action.type) {
       case 'bid':
         return this.handleBid(seat, action.choice);
@@ -481,14 +481,14 @@ export class GameRoom {
    * 当前实现返回 DouZero argmax（top-1）；top-N 带分扩展见 LRM-135（@actor_9）。
    * 不改变对局状态，仅基于当前局面计算并私发；建议来自规则合法动作，安全链不变。
    */
-  private handleHint(seat: Seat): ActionResult {
+  private async handleHint(seat: Seat): Promise<ActionResult> {
     if (this.phase !== GamePhase.PLAYING || this.turnSeat !== seat) {
       return err('not_your_turn', '出牌提示仅在自己的出牌回合可用');
     }
     const p = this.players[seat];
     if (!p) return err('illegal_play', '座位无玩家');
     const prev = this.lastPlay ? this.lastPlay.hand : null;
-    const cards = choosePlayWithDouZero(
+    const cards = await choosePlayWithDouZero(
       {
         seat,
         landlordSeat: this.landlordSeat!,

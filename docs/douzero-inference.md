@@ -23,7 +23,12 @@ The three checkpoints must stay separate:
 
 ## Server Configuration
 
-`apps/server` enables external DouZero inference only when `DOUZERO_INFER_COMMAND` is set. Without it, the current minimal legal bot remains the fallback and the MVP game loop is unchanged.
+`apps/server` enables external DouZero inference via one of two environment variables (checked in this order):
+
+1. `DOUZERO_INFER_URL` — resident HTTP service (production path, LRM-136). The server `POST`s each `DouZeroPlayState` to `${URL}/infer` and reads the action back. Models stay loaded in the service, so per-move latency is a single forward pass.
+2. `DOUZERO_INFER_COMMAND` — process-per-move CLI (smoke / low concurrency). Spawned once per robot move with the state on stdin.
+
+Without either, the current minimal legal bot remains the fallback and the game loop is unchanged. The HTTP path is non-blocking: the GameRoom bot pump and the transport action handler are `async`, and actions for the same room are serialized so a human move cannot race an in-flight bot inference.
 
 Environment variables:
 
@@ -97,12 +102,63 @@ Runtime deps on the inference host: Python 3, `torch`, `numpy`, `gitpython` (the
 `douzero.dmc` package import pulls `git`). CPU torch works (~2s/move for one
 forward pass); GPU is preferred for production.
 
+## Resident inference service (LRM-136)
+
+`apps/server/scripts/douzero-server.py` is the production inference path. It loads
+all three identity models once at startup and serves them over HTTP, eliminating
+the per-move torch import / checkpoint reload that makes the CLI path slow.
+
+Shared model-loading and InfoSet logic live in `apps/server/scripts/douzero_lib.py`
+(used by both the CLI and the server), kept verbatim from the validated wrapper so
+the training-side value alignment (`ground_truth_seed123`, max diff `<5e-7`) still
+holds.
+
+Run on the inference host:
+
+```bash
+export DOUZERO_DOUZERO_REPO=/path/to/kwai/DouZero
+export DOUZERO_LANDLORD_CKPT=.../landlord_weights.ckpt
+export DOUZERO_LANDLORD_UP_CKPT=.../landlord_up_weights.ckpt
+export DOUZERO_LANDLORD_DOWN_CKPT=.../landlord_down_weights.ckpt
+python apps/server/scripts/douzero-server.py --host 127.0.0.1 --port 8080
+# overrides: DOUZERO_SERVER_HOST / DOUZERO_SERVER_PORT
+```
+
+Then point the game server at it:
+
+```bash
+export DOUZERO_INFER_URL=http://127.0.0.1:8080
+export DOUZERO_INFER_TIMEOUT_MS=1500
+```
+
+Endpoints:
+
+- `POST /infer` — body is a `DouZeroPlayState` (same fields the CLI reads on stdin),
+  optionally with integer `topN`. Returns `{"action":[...]}`, plus
+  `{"top":[{"action":[...],"value":float}, ...]}` when `topN` is given (used by the
+  出牌提示 button, LRM-135). Any failure returns HTTP 500 and the server falls back
+  to the minimal legal bot.
+- `GET /health` — `{"status":"ok","models":["landlord","landlord_up","landlord_down"]}`.
+
+The forward pass is serialized with a lock (torch models are not safe for concurrent
+forward on the same object); a single game server issues moves sequentially, so this
+never contends.
+
+### Deployment machine (GPU vs CPU)
+
+146 has CPU only and no GPU. CPU torch gives correct results but each forward pass is
+~tens of ms; acceptable for a low-concurrency test deployment. For production latency
+(especially the click-instant 出牌提示 button) prefer a host with a GPU. The exact
+inference host is pending caozs2/jianghp3 decision; the service is host-agnostic and
+only needs the three checkpoints + torch + the DouZero repo checkout.
+
 ### Known caveats (2026-07-16 smoke on 146)
 
-1. **Process-per-move cost.** The TS adapter `spawnSync`s this command once per
-   robot move, so each move pays torch import + ckpt load (~2s on CPU). Fine for a
-   smoke / low concurrency; for production use a long-lived inference server that
-   loads the three models once.
+1. **Process-per-move cost (command path only).** `DOUZERO_INFER_COMMAND`
+   `spawnSync`s the CLI once per robot move, so each move pays torch import + ckpt
+   load (~2s on CPU). This path is for smoke / low concurrency. For production use
+   the resident `douzero-server.py` service via `DOUZERO_INFER_URL` — it loads the
+   three models once and serves each move as a single forward pass.
 2. **Rule-grammar alignment.** DouZero's move grammar is a strict superset of
    common 斗地主体 rules in places — e.g. it allows plane (飞机) wings of the same
    rank, which our `@card-game/rules` engine rejects (wings must be distinct
