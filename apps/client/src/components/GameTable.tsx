@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { GamePhase, canPlay, identifyHand } from '@card-game/rules';
+import type { BidRound, DoubleChoice } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
@@ -28,6 +29,7 @@ export function GameTable() {
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
+  const double_ = useGameStore((s) => s.double);
   const start = useGameStore((s) => s.start);
   const dismissError = useGameStore((s) => s.dismissError);
   const navigate = useNavigate();
@@ -70,8 +72,29 @@ export function GameTable() {
   const me = snapshot.players.find((p) => p.seat === mySeat);
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
   const lastPlay = snapshot.lastPlay;
+  const bidRound: BidRound | null = snapshot.bidRound ?? null;
+  const bids = snapshot.bids ?? [];
+  const doubles = snapshot.doubles ?? [];
   const nameOf = (seat: number | null | undefined) =>
     seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
+
+  const bidLabelFor = (seat: number): string | null => {
+    const last = [...bids].reverse().find((b) => b.seat === seat);
+    if (!last) return null;
+    if (last.choice === 'claim') return last.round === 'grab' ? '抢地主！' : '叫地主！';
+    return last.round === 'grab' ? '不抢' : '不叫';
+  };
+  const doubleChoiceLabel = (c: DoubleChoice) =>
+    c === 'double' ? '加倍' : c === 'super' ? '超级加倍' : '不加倍';
+  const myDoubleChoice = doubles.find((d) => d.seat === mySeat)?.choice ?? null;
+  const doublePhaseHint: string | null =
+    phase === GamePhase.DOUBLING
+      ? isMyTurn && !myDoubleChoice
+        ? '加倍阶段 · 你的决策'
+        : myDoubleChoice
+          ? `已选：${doubleChoiceLabel(myDoubleChoice)}`
+          : `等待 ${nameOf(snapshot.turnSeat)} 加倍决策`
+      : null;
 
   const identified = selectedCards.length > 0 ? identifyHand(selectedCards) : null;
   const beats = identified != null && canPlay(lastPlay?.hand ?? null, selectedCards);
@@ -115,7 +138,12 @@ export function GameTable() {
   return (
     <div className="table">
       <div className="opponents">
-        <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
+        <SeatBadge
+          p={opponents[0]}
+          active={snapshot.turnSeat === opponents[0]?.seat}
+          bidBubble={opponents[0] ? bidLabelFor(opponents[0].seat) : null}
+          doublePill={opponents[0] ? (doubles.find((d) => d.seat === opponents[0]!.seat)?.choice ?? null) : null}
+        />
         <div className="center">
           <div className="meta-row">
             <span>倍数 ×{snapshot.multiplier}</span>
@@ -148,11 +176,16 @@ export function GameTable() {
             </div>
           )}
         </div>
-        <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
+        <SeatBadge
+          p={opponents[1]}
+          active={snapshot.turnSeat === opponents[1]?.seat}
+          bidBubble={opponents[1] ? bidLabelFor(opponents[1].seat) : null}
+          doublePill={opponents[1] ? (doubles.find((d) => d.seat === opponents[1]!.seat)?.choice ?? null) : null}
+        />
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
-        {snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING) && (
+        {snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING || phase === GamePhase.DOUBLING) && (
           <span
             className={`turn-timer ${secondsLeft <= 3 ? 'danger' : ''}`}
             style={{ '--timer-deg': `${(secondsLeft / 20) * 360}deg` } as CSSProperties}
@@ -164,16 +197,23 @@ export function GameTable() {
         <span>
           {phase === GamePhase.BIDDING
             ? isMyTurn
-              ? '👉 轮到你叫地主'
-              : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
+              ? bidRound === 'grab'
+                ? '👉 你来抢地主'
+                : '👉 轮到你叫地主'
+              : bidRound === 'grab'
+                ? `等待 ${nameOf(snapshot.turnSeat ?? null)} 抢地主`
+                : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
             : phase === GamePhase.PLAYING
               ? isMyTurn
                 ? '👉 轮到你出牌'
                 : `等待 ${nameOf(snapshot.turnSeat ?? null)} 出牌`
-              : phaseLabel(phase)}
+              : doublePhaseHint ?? phaseLabel(phase)}
         </span>
         {me?.role === 'landlord' && <span className="badge">地主</span>}
         {me?.role === 'farmer' && <span className="badge farmer">农民</span>}
+        {myDoubleChoice && phase !== GamePhase.PLAYING && (
+          <span className="bid-bubble self">{doubleChoiceLabel(myDoubleChoice)}</span>
+        )}
       </div>
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
@@ -183,8 +223,18 @@ export function GameTable() {
 
         {phase === GamePhase.BIDDING && isMyTurn ? (
           <div className="btn-row">
-            <button className="btn primary" onClick={() => bid('claim')}>叫地主</button>
-            <button className="btn" onClick={() => bid('pass')}>不叫</button>
+            <button className="btn primary" onClick={() => bid('claim')}>
+              {bidRound === 'grab' ? '抢地主' : '叫地主'}
+            </button>
+            <button className="btn" onClick={() => bid('pass')}>
+              {bidRound === 'grab' ? '不抢' : '不叫'}
+            </button>
+          </div>
+        ) : phase === GamePhase.DOUBLING && isMyTurn && !myDoubleChoice ? (
+          <div className="btn-row">
+            <button className="btn primary" onClick={() => double_('double')}>加倍</button>
+            <button className="btn" onClick={() => double_('super')}>超级加倍</button>
+            <button className="btn ghost" onClick={() => double_('pass')}>不加倍</button>
           </div>
         ) : (
           <div className="btn-row">
@@ -225,15 +275,21 @@ export function GameTable() {
 function SeatBadge({
   p,
   active,
+  bidBubble,
+  doublePill,
 }: {
   p: { name: string; isBot: boolean; handSize: number; role?: string } | undefined;
   active: boolean;
+  bidBubble?: string | null;
+  doublePill?: DoubleChoice | null;
 }) {
   if (!p) return <div className="seat-badge" />;
   const roleIcon = p.role === 'landlord' ? crownIcon : p.role === 'farmer' ? wheatIcon : null;
   const roleLabel = p.role === 'landlord' ? '地主' : p.role === 'farmer' ? '农民' : null;
+  const doublePillLabel = doublePill === 'double' ? '加倍' : doublePill === 'super' ? '超级加倍' : doublePill === 'pass' ? '不加倍' : null;
   return (
     <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
+      {bidBubble && <div className="bid-bubble" key={bidBubble}>{bidBubble}</div>}
       <div className="avatar">
         <PlayerAvatar kind="player" />
         {roleIcon && (
@@ -246,11 +302,12 @@ function SeatBadge({
       </div>
       <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
+      {doublePillLabel && <div className="double-pill">{doublePillLabel}</div>}
     </div>
   );
 }
 
-function phaseLabel(phase: GamePhase): string {
+function phaseLabel(phase: GamePhase | string): string {
   switch (phase) {
     case GamePhase.WAITING:
       return '等待开局';
@@ -258,6 +315,8 @@ function phaseLabel(phase: GamePhase): string {
       return '发牌中';
     case GamePhase.BIDDING:
       return '叫地主';
+    case 'doubling':
+      return '加倍阶段';
     case GamePhase.PLAYING:
       return '出牌中';
     case GamePhase.SETTLED:

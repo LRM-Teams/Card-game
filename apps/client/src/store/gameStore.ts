@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type {
   BidChoice,
   Card,
+  DoubleChoice,
   GamePhase,
   GameResult,
   GameStateSnapshot,
@@ -48,6 +49,7 @@ interface UiState {
   join: (name: string, roomId?: string) => void;
   start: (fillBots?: boolean) => void;
   bid: (choice: BidChoice) => void;
+  double: (choice: DoubleChoice) => void;
   play: () => void;
   pass: () => void;
   toggleSelect: (id: string) => void;
@@ -146,6 +148,8 @@ export const useGameStore = create<UiState>((set, get) => ({
   start: (fillBots) => send({ type: 'start', fillBots }),
 
   bid: (choice) => send({ type: 'bid', choice }),
+
+  double: (choice) => send({ type: 'double', choice }),
 
   play: () => {
     const ids = get().selected;

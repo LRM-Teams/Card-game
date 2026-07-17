@@ -808,6 +808,57 @@ body::before {
   display: none;
 }
 
+/* 叫/抢地主气泡 */
+.bid-bubble {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(20, 14, 5, 0.88);
+  border: 1px solid rgba(245, 197, 66, 0.45);
+  color: var(--ddz-gold-500);
+  font-family: var(--ddz-font-display);
+  font-size: var(--ddz-text-xs);
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 999px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  animation: ddz-bubble-in 200ms ease-out both, ddz-bubble-out 300ms ease-in 2.5s both;
+  pointer-events: none;
+  z-index: 6;
+}
+.bid-bubble.self {
+  position: static;
+  transform: none;
+  margin-left: 6px;
+  animation: none;
+  opacity: 0.85;
+}
+/* 加倍结果标签 */
+.double-pill {
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(245, 197, 66, 0.18);
+  border: 1px solid rgba(245, 197, 66, 0.4);
+  color: var(--ddz-gold-500);
+  font-family: var(--ddz-font-display);
+  font-size: var(--ddz-text-xs);
+  font-weight: 900;
+}
+@keyframes ddz-bubble-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes ddz-bubble-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
 /* Controls */
 .controls {
   display: flex;
