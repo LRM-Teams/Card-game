@@ -53,4 +53,4 @@
 
 ## 6. 预览覆盖
 
-本批交付覆盖：扑克牌普通/大小王/背面、地主/农民、加倍、炸弹、春天、胜利/失败结算。大厅和整桌场景仍使用 `docs/assets/doudizhu-p0-table.svg` 作为当前整屏氛围预览；下一批补大厅主视觉和完整四状态合成预览。
+本批交付覆盖：扑克牌普通/大小王/背面、地主/农民、加倍、炸弹、春天、胜利/失败结算。四状态合成预览见 `docs/assets/previews/lrm-140-visual-preview.svg`；大厅和整桌场景仍可参考 `docs/assets/doudizhu-p0-table.svg`。
