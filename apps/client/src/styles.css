@@ -631,15 +631,15 @@ body::before {
 }
 .hand .card {
   --card-offset: 0;
-  transform: translateY(calc(var(--card-offset) * -1px));
+  transform: translateY(0);
   transform-origin: 50% 100%;
   margin-left: clamp(-20px, -17px, -14px);
 }
 .hand .card:hover:not(:disabled) {
-  transform: translateY(calc(var(--card-offset) * -1px - 14px));
+  transform: translateY(-14px);
 }
 .hand .card.is-selected {
-  transform: translateY(calc(var(--card-offset) * -1px - 26px));
+  transform: translateY(-26px);
 }
 .hand .card:first-child {
   margin-left: 0;
@@ -970,7 +970,7 @@ body::before {
     padding-bottom: 92px;
   }
   .hand .card {
-    transform: translateY(calc(var(--card-offset) * -1px));
+    transform: translateY(0);
   }
   .controls {
     position: sticky;
