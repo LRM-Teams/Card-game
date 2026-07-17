@@ -19,13 +19,22 @@ function threeHumans(): GameRoom {
   return r;
 }
 
-/** 座位 0 叫(claim)、其余 pass → 地主为 0，进入出牌阶段、轮到 0。 */
+/** 加倍环节：按当前 doubling 顺序全部选 pass（×1），推进到出牌阶段。 */
+async function clearDoubling(r: GameRoom): Promise<void> {
+  while (r.phase === 'doubling' && r.doubling) {
+    const seat = r.doubling.order[r.doubling.index]!;
+    await r.handleDouble(seat, 'pass');
+  }
+}
+
+/** 座位 0 叫(claim)、其余 pass → 地主为 0；加倍全 pass → 进入出牌阶段、轮到 0。 */
 async function landlordAt0(): Promise<GameRoom> {
   const r = threeHumans();
   await r.start();
   await r.handleBid(0, 'claim');
   await r.handleBid(1, 'pass');
   await r.handleBid(2, 'pass');
+  await clearDoubling(r);
   return r;
 }
 
@@ -99,20 +108,61 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
     }
   });
 
-  it('最后一个 claim 者为地主、拿底牌共 20 张，其他人农民', async () => {
+  it('多轮抢地主：最后一个 claim 者为地主、拿底牌 20 张；抢一次进 DOUBLING 且倍数 ×2', async () => {
     const r = threeHumans();
     await r.start();
-    expect((await r.handleBid(0, 'claim')).ok).toBe(true); // 0 叫
-    expect((await r.handleBid(1, 'pass')).ok).toBe(true);
-    expect((await r.handleBid(2, 'claim')).ok).toBe(true); // 2 抢 → 最后 claim → 地主
+    expect((await r.handleBid(0, 'claim')).ok).toBe(true); // 0 叫 → 临时地主 0
+    expect((await r.handleBid(1, 'pass')).ok).toBe(true); // 1 不抢
+    expect((await r.handleBid(2, 'claim')).ok).toBe(true); // 2 抢 → 临时地主 2，0/1 各再欠一次反抢
+    expect(r.phase).toBe('bidding'); // 未收口
+    expect(r.turnSeat).toBe(0);
+    expect((await r.handleBid(0, 'pass')).ok).toBe(true); // 0 不反抢
+    expect((await r.handleBid(1, 'pass')).ok).toBe(true); // 1 不反抢 → 一圈无人再抢 → 收口
     expect(r.landlordSeat).toBe(2);
     expect(r.players[2]!.role).toBe('landlord');
     expect(r.players[0]!.role).toBe('farmer');
     expect(r.players[1]!.role).toBe('farmer');
     expect(r.players[2]!.hand).toHaveLength(20);
     expect(r.bottomRevealed).toBe(true);
+    expect(r.phase).toBe('doubling'); // 先进加倍环节，地主先选
+    expect(r.turnSeat).toBe(2);
+    expect(r.mult.multiplier).toBe(2); // 一次抢 → ×2
+    await clearDoubling(r);
     expect(r.phase).toBe('playing');
     expect(r.turnSeat).toBe(2);
+  });
+
+  it('反抢多轮：0叫→1抢→2抢→0反抢→1弃→2弃，地主=0，抢共 3 次 → 倍数 ×8', async () => {
+    const r = threeHumans();
+    await r.start();
+    await r.handleBid(0, 'claim'); // 叫（临时地主 0）
+    await r.handleBid(1, 'claim'); // 抢1（临时地主 1）
+    await r.handleBid(2, 'claim'); // 抢2（临时地主 2）
+    await r.handleBid(0, 'claim'); // 反抢（临时地主 0）
+    expect(r.phase).toBe('bidding'); // 1、2 还可再反抢
+    await r.handleBid(1, 'pass');
+    await r.handleBid(2, 'pass'); // 0 之后 1、2 都弃 → 收口，地主=0
+    expect(r.landlordSeat).toBe(0);
+    expect(r.phase).toBe('doubling');
+    expect(r.mult.multiplier).toBe(8); // 3 次抢/反抢 → 2^3
+  });
+
+  it('加倍环节：地主 super(×4) + 一农民 double(×2) → 抢×2 基础上累积到 ×16', async () => {
+    const r = threeHumans();
+    await r.start();
+    await r.handleBid(0, 'claim'); // 叫（临时地主 0）
+    await r.handleBid(1, 'claim'); // 抢 → 临时地主 1，×2
+    await r.handleBid(2, 'pass'); // 2 不抢
+    await r.handleBid(0, 'pass'); // 0 不反抢 → 1 之后 2、0 都弃 → 地主=1
+    expect(r.landlordSeat).toBe(1);
+    expect(r.phase).toBe('doubling');
+    expect(r.mult.multiplier).toBe(2);
+    // 加倍顺序：地主(1) 先，农民 0、2 后
+    await r.handleDouble(1, 'super'); // ×4
+    await r.handleDouble(0, 'double'); // ×2
+    await r.handleDouble(2, 'pass'); // ×1
+    expect(r.phase).toBe('playing');
+    expect(r.mult.multiplier).toBe(2 * 4 * 2); // 16
   });
 
   it('全员 pass → 流局重发，重新叫牌', async () => {
@@ -305,8 +355,13 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
     await r.start(true);
     const human: Seat = 0;
     for (let guard = 0; guard < 500 && r.phase !== 'settled'; guard++) {
-      if (r.phase === 'bidding' && r.bid && r.bid.order[r.bid.index] === human) {
-        await r.handleBid(human, botBid(r.players[human]!.hand));
+      if (r.phase === 'bidding' && r.bid && r.bid.current === human) {
+        const claimed = r.bid.entries.some((e) => e.seat === human && e.choice === 'claim');
+        await r.handleBid(human, claimed ? 'pass' : botBid(r.players[human]!.hand));
+        continue;
+      }
+      if (r.phase === 'doubling' && r.doubling && r.doubling.order[r.doubling.index] === human) {
+        await r.handleDouble(human, 'pass');
         continue;
       }
       if (r.phase === 'playing' && r.turnSeat === human) {

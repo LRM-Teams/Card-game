@@ -3,7 +3,17 @@
  * 客户端可见的协议类型统一来自 @card-game/rules 的 protocol.ts。
  * 叫地主 / 倍数 / 结算的语义直接复用 game-rules 的类型，不在服务端另定义。
  */
-import type { BidEntry, Card, ErrorCode, GamePhase, MultiplierState, Role, Seat, ServerEvent } from '@card-game/rules';
+import type {
+  BidEntry,
+  Card,
+  DoubleChoice,
+  ErrorCode,
+  GamePhase,
+  MultiplierState,
+  Role,
+  Seat,
+  ServerEvent,
+} from '@card-game/rules';
 
 /** 单个玩家的完整服务端状态（含私密手牌）。 */
 export interface PlayerState {
@@ -16,16 +26,29 @@ export interface PlayerState {
   hand: Card[];
 }
 
-/** 叫地主进行态（收集 BidEntry，最后交给 game-rules 的 resolveBidding 结算）。 */
+/**
+ * 叫/抢地主进行态（多轮 call→grab→反抢）。
+ * 收口判定与结算都走 game-rules（isBiddingComplete / resolveBidding），服务端只驱动轮转。
+ */
 export interface BidState {
-  /** 叫牌顺序（座位序列）。 */
-  order: Seat[];
-  /** 当前轮到 order 的第几位。 */
-  index: number;
-  /** 按顺序收集的出价记录。 */
+  /** 首叫座位（call 轮从这里起）。 */
+  startSeat: Seat;
+  /** 当前该表态的座位；收口后为 null。 */
+  current: Seat | null;
+  /** 按实际叫抢顺序收集的出价记录（喂给 game-rules 判定/结算）。 */
   entries: BidEntry[];
   /** 重发计数（流局时重发，封顶防死循环）。 */
   redeals: number;
+}
+
+/** 加倍进行态（地主敲定后、出牌前，按 order 依次收集各家加倍选择）。 */
+export interface DoublingState {
+  /** 加倍决策顺序（地主先，两农民后）。 */
+  order: Seat[];
+  /** 当前轮到 order 的第几位。 */
+  index: number;
+  /** 已收集的加倍选择。 */
+  choices: { seat: Seat; choice: DoubleChoice }[];
 }
 
 /** 一次出牌记录（服务端内部用，含已识别的 Hand）。 */

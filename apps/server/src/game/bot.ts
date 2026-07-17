@@ -6,7 +6,7 @@
  * 大伟的 AI 接口就绪后，替换 botBid / botChoosePlay 即可，对局状态机不动。
  */
 import { canPlay, HandType, RANK } from '@card-game/rules';
-import type { BidChoice, Card, Hand } from '@card-game/rules';
+import type { BidChoice, Card, DoubleChoice, Hand } from '@card-game/rules';
 
 /** 生成机器人显示名。 */
 export function botName(n: number): string {
@@ -47,6 +47,21 @@ export function botBid(hand: readonly Card[]): BidChoice {
   }
 
   return power >= 5 ? 'claim' : 'pass';
+}
+
+/**
+ * 机器人加倍决策（启发式占位）：手牌够强就加倍，非常强（王炸+炸弹）超级加倍，否则不加倍。
+ * 具体强度模型是 @大伟 的 AI 职责；这里只保证能做出合法选择、让加倍环节跑完。
+ */
+export function botDouble(hand: readonly Card[]): DoubleChoice {
+  const counts = new Map<number, number>();
+  for (const c of hand) counts.set(c.rank, (counts.get(c.rank) ?? 0) + 1);
+  let bombs = 0;
+  for (const [, n] of counts) if (n === 4) bombs += 1;
+  const rocket = hasRocket(hand);
+  if (rocket && bombs >= 1) return 'super';
+  if (rocket || bombs >= 1) return 'double';
+  return 'pass';
 }
 
 /** 取一组同点数牌里 id 最小的 n 张。 */

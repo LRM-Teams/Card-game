@@ -2,13 +2,15 @@
  * GameRoom —— 服务端权威对局状态机。
  *
  * 规则一律调用 @card-game/rules，服务端不另写：
- * - 叫地主：抢地主（A 方案）→ 收集 BidEntry[] 交给 `resolveBidding`。
- * - 倍数：`createMultiplier` + 每次出牌 `applyPlay`（炸弹/王炸 ×2）→ `unitScore`。
+ * - 叫/抢地主：多轮 call→grab→反抢，收口判定 `isBiddingComplete`、结算 `resolveBidding`（最后 claim 者当地主）。
+ * - 倍数：`createMultiplier` → `applyGrabClaims`（抢地主 2^抢次数）→ `applyDoubles`（加倍环节）→ 出牌 `applyPlay`（炸弹/王炸 ×2）→ `unitScore`。
  * - 胜负/结算：`settle({ landlord, winnerSeat, unit })`。
  * - 地主拿底牌：`withBottom`。
  * - 出牌合法性：`canPlay` / `identifyHand`。
  *
- * 状态机：WAITING → DEALING → BIDDING → PLAYING → SETTLED。
+ * 状态机：WAITING → DEALING → BIDDING → DOUBLING → PLAYING → SETTLED。
+ * BIDDING 是多轮：首叫后转抢，抢过可被反抢，直到一圈无人再抢（`isBiddingComplete` 收口）。
+ * DOUBLING：地主敲定、底牌公开后，地主+两农民依次选 加倍/超级加倍/不加倍，连乘进倍数再开打。
  * 真人不足时补机器人到 3 人；机器人用 bot.ts 的最小合法 AI 自动行棋。
  * 纯逻辑：不依赖 socket.io，可被 transport 和单测直接驱动。
  *
@@ -16,12 +18,15 @@
  * 事件流里的 scope 决定下发范围：'room' 广播，{seat} 仅私发该座位。
  */
 import {
+  applyDoubles,
+  applyGrabClaims,
   applyPlay,
   canPlay,
   createMultiplier,
   deal,
   GamePhase,
   identifyHand,
+  isBiddingComplete,
   resolveBidding,
   settle,
   sortCards,
@@ -30,8 +35,10 @@ import {
 } from '@card-game/rules';
 import type {
   BidChoice,
+  BidRound,
   Card,
   ClientAction,
+  DoubleChoice,
   ErrorCode,
   GameResult,
   GameStateSnapshot,
@@ -40,10 +47,10 @@ import type {
   PlayerView,
   Seat,
 } from '@card-game/rules';
-import { botBid, botName } from './bot';
+import { botBid, botDouble, botName } from './bot';
 import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
-import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
+import type { ActionResult, BidState, DoublingState, LastPlay, PlayerState, RoomEvent } from './types';
 
 const SEATS: readonly Seat[] = [0, 1, 2];
 const MAX_REDEALS = 5;
@@ -77,7 +84,9 @@ export class GameRoom {
   /** 当前轮的领出者（赢得上一轮 / 本轮起始）。 */
   leaderSeat: Seat | null = null;
   bid: BidState | null = null;
-  /** 倍数状态（底分 1，每出一个炸弹/王炸 ×2）。 */
+  /** 加倍进行态（DOUBLING 阶段有效；其余为 null）。 */
+  doubling: DoublingState | null = null;
+  /** 倍数状态（底分 1；抢地主/加倍/炸弹逐步 ×2）。 */
   mult: MultiplierState = createMultiplier();
   result: GameResult | null = null;
   /** 出牌/过牌历史，供 DouZero 适配层构造观测状态。 */
@@ -210,10 +219,10 @@ export class GameRoom {
     }
     events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
 
-    // 进入叫地主（抢地主 A 方案，按座位顺序单轮线性收集 BidEntry）
+    // 进入叫/抢地主（多轮 call→grab→反抢，收口走 game-rules.isBiddingComplete）
     this.phase = GamePhase.BIDDING;
-    this.bid = { order: [0, 1, 2], index: 0, entries: [], redeals: 0 };
-    this.turnSeat = this.bid.order[this.bid.index] ?? null;
+    this.bid = { startSeat: 0, current: 0, entries: [], redeals: 0 };
+    this.turnSeat = this.bid.current;
     events.push({ scope: 'room', event: { type: 'phase', phase: GamePhase.BIDDING } });
     if (this.turnSeat !== null) {
       events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat } });
@@ -228,8 +237,7 @@ export class GameRoom {
 
   async handleBid(seat: Seat, choice: BidChoice): Promise<ActionResult> {
     if (this.phase !== GamePhase.BIDDING || !this.bid) return err('invalid_action_for_phase', '当前不是叫地主阶段');
-    const b = this.bid;
-    if (seat !== b.order[b.index]) return err('not_your_turn', '还没轮到你叫');
+    if (seat !== this.bid.current) return err('not_your_turn', '还没轮到你叫');
     if (choice !== 'claim' && choice !== 'pass') return err('invalid_bid', '叫地主动作必须是 claim 或 pass');
 
     const events: RoomEvent[] = this.iBid(seat, choice);
@@ -239,33 +247,78 @@ export class GameRoom {
 
   private iBid(seat: Seat, choice: BidChoice): RoomEvent[] {
     const b = this.bid!;
+    // 首个 claim 之前是「叫地主」(call)，其后是「抢地主」(grab)——供客户端选气泡文案。
+    const round: BidRound = this.currentBidRound();
     b.entries.push({ seat, choice });
-    const events: RoomEvent[] = [{ scope: 'room', event: { type: 'bid', seat, choice } }];
-    b.index += 1;
-    if (b.index >= b.order.length) {
-      events.push(...this.finishBidding());
-    } else {
-      this.turnSeat = b.order[b.index] ?? null;
-      if (this.turnSeat !== null) {
-        events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat } });
+    const events: RoomEvent[] = [{ scope: 'room', event: { type: 'bid', seat, choice, round } }];
+
+    // 收口判定单一事实来源在 game-rules。
+    const progress = isBiddingComplete(b.startSeat, b.entries);
+    if (progress.complete) {
+      if (progress.redeal || progress.landlord === null) {
+        events.push(...this.redealOrForce());
+      } else {
+        events.push(...this.setLandlord(progress.landlord));
       }
-      events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
+      return events;
     }
+    // 未收口：轮到下一个还欠表态的座位（call 轮下一家 / grab 轮可反抢的非地主家）。
+    b.current = this.nextBidder();
+    this.turnSeat = b.current;
+    if (b.current !== null) events.push({ scope: 'room', event: { type: 'turn', seat: b.current } });
+    events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
     return events;
   }
 
-  /** 三家叫完 → 交给 resolveBidding 结算；流局则重发（封顶后强制座位 0 当地主）。 */
-  private finishBidding(): RoomEvent[] {
-    const b = this.bid!;
-    const res = resolveBidding(b.entries);
-    if (!res.redeal && res.landlord !== null) {
-      return this.setLandlord(res.landlord);
+  /** 当前叫抢轮次：已出现 claim → grab（抢/反抢），否则 call（叫）。 */
+  private currentBidRound(): BidRound {
+    return this.bid!.entries.some((e) => e.choice === 'claim') ? 'grab' : 'call';
+  }
+
+  /**
+   * 下一个该表态的座位（多轮驱动，与 game-rules.isBiddingComplete 的收口口径一致）。
+   * - call 轮（尚无 claim）：从上一位的下家起，找还没叫过的座位。
+   * - grab 轮：从上一位的下家起，找「最后一次 claim 之后」还没表态、且非当前临时地主的座位（允许反抢）。
+   */
+  private nextBidder(): Seat | null {
+    const entries = this.bid!.entries;
+    let lastClaimIdx = -1;
+    let lastClaimSeat: Seat | null = null;
+    for (let i = 0; i < entries.length; i++) {
+      if (entries[i]!.choice === 'claim') {
+        lastClaimIdx = i;
+        lastClaimSeat = entries[i]!.seat;
+      }
     }
+    const lastBidder = entries.length ? entries[entries.length - 1]!.seat : null;
+    const from: Seat = lastBidder === null ? this.bid!.startSeat : nextSeat(lastBidder);
+
+    if (lastClaimSeat === null) {
+      const bidded = new Set(entries.map((e) => e.seat));
+      for (let k = 0; k < 3; k++) {
+        const s = ((from + k) % 3) as Seat;
+        if (!bidded.has(s)) return s;
+      }
+      return null;
+    }
+    const respondedAfter = new Set(
+      entries.slice(lastClaimIdx + 1).filter((e) => e.seat !== lastClaimSeat).map((e) => e.seat),
+    );
+    for (let k = 0; k < 3; k++) {
+      const s = ((from + k) % 3) as Seat;
+      if (s !== lastClaimSeat && !respondedAfter.has(s)) return s;
+    }
+    return null;
+  }
+
+  /** 流局：未达重发上限则重发重叫；达上限强制座位 0 当地主兜底。 */
+  private redealOrForce(): RoomEvent[] {
+    const b = this.bid!;
     if (b.redeals < MAX_REDEALS) {
       b.redeals += 1;
       return this.redeal();
     }
-    return this.setLandlord(0); // 封顶兜底
+    return this.setLandlord(0);
   }
 
   private redeal(): RoomEvent[] {
@@ -273,16 +326,19 @@ export class GameRoom {
     for (const seat of SEATS) this.players[seat]!.hand = sortCards(hands[seat]);
     this.bottom = bottom;
     const b = this.bid!;
-    b.index = 0;
     b.entries = [];
+    b.current = b.startSeat;
+    this.turnSeat = b.startSeat;
     const events: RoomEvent[] = [];
     for (const seat of SEATS) {
       events.push({ scope: { seat }, event: { type: 'dealt', hand: this.players[seat]!.hand.map((c) => c.id) } });
     }
+    events.push({ scope: 'room', event: { type: 'turn', seat: b.startSeat } });
     events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
     return events;
   }
 
+  /** 地主敲定：分派身份、公开底牌、把抢地主倍数折进 mult，随后进入加倍环节（DOUBLING）。 */
   private setLandlord(seat: Seat): RoomEvent[] {
     this.landlordSeat = seat;
     for (const s of SEATS) {
@@ -291,15 +347,70 @@ export class GameRoom {
     // 地主拿底牌（共 20 张）
     this.players[seat]!.hand = withBottom(this.players[seat]!.hand, this.bottom);
     this.bottomRevealed = true;
+    // 抢地主倍数：每抢/反抢一次 ×2（规则来自 game-rules.resolveBidding.grabClaims）。
+    this.mult = applyGrabClaims(this.mult, resolveBidding(this.bid?.entries ?? []).grabClaims);
+    this.bid = { ...this.bid!, current: null };
+    const events: RoomEvent[] = [
+      // 地主的新手牌（20 张）私发
+      { scope: { seat }, event: { type: 'dealt', hand: this.players[seat]!.hand.map((c) => c.id) } },
+      { scope: 'room', event: { type: 'landlord', seat, bottom: this.bottom.map((c) => c.id) } },
+    ];
+    events.push(...this.enterDoubling(seat));
+    return events;
+  }
+
+  // ---------------- 加倍环节（地主敲定后、出牌前；倍数走 game-rules.applyDoubles） ----------------
+
+  /** 进入 DOUBLING：地主先、两农民后，依次决定 加倍/超级加倍/不加倍。 */
+  private enterDoubling(landlordSeat: Seat): RoomEvent[] {
+    const order: Seat[] = [landlordSeat, ...SEATS.filter((s) => s !== landlordSeat)];
+    this.doubling = { order, index: 0, choices: [] };
+    this.phase = GamePhase.DOUBLING;
+    this.turnSeat = order[0] ?? null;
+    const events: RoomEvent[] = [{ scope: 'room', event: { type: 'phase', phase: GamePhase.DOUBLING } }];
+    if (this.turnSeat !== null) events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat } });
+    events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
+    return events;
+  }
+
+  async handleDouble(seat: Seat, choice: DoubleChoice): Promise<ActionResult> {
+    if (this.phase !== GamePhase.DOUBLING || !this.doubling) return err('invalid_double', '当前不是加倍阶段');
+    const d = this.doubling;
+    if (seat !== d.order[d.index]) return err('not_your_turn', '还没轮到你加倍');
+    if (choice !== 'double' && choice !== 'super' && choice !== 'pass') {
+      return err('invalid_double', '加倍动作必须是 double / super / pass');
+    }
+    const events: RoomEvent[] = this.iDouble(seat, choice);
+    events.push(...(await this.autoBots()));
+    return ok(events);
+  }
+
+  private iDouble(seat: Seat, choice: DoubleChoice): RoomEvent[] {
+    const d = this.doubling!;
+    d.choices.push({ seat, choice });
+    const events: RoomEvent[] = [{ scope: 'room', event: { type: 'doubled', seat, choice } }];
+    d.index += 1;
+    if (d.index >= d.order.length) {
+      events.push(...this.finishDoubling());
+    } else {
+      this.turnSeat = d.order[d.index] ?? null;
+      if (this.turnSeat !== null) events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat } });
+      events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
+    }
+    return events;
+  }
+
+  /** 各家加倍收齐 → 连乘进倍数 → 开打（地主领出）。 */
+  private finishDoubling(): RoomEvent[] {
+    const d = this.doubling!;
+    this.mult = applyDoubles(this.mult, d.choices.map((c) => c.choice));
+    const seat = this.landlordSeat!;
     this.phase = GamePhase.PLAYING;
     this.turnSeat = seat;
     this.leaderSeat = seat;
     this.lastPlay = null;
     this.passCount = 0;
     return [
-      // 地主的新手牌（20 张）私发
-      { scope: { seat }, event: { type: 'dealt', hand: this.players[seat]!.hand.map((c) => c.id) } },
-      { scope: 'room', event: { type: 'landlord', seat, bottom: this.bottom.map((c) => c.id) } },
       { scope: 'room', event: { type: 'phase', phase: GamePhase.PLAYING } },
       { scope: 'room', event: { type: 'turn', seat } },
       { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
@@ -416,10 +527,21 @@ export class GameRoom {
       if (this.phase === GamePhase.SETTLED) break;
 
       if (this.phase === GamePhase.BIDDING && this.bid) {
-        const seat = this.bid.order[this.bid.index]!;
+        const seat = this.bid.current;
+        if (seat === null) break;
         const p = this.players[seat];
         if (!p || !p.isBot) break;
-        events.push(...this.iBid(seat, botBid(p.hand)));
+        // 机器人不反抢自己：已叫/抢过的座位再轮到时直接不抢，保证收口（否则确定性策略会无限反抢）。
+        const alreadyClaimed = this.bid.entries.some((e) => e.seat === seat && e.choice === 'claim');
+        events.push(...this.iBid(seat, alreadyClaimed ? 'pass' : botBid(p.hand)));
+        continue;
+      }
+
+      if (this.phase === GamePhase.DOUBLING && this.doubling) {
+        const seat = this.doubling.order[this.doubling.index]!;
+        const p = this.players[seat];
+        if (!p || !p.isBot) break;
+        events.push(...this.iDouble(seat, botDouble(p.hand)));
         continue;
       }
 
@@ -465,6 +587,8 @@ export class GameRoom {
     switch (action.type) {
       case 'bid':
         return this.handleBid(seat, action.choice);
+      case 'double':
+        return this.handleDouble(seat, action.choice);
       case 'play':
         return this.handlePlay(seat, action.cards);
       case 'pass':
@@ -530,11 +654,11 @@ export class GameRoom {
       phase: this.phase,
       players,
       turnSeat: this.turnSeat,
-      // 抢地主/加倍尚为 MVP：当前实现是单轮线性叫地主（call 轮），无 grab 轮与 DOUBLING 阶段。
-      // 协议已预留字段（见 protocol.ts BidRound/DoubleChoice），补齐待 game-rules 多轮 resolver（@大伟）落地。
-      bidRound: this.phase === GamePhase.BIDDING ? 'call' : null,
-      bids: this.bid ? this.bid.entries.map((e) => ({ seat: e.seat, choice: e.choice, round: 'call' as const })) : [],
-      doubles: [],
+      // 当前叫抢轮次：首个 claim 前为 call（叫地主），其后为 grab（抢地主）。
+      bidRound: this.phase === GamePhase.BIDDING && this.bid ? this.currentBidRound() : null,
+      // 叫/抢公开历史，逐条带轮次标签（此条之前出现过 claim 即为 grab），供客户端渲染气泡。
+      bids: this.bid ? bidsWithRounds(this.bid.entries) : [],
+      doubles: this.doubling ? this.doubling.choices.map((c) => ({ seat: c.seat, choice: c.choice })) : [],
       landlordSeat: this.landlordSeat,
       hostSeat: this.hostSeat,
       bottom: this.bottomRevealed ? this.bottom.map((c) => c.id) : [],
@@ -552,6 +676,18 @@ function smallestFallback(hand: readonly Card[]): Card[] {
   const sorted = [...hand].sort((a, b) => a.rank - b.rank);
   const c = sorted[0];
   return c ? [c] : [];
+}
+
+/** 给叫抢历史逐条打轮次标签：某条之前出现过 claim 即为 grab（抢/反抢），否则 call（叫）。 */
+function bidsWithRounds(
+  entries: readonly { seat: Seat; choice: BidChoice }[],
+): { seat: Seat; choice: BidChoice; round: BidRound }[] {
+  let claimed = false;
+  return entries.map((e) => {
+    const round: BidRound = claimed ? 'grab' : 'call';
+    if (e.choice === 'claim') claimed = true;
+    return { seat: e.seat, choice: e.choice, round };
+  });
 }
 
 export type { Hand };
