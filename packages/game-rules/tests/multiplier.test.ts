@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { HandType, type Hand } from '../src/types';
-import { createMultiplier, applyPlay, computeMultiplier, isDoublingPlay, unitScore, applySpring, applyAntiSpring, applyReveal, applyGrab, applyDoubles, doubleFactor } from '../src/multiplier';
+import { createMultiplier, applyPlay, computeMultiplier, isDoublingPlay, unitScore, applySpring, applyAntiSpring, applyReveal } from '../src/multiplier';
 
 const hand = (type: HandType): Hand => ({ type, cards: [], mainRank: 3, length: 1 });
 
@@ -53,32 +53,5 @@ describe('multiplier', () => {
     const s2 = applyPlay(s, hand(HandType.BOMB));
     expect(s.multiplier).toBe(1); // 原状态不变
     expect(s2.multiplier).toBe(2);
-  });
-});
-
-describe('抢地主 / 加倍倍数', () => {
-  it('doubleFactor：pass ×1、double ×2、super ×4', () => {
-    expect(doubleFactor('pass')).toBe(1);
-    expect(doubleFactor('double')).toBe(2);
-    expect(doubleFactor('super')).toBe(4);
-  });
-
-  it('applyGrab：把抢地主因子乘进倍数（不改入参）', () => {
-    const s = createMultiplier();
-    const s2 = applyGrab(s, 4);
-    expect(s2.multiplier).toBe(4);
-    expect(s.multiplier).toBe(1); // 原状态不变
-  });
-
-  it('applyDoubles：各家加倍选择连乘（super×4 · double×2 · pass×1 = ×8）', () => {
-    const s = applyDoubles(createMultiplier(), ['super', 'double', 'pass']);
-    expect(s.multiplier).toBe(8);
-  });
-
-  it('抢地主 ×2 叠加加倍 ×8 → 累积 ×16', () => {
-    let s = createMultiplier();
-    s = applyGrab(s, 2);
-    s = applyDoubles(s, ['double', 'double', 'pass']); // ×4
-    expect(s.multiplier).toBe(8);
   });
 });

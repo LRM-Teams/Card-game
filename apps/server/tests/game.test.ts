@@ -19,22 +19,13 @@ function threeHumans(): GameRoom {
   return r;
 }
 
-/** 加倍环节：按当前 doubling 顺序全部选 pass（×1），推进到出牌阶段。 */
-async function clearDoubling(r: GameRoom): Promise<void> {
-  while (r.phase === 'doubling' && r.doubling) {
-    const seat = r.doubling.order[r.doubling.index]!;
-    await r.handleDouble(seat, 'pass');
-  }
-}
-
-/** 座位 0 叫(claim)、其余 pass → 地主为 0；加倍全 pass → 进入出牌阶段、轮到 0。 */
+/** 座位 0 叫(claim)、其余 pass → 地主为 0，进入出牌阶段、轮到 0。 */
 async function landlordAt0(): Promise<GameRoom> {
   const r = threeHumans();
   await r.start();
   await r.handleBid(0, 'claim');
   await r.handleBid(1, 'pass');
   await r.handleBid(2, 'pass');
-  await clearDoubling(r);
   return r;
 }
 
@@ -108,7 +99,7 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
     }
   });
 
-  it('最后一个 claim 者为地主、拿底牌共 20 张，其他人农民；抢地主进 DOUBLING 且倍数 ×2', async () => {
+  it('最后一个 claim 者为地主、拿底牌共 20 张，其他人农民', async () => {
     const r = threeHumans();
     await r.start();
     expect((await r.handleBid(0, 'claim')).ok).toBe(true); // 0 叫
@@ -120,31 +111,8 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
     expect(r.players[1]!.role).toBe('farmer');
     expect(r.players[2]!.hand).toHaveLength(20);
     expect(r.bottomRevealed).toBe(true);
-    // 地主敲定后先进加倍环节（DOUBLING），轮到地主先选；一次「抢」→ 倍数 ×2。
-    expect(r.phase).toBe('doubling');
-    expect(r.turnSeat).toBe(2);
-    expect(r.mult.multiplier).toBe(2);
-    await clearDoubling(r); // 全 pass
     expect(r.phase).toBe('playing');
     expect(r.turnSeat).toBe(2);
-    expect(r.mult.multiplier).toBe(2); // 加倍全 pass，维持 ×2
-  });
-
-  it('加倍环节：地主 super(×4) + 一农民 double(×2) → 在抢地主 ×2 基础上累积到 ×16', async () => {
-    const r = threeHumans();
-    await r.start();
-    await r.handleBid(0, 'claim'); // 叫
-    await r.handleBid(1, 'claim'); // 抢 ×2
-    await r.handleBid(2, 'claim'); // 再抢 ×2 → 抢地主共 ×4，地主=2
-    expect(r.landlordSeat).toBe(2);
-    expect(r.phase).toBe('doubling');
-    expect(r.mult.multiplier).toBe(4); // 两次抢
-    // 加倍顺序：地主(2) 先，农民 0、1 后
-    await r.handleDouble(2, 'super'); // ×4
-    await r.handleDouble(0, 'double'); // ×2
-    await r.handleDouble(1, 'pass'); // ×1
-    expect(r.phase).toBe('playing');
-    expect(r.mult.multiplier).toBe(4 * 4 * 2); // 32
   });
 
   it('全员 pass → 流局重发，重新叫牌', async () => {
@@ -339,10 +307,6 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
     for (let guard = 0; guard < 500 && r.phase !== 'settled'; guard++) {
       if (r.phase === 'bidding' && r.bid && r.bid.order[r.bid.index] === human) {
         await r.handleBid(human, botBid(r.players[human]!.hand));
-        continue;
-      }
-      if (r.phase === 'doubling' && r.doubling && r.doubling.order[r.doubling.index] === human) {
-        await r.handleDouble(human, 'pass');
         continue;
       }
       if (r.phase === 'playing' && r.turnSeat === human) {

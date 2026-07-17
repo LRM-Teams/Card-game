@@ -7,7 +7,7 @@
  * 状态以服务端为准，客户端只做展示与乐观更新；权威判定走 game-rules。
  * 叫地主 / 倍数 / 结算的语义统一引用 game-rules 的 bidding / multiplier / settlement。
  */
-import type { BidChoice, BidRound, DoubleChoice } from './bidding';
+import type { BidChoice } from './bidding';
 import type { Side } from './settlement';
 import type { Hand, Seat } from './types';
 
@@ -21,8 +21,24 @@ export enum GamePhase {
   SETTLED = 'settled', // 已结算
 }
 
-// BidRound / DoubleChoice 定义在 bidding.ts（规则域），此处从 './bidding' 引入并对外 re-export。
-export type { BidRound, DoubleChoice };
+/**
+ * 叫/抢地主的轮次（对标腾讯欢乐斗地主：先「叫地主」轮，再「抢地主」轮）。
+ * 客户端据此显示按钮与气泡文案（叫地主/不叫 vs 抢地主/不抢）。
+ *
+ * 轮转语义（服务端状态机驱动，权威判定由 game-rules 提供多轮 resolver —— 依赖 @大伟）：
+ * - call 轮：从首叫位起依次 claim(叫) / pass(不叫)。首个 claim 者成为临时地主，进入 grab 轮。
+ * - grab 轮：其余玩家依次 claim(抢) / pass(不抢)；抢过之后可被「反抢」，直到一圈无人再抢。
+ * - 最后一个 claim 的座位当地主；call 轮全 pass → 流局重发。
+ * - 倍数：叫=基础 1；每一次「抢/反抢」×2（倍数累积由 multiplier 规则统一处理 —— 依赖 @大伟）。
+ */
+export type BidRound = 'call' | 'grab';
+
+/**
+ * 加倍选择（DOUBLING 阶段，每名玩家一次）。
+ * - `double` 加倍 ×2；`super` 超级加倍 ×4；`pass` 不加倍（×1）。
+ * 具体倍数折算由 game-rules 的 multiplier 规则统一处理（依赖 @大伟）。
+ */
+export type DoubleChoice = 'double' | 'super' | 'pass';
 
 /** 玩家身份。 */
 export type Role = 'landlord' | 'farmer' | undefined;
