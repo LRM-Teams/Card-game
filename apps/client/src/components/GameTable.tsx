@@ -5,6 +5,11 @@ import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
+// 开源可商用图标（Iconify MDI 集，Apache-2.0），离线打包避免运行时网络依赖。
+// 来源：https://icon-sets.iconify.sh/mdi/  License: https://github.com/Templarian/MaterialDesign/blob/master/LICENSE
+import { Icon } from '@iconify/react';
+import crownIcon from '@iconify-icons/mdi/crown';
+import wheatIcon from '@iconify-icons/mdi/wheat';
 import { useNavigate } from '@tanstack/react-router';
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
@@ -225,15 +230,20 @@ function SeatBadge({
   active: boolean;
 }) {
   if (!p) return <div className="seat-badge" />;
-  const badgeSrc = p.role === 'landlord' ? '/badges/landlord.svg' : p.role === 'farmer' ? '/badges/farmer.svg' : null;
+  const roleIcon = p.role === 'landlord' ? crownIcon : p.role === 'farmer' ? wheatIcon : null;
   const roleLabel = p.role === 'landlord' ? '地主' : p.role === 'farmer' ? '农民' : null;
   return (
     <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
       <div className="avatar">
         <PlayerAvatar kind="player" />
-        {badgeSrc && <img className="role-icon" src={badgeSrc} alt={roleLabel ?? ''} title={roleLabel ?? ''} />}
+        {roleIcon && (
+          <Icon
+            className="role-icon"
+            icon={roleIcon}
+            aria-label={roleLabel ?? undefined}
+          />
+        )}
       </div>
-      {badgeSrc && <div className="role-plate"><img src={badgeSrc} alt="" />{roleLabel}</div>}
       <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
     </div>
