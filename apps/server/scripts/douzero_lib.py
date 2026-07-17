@@ -274,14 +274,16 @@ def score(info, legal, models):
     """
     model = models.get(info.player_position)
     raw = forward_values(model, info)
-    vals = [float(round(float(v), 6)) for v in raw]
+    # Full-precision values for ranking + alignment (round only in the debug dump
+    # below, so /infer can be compared against training-side fixtures at <5e-7).
+    vals = [float(v) for v in raw]
     best = int(np.argmax(raw, axis=0)) if len(legal) > 1 else 0
     dbg = {
         "position": info.player_position,
         "num_legal_actions": len(legal),
         "obs_z_shape": list(get_obs(info)["z_batch"].shape),
         "obs_x_shape": list(get_obs(info)["x_batch"].shape),
-        "values": vals,
+        "values": [round(v, 6) for v in vals],
         "legal_actions": [[int(c) for c in a] for a in legal],
     }
     return [int(c) for c in legal[best]], vals, dbg
