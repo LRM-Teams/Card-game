@@ -66,6 +66,7 @@ export function GameTable() {
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
   const lastPlay = snapshot.lastPlay;
   const recentPlayOf = (seat: Seat | undefined): PlayRecord | null => (seat == null ? null : snapshot.recentPlays[seat]);
+  const recentPassOf = (seat: Seat | undefined): boolean => (seat == null ? false : snapshot.recentPasses[seat]);
   const nameOf = (seat: number | null | undefined) =>
     seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
 
@@ -117,6 +118,7 @@ export function GameTable() {
           p={opponents[0]}
           active={snapshot.turnSeat === opponents[0]?.seat}
           play={recentPlayOf(opponents[0]?.seat)}
+          passed={recentPassOf(opponents[0]?.seat)}
           nameOf={nameOf}
         />
         <div className="center">
@@ -148,6 +150,7 @@ export function GameTable() {
           p={opponents[1]}
           active={snapshot.turnSeat === opponents[1]?.seat}
           play={recentPlayOf(opponents[1]?.seat)}
+          passed={recentPassOf(opponents[1]?.seat)}
           nameOf={nameOf}
         />
       </div>
@@ -180,6 +183,7 @@ export function GameTable() {
       <PlayerPlayZone
         className="my-play-zone"
         play={recentPlayOf(mySeat == null ? undefined : (mySeat as Seat))}
+        passed={recentPassOf(mySeat == null ? undefined : (mySeat as Seat))}
         nameOf={nameOf}
         emptyLabel="你还没出牌"
       />
@@ -234,34 +238,38 @@ function PlayerColumn({
   p,
   active,
   play,
+  passed,
   nameOf,
 }: {
   p: PlayerView | undefined;
   active: boolean;
   play: PlayRecord | null;
+  passed: boolean;
   nameOf: (seat: number | null | undefined) => string;
 }) {
   return (
     <div className="player-column">
       <SeatBadge p={p} active={active} />
-      <PlayerPlayZone play={play} nameOf={nameOf} emptyLabel="等待出牌" />
+      <PlayerPlayZone play={play} passed={passed} nameOf={nameOf} emptyLabel="等待出牌" />
     </div>
   );
 }
 
 function PlayerPlayZone({
   play,
+  passed,
   nameOf,
   emptyLabel,
   className = '',
 }: {
   play: PlayRecord | null;
+  passed: boolean;
   nameOf: (seat: number | null | undefined) => string;
   emptyLabel: string;
   className?: string;
 }) {
   return (
-    <div className={`play-zone ${className} ${play ? 'has-play' : ''}`}>
+    <div className={`play-zone ${className} ${play ? 'has-play' : ''} ${passed ? 'has-pass' : ''}`}>
       {play ? (
         <>
           <div className="play-zone-label">
@@ -273,6 +281,8 @@ function PlayerPlayZone({
             ))}
           </div>
         </>
+      ) : passed ? (
+        <div className="play-zone-pass">不出</div>
       ) : (
         <div className="play-zone-empty">{emptyLabel}</div>
       )}

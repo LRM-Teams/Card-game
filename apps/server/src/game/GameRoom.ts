@@ -81,6 +81,7 @@ export class GameRoom {
   bottomRevealed = false;
   lastPlay: LastPlay | null = null;
   recentPlays: [LastPlay | null, LastPlay | null, LastPlay | null] = [null, null, null];
+  recentPasses: [boolean, boolean, boolean] = [false, false, false];
   passCount = 0;
   /** 当前轮的领出者（赢得上一轮 / 本轮起始）。 */
   leaderSeat: Seat | null = null;
@@ -206,6 +207,7 @@ export class GameRoom {
     this.bottomRevealed = false;
     this.lastPlay = null;
     this.recentPlays = [null, null, null];
+    this.recentPasses = [false, false, false];
     this.passCount = 0;
     this.leaderSeat = null;
     this.landlordSeat = null;
@@ -283,6 +285,7 @@ export class GameRoom {
     this.bottom = bottom;
     this.lastPlay = null;
     this.recentPlays = [null, null, null];
+    this.recentPasses = [false, false, false];
     const b = this.bid!;
     b.index = 0;
     b.entries = [];
@@ -307,6 +310,7 @@ export class GameRoom {
     this.leaderSeat = seat;
     this.lastPlay = null;
     this.recentPlays = [null, null, null];
+    this.recentPasses = [false, false, false];
     this.passCount = 0;
     return [
       // 地主的新手牌（20 张）私发
@@ -353,6 +357,7 @@ export class GameRoom {
     const hand = identifyHand(cards)!; // 已由 handlePlay 校验合法
     this.lastPlay = { seat, hand };
     this.recentPlays[seat] = { seat, hand };
+    this.recentPasses[seat] = false;
     this.leaderSeat = seat;
     this.passCount = 0;
     this.playHistory.push({ seat, cards: [...cards], isPass: false });
@@ -382,11 +387,15 @@ export class GameRoom {
 
   private iPass(seat: Seat): RoomEvent[] {
     this.passCount += 1;
+    this.recentPlays[seat] = null;
+    this.recentPasses[seat] = true;
     this.playHistory.push({ seat, cards: [], isPass: true });
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'passed', seat } }];
     if (this.passCount >= 2) {
       // 两人连过 → 本轮结束，领出者继续领出
       this.lastPlay = null;
+      this.recentPlays = [null, null, null];
+      this.recentPasses = [false, false, false];
       this.passCount = 0;
       this.turnSeat = this.leaderSeat;
       events.push({ scope: 'room', event: { type: 'turn', seat: this.turnSeat! } });
@@ -549,6 +558,7 @@ export class GameRoom {
       bottomRevealed: this.bottomRevealed,
       lastPlay: this.lastPlay ? { seat: this.lastPlay.seat, hand: this.lastPlay.hand } : null,
       recentPlays: this.recentPlays.map((play) => (play ? { seat: play.seat, hand: play.hand } : null)) as [LastPlay | null, LastPlay | null, LastPlay | null],
+      recentPasses: [...this.recentPasses],
       passCount: this.passCount,
       multiplier: this.mult.multiplier,
       result: this.result,
