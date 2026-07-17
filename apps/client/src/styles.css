@@ -392,6 +392,13 @@ body::before {
 .seat-badge.farmer .avatar {
   box-shadow: 0 0 0 3px rgba(126, 240, 168, 0.14), 0 0 14px rgba(126, 240, 168, 0.16), inset 0 0 0 1px rgba(0, 0, 0, 0.16);
 }
+.role-character {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+}
 .role-plate {
   display: inline-flex;
   align-items: center;
@@ -697,7 +704,9 @@ body::before {
   text-shadow: 0 0 16px rgba(245, 197, 66, 0.36);
 }
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin-left: var(--ddz-space-2);
   font-size: 11px;
   font-weight: 900;
@@ -705,6 +714,11 @@ body::before {
   padding: 2px 8px;
   border-radius: 999px;
   color: #fff;
+}
+.badge img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 .badge.farmer {
   background: linear-gradient(180deg, #4d8cff, #2d6cdf);
@@ -762,7 +776,13 @@ body::before {
   color: var(--ddz-red-500);
 }
 .card.is-joker {
-  background: linear-gradient(145deg, #fffef5, #f6e9b8 70%, #dfbd63);
+  background: #fffdf4;
+}
+.card-joker-art {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 .card-rank {
   font-size: 18px;
@@ -867,6 +887,13 @@ body::before {
   border-radius: var(--ddz-radius-lg);
   padding: 32px 38px;
   box-shadow: var(--ddz-shadow-panel);
+}
+.result-badge {
+  width: 96px;
+  height: 96px;
+  display: block;
+  margin: 0 auto 8px;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.36));
 }
 .result-card h2 {
   margin: 0 0 var(--ddz-space-3);
