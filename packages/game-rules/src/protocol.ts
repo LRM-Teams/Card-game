@@ -15,10 +15,30 @@ import type { Hand, Seat } from './types';
 export enum GamePhase {
   WAITING = 'waiting', // 房间等待开局
   DEALING = 'dealing', // 发牌中
-  BIDDING = 'bidding', // 叫地主
+  BIDDING = 'bidding', // 叫/抢地主（含 call 轮与 grab 轮，见 BidRound）
+  DOUBLING = 'doubling', // 加倍环节（地主敲定后、出牌前；农民/地主各选 加倍/超级加倍/不加倍）
   PLAYING = 'playing', // 出牌中
   SETTLED = 'settled', // 已结算
 }
+
+/**
+ * 叫/抢地主的轮次（对标腾讯欢乐斗地主：先「叫地主」轮，再「抢地主」轮）。
+ * 客户端据此显示按钮与气泡文案（叫地主/不叫 vs 抢地主/不抢）。
+ *
+ * 轮转语义（服务端状态机驱动，权威判定由 game-rules 提供多轮 resolver —— 依赖 @大伟）：
+ * - call 轮：从首叫位起依次 claim(叫) / pass(不叫)。首个 claim 者成为临时地主，进入 grab 轮。
+ * - grab 轮：其余玩家依次 claim(抢) / pass(不抢)；抢过之后可被「反抢」，直到一圈无人再抢。
+ * - 最后一个 claim 的座位当地主；call 轮全 pass → 流局重发。
+ * - 倍数：叫=基础 1；每一次「抢/反抢」×2（倍数累积由 multiplier 规则统一处理 —— 依赖 @大伟）。
+ */
+export type BidRound = 'call' | 'grab';
+
+/**
+ * 加倍选择（DOUBLING 阶段，每名玩家一次）。
+ * - `double` 加倍 ×2；`super` 超级加倍 ×4；`pass` 不加倍（×1）。
+ * 具体倍数折算由 game-rules 的 multiplier 规则统一处理（依赖 @大伟）。
+ */
+export type DoubleChoice = 'double' | 'super' | 'pass';
 
 /** 玩家身份。 */
 export type Role = 'landlord' | 'farmer' | undefined;
@@ -33,6 +53,7 @@ export type ErrorCode =
   | 'not_your_turn' // 还没轮到你
   | 'illegal_play' // 出牌不合法（不是有效牌型 / 压不过上家 / 手里没这些牌）
   | 'invalid_bid' // 叫地主动作非法（choice 非 claim/pass）
+  | 'invalid_double' // 加倍动作非法（choice 非 double/super/pass，或不在 DOUBLING 阶段）
   | 'must_play_when_leading' // 领出（自由出牌）时不能 pass
   | 'not_enough_players' // 不足 3 名真人且未选择补机器人，无法开局
   | 'not_your_turn'; // 当前不是你的回合（如非自己出牌回合请求出牌提示）
@@ -73,8 +94,14 @@ export interface GameResult {
 export interface GameStateSnapshot {
   phase: GamePhase;
   players: PlayerView[];
-  /** 轮到谁（BIDDING 时为当前叫牌者；PLAYING 时为当前出牌者）。 */
+  /** 轮到谁（BIDDING 时为当前叫/抢者；DOUBLING 时为当前加倍决策者；PLAYING 时为当前出牌者）。 */
   turnSeat: Seat | null;
+  /** 当前叫抢轮次；仅 BIDDING 阶段有意义，其余为 null。 */
+  bidRound: BidRound | null;
+  /** 本局叫/抢地主的公开历史（供客户端渲染气泡/回顾）；未进入 BIDDING 时为空数组。 */
+  bids: { seat: Seat; choice: BidChoice; round: BidRound }[];
+  /** 加倍环节各家选择（公开）；未进入/未经过 DOUBLING 时为空数组。 */
+  doubles: { seat: Seat; choice: DoubleChoice }[];
   landlordSeat: Seat | null;
   /** 房主座位（创建房间的真人；WAITING 阶段房主可决定开局/补机器人）。 */
   hostSeat: Seat | null;
@@ -94,7 +121,8 @@ export interface GameStateSnapshot {
 export type ClientAction =
   | { type: 'join'; name: string; roomId?: string }
   | { type: 'start'; fillBots?: boolean } // fillBots=true：不足 3 真人时补机器人开局；默认 false：等人齐（3 真人）才开局
-  | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫
+  | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫/不抢；服务端按当前 BidRound 判定语义
+  | { type: 'double'; choice: DoubleChoice } // 加倍环节：double 加倍 / super 超级加倍 / pass 不加倍
   | { type: 'play'; cards: string[] } // 要出的牌 id 列表
   | { type: 'pass' }
   | { type: 'hint' }; // 请求 AI 出牌提示（DouZero top-N 合法出牌建议，按模型分从高到低）
@@ -109,9 +137,11 @@ export type ServerEvent =
   | { type: 'phase'; phase: GamePhase }
   // —— 私有：只发给对应玩家 ——
   | { type: 'dealt'; hand: string[] } // 你的手牌（card id）
-  // —— 叫地主 ——
-  | { type: 'bid'; seat: Seat; choice: BidChoice }
+  // —— 叫/抢地主 ——
+  | { type: 'bid'; seat: Seat; choice: BidChoice; round?: BidRound } // round 供客户端区分「叫地主」与「抢地主」气泡文案（缺省视为 call）
   | { type: 'landlord'; seat: Seat; bottom: string[] } // 地主敲定 + 底牌公开
+  // —— 加倍 ——
+  | { type: 'doubled'; seat: Seat; choice: DoubleChoice } // 某玩家的加倍决策（公开）
   // —— 出牌回合 ——
   | { type: 'turn'; seat: Seat }
   | { type: 'played'; seat: Seat; hand: Hand }

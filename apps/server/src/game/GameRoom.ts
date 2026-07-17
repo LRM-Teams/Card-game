@@ -530,6 +530,11 @@ export class GameRoom {
       phase: this.phase,
       players,
       turnSeat: this.turnSeat,
+      // 抢地主/加倍尚为 MVP：当前实现是单轮线性叫地主（call 轮），无 grab 轮与 DOUBLING 阶段。
+      // 协议已预留字段（见 protocol.ts BidRound/DoubleChoice），补齐待 game-rules 多轮 resolver（@大伟）落地。
+      bidRound: this.phase === GamePhase.BIDDING ? 'call' : null,
+      bids: this.bid ? this.bid.entries.map((e) => ({ seat: e.seat, choice: e.choice, round: 'call' as const })) : [],
+      doubles: [],
       landlordSeat: this.landlordSeat,
       hostSeat: this.hostSeat,
       bottom: this.bottomRevealed ? this.bottom.map((c) => c.id) : [],
