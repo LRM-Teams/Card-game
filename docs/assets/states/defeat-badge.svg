@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="140" viewBox="0 0 180 140" role="img" aria-label="Defeat settlement badge">
+  <rect x="20" y="34" width="140" height="82" rx="22" fill="#43556f" stroke="#b9c4d6" stroke-width="6"/>
+  <path d="M48 56h84M48 94h84" stroke="#dbe4f1" stroke-width="7" stroke-linecap="round" opacity=".65"/>
+  <text x="90" y="84" text-anchor="middle" font-family="sans-serif" font-size="38" font-weight="900" fill="#f3f7ff">惜败</text>
+</svg>
