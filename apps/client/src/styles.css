@@ -630,15 +630,15 @@ body::before {
 }
 .hand .card {
   --card-offset: 0;
-  transform: translateY(calc(var(--card-offset) * -2px)) rotate(calc(var(--card-offset) * 3deg));
+  transform: translateY(calc(var(--card-offset) * -1px));
   transform-origin: 50% 100%;
   margin-left: clamp(-20px, -17px, -14px);
 }
 .hand .card:hover:not(:disabled) {
-  transform: translateY(calc(var(--card-offset) * -2px - 14px)) rotate(calc(var(--card-offset) * 3deg));
+  transform: translateY(calc(var(--card-offset) * -1px - 14px));
 }
 .hand .card.is-selected {
-  transform: translateY(calc(var(--card-offset) * -2px - 26px)) rotate(calc(var(--card-offset) * 3deg));
+  transform: translateY(calc(var(--card-offset) * -1px - 26px));
 }
 .hand .card:first-child {
   margin-left: 0;
@@ -969,7 +969,7 @@ body::before {
     padding-bottom: 92px;
   }
   .hand .card {
-    transform: translateY(calc(var(--card-offset) * -1px)) rotate(calc(var(--card-offset) * 2deg));
+    transform: translateY(calc(var(--card-offset) * -1px));
   }
   .controls {
     position: sticky;
