@@ -15,6 +15,7 @@ import {
   douZeroPosition,
   fromDouZeroAction,
   listLegalActions,
+  rankPlaySuggestions,
   toDouZeroCards,
 } from '../src/game/douzeroAdapter';
 import { GameRoom } from '../src/game/GameRoom';
@@ -288,6 +289,72 @@ describe('DouZero adapter', () => {
         createDouZeroHttpAdapter(base, { timeoutMs: 2000 }),
       );
       expect(chosen?.map((c) => c.rank)).toEqual([RANK.FIVE]);
+    });
+  });
+
+  it('HTTP rankActions 返回 top-N 带分，rankPlaySuggestions 给出多条规则合法建议', async () => {
+    await withMockServer((_req, res) => {
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ action: [5], top: [{ action: [5], value: 0.9 }, { action: [6], value: 0.5 }] }));
+    }, async (base) => {
+      const suggestions = await rankPlaySuggestions(
+        {
+          seat: 0,
+          landlordSeat: 0,
+          hand: [card(RANK.FIVE, '5a'), card(RANK.SIX, '6a')],
+          prev: identifyHand([card(RANK.FOUR)])!,
+          bottom: [],
+          handCounts: { 0: 2, 1: 17, 2: 17 },
+          history: [],
+        },
+        createDouZeroHttpAdapter(base, { timeoutMs: 2000 }),
+        5,
+      );
+      expect(suggestions.map((cs) => cs.map((c) => c.rank))).toEqual([[RANK.FIVE], [RANK.SIX]]);
+    });
+  });
+
+  it('rankActions 缺失（command 适配器）时退化为 choosePlay top-1', async () => {
+    const adapter = createDouZeroCommandAdapter(
+      `node -e "process.stdin.resume();process.stdin.on('data',()=>process.stdout.write(JSON.stringify([5])))"`,
+    );
+    expect(adapter.rankActions).toBeUndefined();
+    const suggestions = await rankPlaySuggestions(
+      {
+        seat: 0,
+        landlordSeat: 0,
+        hand: [card(RANK.FIVE, '5a')],
+        prev: null,
+        bottom: [],
+        handCounts: { 0: 1, 1: 17, 2: 17 },
+        history: [],
+      },
+      adapter,
+      3,
+    );
+    expect(suggestions.map((cs) => cs.map((c) => c.rank))).toEqual([[RANK.FIVE]]);
+  });
+
+  it('rankActions 返回的动作不在手牌/合法集会被规则过滤掉', async () => {
+    await withMockServer((_req, res) => {
+      res.setHeader('content-type', 'application/json');
+      // 17(=2) 不在手牌/合法集 → 应被过滤；[5] 合法 → 保留
+      res.end(JSON.stringify({ action: [5], top: [{ action: [17], value: 0.99 }, { action: [5], value: 0.4 }] }));
+    }, async (base) => {
+      const suggestions = await rankPlaySuggestions(
+        {
+          seat: 0,
+          landlordSeat: 0,
+          hand: [card(RANK.FIVE, '5a')],
+          prev: null,
+          bottom: [],
+          handCounts: { 0: 1, 1: 17, 2: 17 },
+          history: [],
+        },
+        createDouZeroHttpAdapter(base, { timeoutMs: 2000 }),
+        5,
+      );
+      expect(suggestions.map((cs) => cs.map((c) => c.rank))).toEqual([[RANK.FIVE]]);
     });
   });
 

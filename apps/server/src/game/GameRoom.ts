@@ -41,13 +41,15 @@ import type {
   Seat,
 } from '@card-game/rules';
 import { botBid, botName } from './bot';
-import { choosePlayWithDouZero } from './douzeroAdapter';
+import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
 import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
 
 const SEATS: readonly Seat[] = [0, 1, 2];
 const MAX_REDEALS = 5;
 const BOT_LOOP_GUARD = 2000;
+/** AI 出牌提示一次返回的建议条数（按模型分从高到低，前端可循环切换）。 */
+const HINT_TOP_N = 3;
 
 function ok(events: RoomEvent[]): ActionResult {
   return { ok: true, events };
@@ -488,7 +490,7 @@ export class GameRoom {
     const p = this.players[seat];
     if (!p) return err('illegal_play', '座位无玩家');
     const prev = this.lastPlay ? this.lastPlay.hand : null;
-    const cards = await choosePlayWithDouZero(
+    const suggestions = (await rankPlaySuggestions(
       {
         seat,
         landlordSeat: this.landlordSeat!,
@@ -503,8 +505,8 @@ export class GameRoom {
         history: this.playHistory,
       },
       this.aiAdapter,
-    );
-    const suggestions = cards && cards.length > 0 ? [cards.map((c) => c.id)] : [];
+      HINT_TOP_N,
+    )).map((cs) => cs.map((c) => c.id));
     return ok([{ scope: { seat }, event: { type: 'hint', suggestions } }]);
   }
 

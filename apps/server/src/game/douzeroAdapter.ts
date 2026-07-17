@@ -44,6 +44,18 @@ export interface BotPlayContext {
 
 export interface DouZeroBotAdapter {
   choosePlay(state: DouZeroPlayState): Promise<DouZeroAction | null>;
+  /**
+   * Top-N scored legal actions (resident path only), high to low. Returns `null`
+   * when unsupported (e.g. the process-per-move command adapter) so the caller
+   * can fall back to a single choosePlay suggestion.
+   */
+  rankActions?(state: DouZeroPlayState, topN: number): Promise<RankEntry[] | null>;
+}
+
+/** A model-scored action, used for ranked top-N suggestions (hint button). */
+export interface RankEntry {
+  action: DouZeroAction;
+  value: number;
 }
 
 export interface DouZeroCommandAdapterOptions {
@@ -93,33 +105,67 @@ export interface DouZeroHttpAdapterOptions {
  * error, non-2xx response, timeout, or invalid payload resolves to `null`, and
  * the caller falls back to the minimal legal bot.
  */
+function parseDouZeroAction(payload: unknown): DouZeroAction | null {
+  const action = Array.isArray(payload)
+    ? payload
+    : typeof payload === 'object' && payload !== null && Array.isArray((payload as { action?: unknown }).action)
+      ? (payload as { action: unknown[] }).action
+      : null;
+  return isDouZeroAction(action) ? action : null;
+}
+
+function parseRankedTop(payload: unknown): RankEntry[] | undefined {
+  if (typeof payload !== 'object' || payload === null) return undefined;
+  const top = (payload as { top?: unknown }).top;
+  if (!Array.isArray(top)) return undefined;
+  const entries: RankEntry[] = [];
+  for (const entry of top) {
+    if (!entry || typeof entry !== 'object') continue;
+    const action = (entry as { action?: unknown }).action;
+    const value = (entry as { value?: unknown }).value;
+    if (Array.isArray(action) && isDouZeroAction(action) && typeof value === 'number') {
+      entries.push({ action, value });
+    }
+  }
+  return entries.length > 0 ? entries : undefined;
+}
+
+async function postInfer(
+  base: string,
+  state: DouZeroPlayState,
+  timeoutMs: number,
+  topN?: number,
+): Promise<{ action: DouZeroAction | null; top?: RankEntry[] } | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${base}/infer`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(topN && topN > 0 ? { ...state, topN } : state),
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const payload: unknown = await res.json();
+    return { action: parseDouZeroAction(payload), top: parseRankedTop(payload) };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function createDouZeroHttpAdapter(url: string, options: DouZeroHttpAdapterOptions = {}): DouZeroBotAdapter {
   const timeoutMs = options.timeoutMs ?? 1500;
   const base = url.replace(/\/+$/, '');
   return {
     async choosePlay(state) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const res = await fetch(`${base}/infer`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(state),
-          signal: controller.signal,
-        });
-        if (!res.ok) return null;
-        const payload: unknown = await res.json();
-        const action = Array.isArray(payload)
-          ? payload
-          : typeof payload === 'object' && payload !== null && Array.isArray((payload as { action?: unknown }).action)
-            ? (payload as { action: unknown[] }).action
-            : null;
-        return isDouZeroAction(action) ? action : null;
-      } catch {
-        return null;
-      } finally {
-        clearTimeout(timer);
-      }
+      const r = await postInfer(base, state, timeoutMs);
+      return r?.action ?? null;
+    },
+    async rankActions(state, topN) {
+      const r = await postInfer(base, state, timeoutMs, topN);
+      return r?.top ?? null;
     },
   };
 }
@@ -401,4 +447,50 @@ export async function choosePlayWithDouZero(
   } catch {
     return botChoosePlay(ctx.hand, ctx.prev);
   }
+}
+
+/**
+ * Top-N AI play suggestions for the hint button (LRM-135). Uses the resident
+ * adapter's `rankActions` when available; otherwise falls back to a single
+ * choosePlay suggestion so the command/smoke path still works. Every suggestion
+ * is revalidated by the rule engine (legalActions membership + canPlay) and
+ * de-duplicated, so the AI never recommends an illegal or repeated play.
+ */
+export async function rankPlaySuggestions(
+  ctx: BotPlayContext,
+  adapter: DouZeroBotAdapter | undefined,
+  topN: number,
+): Promise<Card[][]> {
+  if (!adapter || !adapter.rankActions) {
+    const cards = await choosePlayWithDouZero(ctx, adapter);
+    return cards && cards.length > 0 ? [cards] : [];
+  }
+
+  const state = buildDouZeroPlayState(ctx);
+  let ranked: RankEntry[] | null;
+  try {
+    ranked = await adapter.rankActions(state, topN);
+  } catch {
+    ranked = null;
+  }
+  if (!ranked || ranked.length === 0) {
+    const cards = await choosePlayWithDouZero(ctx, adapter);
+    return cards && cards.length > 0 ? [cards] : [];
+  }
+
+  const seen = new Set<string>();
+  const suggestions: Card[][] = [];
+  for (const entry of ranked) {
+    if (suggestions.length >= topN) break;
+    const { action } = entry;
+    if (action.length === 0) continue; // pass is not a play suggestion
+    if (!state.legalActions.some((legal) => sameDouZeroAction(legal, action))) continue;
+    const cards = fromDouZeroAction(action, ctx.hand);
+    if (!cards || !canPlay(ctx.prev, cards)) continue;
+    const key = cards.map((c) => c.id).sort().join(',');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    suggestions.push(cards);
+  }
+  return suggestions;
 }

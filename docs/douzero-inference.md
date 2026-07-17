@@ -137,7 +137,9 @@ Endpoints:
   optionally with integer `topN`. Returns `{"action":[...]}`, plus
   `{"top":[{"action":[...],"value":float}, ...]}` when `topN` is given (used by the
   出牌提示 button, LRM-135). Any failure returns HTTP 500 and the server falls back
-  to the minimal legal bot.
+  to the minimal legal bot. `GameRoom.handleHint` now requests `topN=3` and returns
+  multiple ranked, rule-filtered suggestions; the command (process-per-move) path
+  has no `rankActions` and falls back to a single suggestion.
 - `GET /health` — `{"status":"ok","models":["landlord","landlord_up","landlord_down"]}`.
 
 The forward pass is serialized with a lock (torch models are not safe for concurrent
