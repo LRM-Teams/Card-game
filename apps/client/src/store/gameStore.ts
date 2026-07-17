@@ -5,6 +5,7 @@ import type {
   GamePhase,
   GameResult,
   GameStateSnapshot,
+  HintSuggestion,
   PlayRecord,
 } from '@card-game/rules';
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
@@ -27,6 +28,9 @@ export interface UiError {
   at: number;
 }
 
+/** 默认提示请求返回的候选数。 */
+const HINT_TOP_N = 3;
+
 interface UiState {
   status: ConnStatus;
   myName: string;
@@ -36,12 +40,14 @@ interface UiState {
   selected: string[];
   snapshot: GameStateSnapshot | null;
   lastError: UiError | null;
-  /** AI 出牌提示：按模型分从高到低的合法出牌建议（每组 card id）；为空表示无建议。 */
-  hints: string[][];
-  /** 当前选用的提示组下标；点「提示」时循环切换。 */
+  /** 服务端返回的 top-N 出牌建议（按优先级从高到低）。 */
+  hints: HintSuggestion[];
+  /** 当前选中的建议下标（-1 表示未选中任何建议）。 */
   hintIndex: number;
-  /** 提示文案：如 AI 建议不出（管不上）。 */
-  hintMessage: string | null;
+  /** 建议对应的 turnSeat，轮次变化即作废。 */
+  hintTurnSeat: number | null;
+  /** 是否正在等待服务端返回建议。 */
+  hintLoading: boolean;
 
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
@@ -52,11 +58,11 @@ interface UiState {
   pass: () => void;
   toggleSelect: (id: string) => void;
   clearSelect: () => void;
-  /** 请求 AI 出牌提示（服务端 DouZero top-N）。 */
-  requestHint: () => void;
-  /** 在已有提示组中循环切换下一组（top-N 时可用）。 */
-  cycleHint: () => void;
   dismissError: () => void;
+  /** 请求 top-N 出牌建议；已有有效建议时改为循环下一条。 */
+  hint: () => void;
+  /** 清空当前建议（轮次/手牌变化时调用）。 */
+  clearHints: () => void;
 }
 
 export const useGameStore = create<UiState>((set, get) => ({
@@ -69,8 +75,9 @@ export const useGameStore = create<UiState>((set, get) => ({
   snapshot: null,
   lastError: null,
   hints: [],
-  hintIndex: 0,
-  hintMessage: null,
+  hintIndex: -1,
+  hintTurnSeat: null,
+  hintLoading: false,
 
   init: () => {
     connect();
@@ -81,11 +88,14 @@ export const useGameStore = create<UiState>((set, get) => ({
           set({ mySeat: e.seat, roomId: e.roomId });
           break;
         case 'snapshot': {
-          const prevTurn = get().snapshot?.turnSeat;
-          const turnChanged = prevTurn !== undefined && prevTurn !== e.state.turnSeat;
+          // 轮次变化后旧建议作废（不是我的回合 / 上家牌变了都算）。
+          const prevTurn = get().hintTurnSeat;
+          const turnChanged = prevTurn !== null && e.state.turnSeat !== prevTurn;
           set({
             snapshot: e.state,
-            ...(turnChanged ? { hints: [], hintIndex: 0, hintMessage: null } : {}),
+            ...(turnChanged
+              ? { hints: [], hintIndex: -1, hintTurnSeat: null, hintLoading: false }
+              : {}),
           });
           break;
         }
@@ -93,7 +103,21 @@ export const useGameStore = create<UiState>((set, get) => ({
           const hand = e.hand
             .map((id) => cardOf(id))
             .filter((c): c is Card => !!c);
-          set({ myHand: hand, selected: [] });
+          set({ myHand: hand, selected: [], hints: [], hintIndex: -1, hintTurnSeat: null, hintLoading: false });
+          break;
+        }
+        case 'hint': {
+          // 选中首条建议：把它对应的手牌高亮选中，玩家可直接点「出牌」。
+          const hints = e.suggestions;
+          const first = hints[0];
+          const selected = first ? first.hand.cards.map((c) => c.id) : get().selected;
+          set({
+            hints,
+            hintIndex: hints.length > 0 ? 0 : -1,
+            selected,
+            hintTurnSeat: get().snapshot?.turnSeat ?? null,
+            hintLoading: false,
+          });
           break;
         }
         case 'played': {
@@ -103,22 +127,15 @@ export const useGameStore = create<UiState>((set, get) => ({
             set((st) => ({
               myHand: st.myHand.filter((card) => !playedIds.has(card.id)),
               selected: st.selected.filter((id) => !playedIds.has(id)),
+              hints: [],
+              hintIndex: -1,
+              hintTurnSeat: null,
             }));
           }
           break;
         }
-        case 'hint': {
-          // 服务端按模型分从高到低返回合法出牌建议；空表示建议不出。
-          const groups = e.suggestions;
-          if (groups.length === 0) {
-            set({ hints: [], hintIndex: 0, selected: [], hintMessage: 'AI 建议不出（管不上）' });
-          } else {
-            set({ hints: groups, hintIndex: 0, selected: groups[0] ?? [], hintMessage: null });
-          }
-          break;
-        }
         case 'error':
-          set({ lastError: { code: e.code, message: e.message, at: Date.now() } });
+          set({ lastError: { code: e.code, message: e.message, at: Date.now() }, hintLoading: false });
           break;
         // phase / turn / passed / landlord / settled 均已被 snapshot 覆盖
         default:
@@ -136,9 +153,6 @@ export const useGameStore = create<UiState>((set, get) => ({
       selected: [],
       snapshot: null,
       lastError: null,
-      hints: [],
-      hintIndex: 0,
-      hintMessage: null,
     });
     send({ type: 'join', name, roomId: roomId?.trim() || undefined });
   },
@@ -156,7 +170,7 @@ export const useGameStore = create<UiState>((set, get) => ({
 
   pass: () => {
     send({ type: 'pass' });
-    set({ selected: [] });
+    set({ selected: [], hints: [], hintIndex: -1, hintTurnSeat: null });
   },
 
   toggleSelect: (id) =>
@@ -168,25 +182,27 @@ export const useGameStore = create<UiState>((set, get) => ({
 
   clearSelect: () => set({ selected: [] }),
 
-  requestHint: () => {
-    // 若本回合已有提示组，直接循环下一组，避免重复推理；否则向服务端请求。
-    const { hints } = get();
-    if (hints.length > 0) {
-      get().cycleHint();
+  dismissError: () => set({ lastError: null }),
+
+  hint: () => {
+    const st = get();
+    // 已有当前轮的建议：循环到下一条并自动选中。
+    if (st.hints.length > 0) {
+      const next = (st.hintIndex + 1) % st.hints.length;
+      const suggestion = st.hints[next];
+      set({
+        hintIndex: next,
+        selected: suggestion ? suggestion.hand.cards.map((c) => c.id) : st.selected,
+      });
       return;
     }
-    set({ hintMessage: null });
-    send({ type: 'hint' });
+    // 否则向服务端请求（仅本人回合会返回建议；否则服务端回 error）。
+    set({ hintLoading: true });
+    send({ type: 'hint', topN: HINT_TOP_N });
   },
 
-  cycleHint: () =>
-    set((st) => {
-      if (st.hints.length === 0) return {};
-      const next = (st.hintIndex + 1) % st.hints.length;
-      return { hintIndex: next, selected: st.hints[next] ?? [], hintMessage: null };
-    }),
-
-  dismissError: () => set({ lastError: null }),
+  clearHints: () =>
+    set({ hints: [], hintIndex: -1, hintTurnSeat: null, hintLoading: false }),
 }));
 
 // —— 便捷派生选择器 ——

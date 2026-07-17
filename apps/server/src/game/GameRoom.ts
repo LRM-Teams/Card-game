@@ -36,12 +36,13 @@ import type {
   GameResult,
   GameStateSnapshot,
   Hand,
+  HintSuggestion,
   MultiplierState,
   PlayerView,
   Seat,
 } from '@card-game/rules';
 import { botBid, botName } from './bot';
-import { choosePlayWithDouZero } from './douzeroAdapter';
+import { choosePlayWithDouZero, rankPlaysWithDouZero } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
 import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
 
@@ -365,6 +366,44 @@ export class GameRoom {
     return ok(events);
   }
 
+  /**
+   * 出牌提示（仅本人回合）：返回 top-N 合法出牌建议，私发给请求者。
+   * 安全链不变——所有建议均经 legalActions + canPlay 复校；提示仅作建议，权威仍在服务端。
+   * 不推进状态机、不触发机器人行棋（只读）。
+   */
+  handleHint(seat: Seat, topN = 3): ActionResult {
+    if (this.phase !== GamePhase.PLAYING) return err('invalid_action_for_phase', '当前不是出牌阶段');
+    if (this.turnSeat !== seat) return err('not_your_turn', '还没轮到你');
+    const p = this.players[seat]!;
+    const prev = this.lastPlay ? this.lastPlay.hand : null;
+    const ranked = rankPlaysWithDouZero(
+      {
+        seat,
+        landlordSeat: this.landlordSeat!,
+        hand: p.hand,
+        prev,
+        bottom: this.bottom,
+        handCounts: {
+          0: this.players[0]!.hand.length,
+          1: this.players[1]!.hand.length,
+          2: this.players[2]!.hand.length,
+        },
+        history: this.playHistory,
+      },
+      this.aiAdapter,
+      topN,
+    );
+    const suggestions: HintSuggestion[] = [];
+    for (const r of ranked) {
+      const hand = identifyHand(r.cards);
+      if (!hand) continue;
+      const suggestion: HintSuggestion = { hand };
+      if (r.score !== undefined) suggestion.score = r.score;
+      suggestions.push(suggestion);
+    }
+    return ok([{ scope: { seat }, event: { type: 'hint', suggestions } }]);
+  }
+
   private iPass(seat: Seat): RoomEvent[] {
     this.passCount += 1;
     this.playHistory.push({ seat, cards: [], isPass: true });
@@ -467,45 +506,13 @@ export class GameRoom {
         return this.handlePlay(seat, action.cards);
       case 'pass':
         return this.handlePass(seat);
+      case 'hint':
+        return this.handleHint(seat, action.topN ?? 3);
       case 'start':
         return this.start(action.fillBots ?? false);
-      case 'hint':
-        return this.handleHint(seat);
       default:
         return err('invalid_action_for_phase', `当前阶段不支持动作：${action.type}`);
     }
-  }
-
-  /**
-   * AI 出牌提示：私发给请求者，返回按模型分从高到低的合法出牌建议。
-   * 当前实现返回 DouZero argmax（top-1）；top-N 带分扩展见 LRM-135（@actor_9）。
-   * 不改变对局状态，仅基于当前局面计算并私发；建议来自规则合法动作，安全链不变。
-   */
-  private handleHint(seat: Seat): ActionResult {
-    if (this.phase !== GamePhase.PLAYING || this.turnSeat !== seat) {
-      return err('not_your_turn', '出牌提示仅在自己的出牌回合可用');
-    }
-    const p = this.players[seat];
-    if (!p) return err('illegal_play', '座位无玩家');
-    const prev = this.lastPlay ? this.lastPlay.hand : null;
-    const cards = choosePlayWithDouZero(
-      {
-        seat,
-        landlordSeat: this.landlordSeat!,
-        hand: p.hand,
-        prev,
-        bottom: this.bottom,
-        handCounts: {
-          0: this.players[0]!.hand.length,
-          1: this.players[1]!.hand.length,
-          2: this.players[2]!.hand.length,
-        },
-        history: this.playHistory,
-      },
-      this.aiAdapter,
-    );
-    const suggestions = cards && cards.length > 0 ? [cards.map((c) => c.id)] : [];
-    return ok([{ scope: { seat }, event: { type: 'hint', suggestions } }]);
   }
 
   /** 生成全量公开快照（不含任何玩家手牌；底牌未公开前不下发）。 */

@@ -828,6 +828,15 @@ body::before {
 .hint.warn {
   color: #ffd166;
 }
+/* 出牌「提示」按钮：区别于上面的 .hint 文本胶囊，用独立类名避免冲突 */
+.btn.hint-btn {
+  background: linear-gradient(180deg, rgba(255, 209, 102, 0.22), rgba(255, 209, 102, 0.08));
+  border-color: rgba(255, 209, 102, 0.55);
+  color: #ffd166;
+}
+.btn.hint-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, rgba(255, 209, 102, 0.34), rgba(255, 209, 102, 0.14));
+}
 .err-toast,
 .error-banner {
   background: rgba(214, 48, 49, 0.18);

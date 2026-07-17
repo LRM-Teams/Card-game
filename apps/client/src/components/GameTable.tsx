@@ -4,7 +4,6 @@ import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
-import { PlayerAvatar } from './PlayerAvatar';
 import { useNavigate } from '@tanstack/react-router';
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
@@ -15,15 +14,16 @@ export function GameTable() {
   const selected = useGameStore((s) => s.selected);
   const status = useGameStore((s) => s.status);
   const lastError = useGameStore((s) => s.lastError);
+  const hints = useGameStore((s) => s.hints);
+  const hintIndex = useGameStore((s) => s.hintIndex);
+  const hintLoading = useGameStore((s) => s.hintLoading);
   const toggleSelect = useGameStore((s) => s.toggleSelect);
   const clearSelect = useGameStore((s) => s.clearSelect);
-  const requestHint = useGameStore((s) => s.requestHint);
-  const hintMessage = useGameStore((s) => s.hintMessage);
-  const hints = useGameStore((s) => s.hints);
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
   const start = useGameStore((s) => s.start);
+  const hint = useGameStore((s) => s.hint);
   const dismissError = useGameStore((s) => s.dismissError);
   const navigate = useNavigate();
 
@@ -72,6 +72,8 @@ export function GameTable() {
   const beats = identified != null && canPlay(lastPlay?.hand ?? null, selectedCards);
   const canPlayNow = isMyTurn && phase === GamePhase.PLAYING && identified != null && beats;
 
+  const activeHint = hintIndex >= 0 ? hints[hintIndex] : undefined;
+
   const liveHint =
     selectedCards.length === 0
       ? lastPlay
@@ -79,7 +81,9 @@ export function GameTable() {
         : '自由出牌'
       : identified == null
         ? '不是合法牌型（提示，权威在服务端）'
-        : `${HAND_TYPE_LABEL[identified.type]} · ${beats ? '可压过' : '管不上'}`;
+        : `${HAND_TYPE_LABEL[identified.type]} · ${beats ? '可压过' : '管不上'}${
+            activeHint?.score != null ? ` · 模型分 ${activeHint.score.toFixed(3)}` : ''
+          }`;
 
   if (phase === GamePhase.SETTLED && snapshot.result) {
     const r = snapshot.result;
@@ -174,7 +178,10 @@ export function GameTable() {
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
 
       <div className="controls">
-        <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>
+        <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{liveHint}</div>
+        {hints.length === 0 && hintIndex === -1 && !hintLoading && isMyTurn && phase === GamePhase.PLAYING && (
+          <div className="tip-line">点「提示」获取合法出牌建议（再点切换下一条）</div>
+        )}
 
         {phase === GamePhase.BIDDING && isMyTurn ? (
           <div className="btn-row">
@@ -188,20 +195,24 @@ export function GameTable() {
             </button>
             <button
               className="btn"
-              onClick={requestHint}
-              disabled={!(isMyTurn && phase === GamePhase.PLAYING)}
-              title="AI 出牌提示（DouZero）"
-            >
-              提示{hints.length > 1 ? ` ${hintIndexLabel(hints.length)}` : ''}
-            </button>
-            <button
-              className="btn"
               onClick={pass}
               disabled={!(isMyTurn && phase === GamePhase.PLAYING && lastPlay)}
             >
               不出
             </button>
-            <button className="btn primary cta" onClick={play} disabled={!canPlayNow}>
+            <button
+              className="btn hint-btn"
+              onClick={hint}
+              disabled={!(isMyTurn && phase === GamePhase.PLAYING) || hintLoading}
+              title="从合法出牌里取一个建议（再点切换下一条）"
+            >
+              {hintLoading
+                ? '计算中…'
+                : hints.length > 0
+                  ? `提示 ${hintIndex + 1}/${hints.length}`
+                  : '提示'}
+            </button>
+            <button className="btn primary" onClick={play} disabled={!canPlayNow}>
               出牌
             </button>
           </div>
@@ -230,7 +241,7 @@ function SeatBadge({
   return (
     <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
       <div className="avatar">
-        <PlayerAvatar kind="player" />
+        <span>{p.isBot ? '🤖' : '🙂'}</span>
         {badgeSrc && <img className="role-icon" src={badgeSrc} alt={roleLabel ?? ''} title={roleLabel ?? ''} />}
       </div>
       {badgeSrc && <div className="role-plate"><img src={badgeSrc} alt="" />{roleLabel}</div>}
@@ -255,9 +266,4 @@ function phaseLabel(phase: GamePhase): string {
     default:
       return String(phase);
   }
-}
-
-/** 提示按钮后缀：有多组建议时显示组数，提示可重复点切换。 */
-function hintIndexLabel(count: number): string {
-  return count > 1 ? ` ·${count}组` : '';
 }

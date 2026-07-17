@@ -34,8 +34,7 @@ export type ErrorCode =
   | 'illegal_play' // 出牌不合法（不是有效牌型 / 压不过上家 / 手里没这些牌）
   | 'invalid_bid' // 叫地主动作非法（choice 非 claim/pass）
   | 'must_play_when_leading' // 领出（自由出牌）时不能 pass
-  | 'not_enough_players' // 不足 3 名真人且未选择补机器人，无法开局
-  | 'not_your_turn'; // 当前不是你的回合（如非自己出牌回合请求出牌提示）
+  | 'not_enough_players'; // 不足 3 名真人且未选择补机器人，无法开局
 
 /** 牌桌上某玩家的公开视图（绝不含他人手牌）。 */
 export interface PlayerView {
@@ -52,6 +51,19 @@ export interface PlayerView {
 export interface PlayRecord {
   seat: Seat;
   hand: Hand;
+}
+
+/**
+ * 出牌提示建议（仅私发给请求者本人）。
+ *
+ * 仅作建议：牌型/牌面已过我方规则合法性校验，但权威判定仍在服务端出牌时复校。
+ * cards 内的 id 对应请求者本人手牌，客户端可直接据此高亮/选中。
+ */
+export interface HintSuggestion {
+  /** 识别出的合法牌型（cards 为请求者本人手牌）。 */
+  hand: Hand;
+  /** 模型/启发式打分，越高越优先；启发式无打分时不填。 */
+  score?: number;
 }
 
 /** 结算结果（得分口径与 game-rules 的 settlement 完全一致）。 */
@@ -97,7 +109,7 @@ export type ClientAction =
   | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫
   | { type: 'play'; cards: string[] } // 要出的牌 id 列表
   | { type: 'pass' }
-  | { type: 'hint' }; // 请求 AI 出牌提示（DouZero top-N 合法出牌建议，按模型分从高到低）
+  | { type: 'hint'; topN?: number }; // 请求 top-N 合法出牌建议（仅本人回合；结果私发回请求者）
 
 /** 服务端 → 客户端事件。 */
 export type ServerEvent =
@@ -116,9 +128,9 @@ export type ServerEvent =
   | { type: 'turn'; seat: Seat }
   | { type: 'played'; seat: Seat; hand: Hand }
   | { type: 'passed'; seat: Seat }
+  // —— 出牌提示（私有：只发给请求者；建议仅供参考，权威在服务端）——
+  | { type: 'hint'; suggestions: HintSuggestion[] }
   // —— 结算 ——
   | { type: 'settled'; result: GameResult }
-  // —— AI 出牌提示（私发给请求者；按模型分从高到低的合法出牌建议，每组为 card id 列表；空数组表示建议不出）——
-  | { type: 'hint'; suggestions: string[][] }
   // —— 错误（只回送给发起动作的客户端）——
   | { type: 'error'; code: ErrorCode; message: string };

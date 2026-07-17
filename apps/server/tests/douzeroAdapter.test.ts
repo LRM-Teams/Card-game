@@ -12,6 +12,8 @@ import {
   douZeroPosition,
   fromDouZeroAction,
   listLegalActions,
+  rankLegalActionsHeuristic,
+  rankPlaysWithDouZero,
   toDouZeroCards,
 } from '../src/game/douzeroAdapter';
 import { GameRoom } from '../src/game/GameRoom';
@@ -209,5 +211,116 @@ describe('DouZero adapter', () => {
     expect(room.phase).toBe('settled');
     expect(room.result).not.toBeNull();
     expect(room.playHistory.length).toBeGreaterThan(0);
+  });
+});
+
+describe('DouZero adapter · 出牌提示 top-N（LRM-135）', () => {
+  it('命令适配器可在 ranked 模式下返回带分的 top-N 合法动作', () => {
+    // 子进程模拟 douzero-infer.py 的 ranked 契约：
+    // {"action":[5],"ranked":[{"action":[5],"score":0.9},{"action":[20,30],"score":0.1}]}
+    const adapter = createDouZeroCommandAdapter(
+      `node -e "process.stdin.resume();process.stdin.on('data',()=>process.stdout.write(JSON.stringify({action:[5],ranked:[{action:[5],score:0.9},{action:[20,30],score:0.1}]})))"`,
+    );
+    const state = buildDouZeroPlayState({
+      seat: 0,
+      landlordSeat: 0,
+      hand: [card(RANK.FIVE), card(RANK.SMALL_JOKER), card(RANK.BIG_JOKER)],
+      prev: identifyHand([card(RANK.FOUR)])!,
+      bottom: [],
+      handCounts: { 0: 3, 1: 17, 2: 17 },
+      history: [],
+    });
+
+    expect(adapter.rankPlays).toBeDefined();
+    const ranked = adapter.rankPlays!(state, 3);
+    expect(ranked).not.toBeNull();
+    expect(ranked![0]).toEqual({ action: [5], score: 0.9 });
+    expect(ranked![1]).toEqual({ action: [20, 30], score: 0.1 });
+  });
+
+  it('rankPlays 旧版裸数组输出返回 null，调用方回退启发式', () => {
+    const adapter = createDouZeroCommandAdapter(
+      `node -e "process.stdin.resume();process.stdin.on('data',()=>process.stdout.write(JSON.stringify([5])))"`,
+    );
+    const state = buildDouZeroPlayState({
+      seat: 0,
+      landlordSeat: 0,
+      hand: [card(RANK.FIVE)],
+      prev: identifyHand([card(RANK.FOUR)])!,
+      bottom: [],
+      handCounts: { 0: 1, 1: 17, 2: 17 },
+      history: [],
+    });
+    expect(adapter.rankPlays!(state, 3)).toBeNull();
+  });
+
+  it('rankPlaysWithDouZero：模型路径映射回真实手牌并按分排序、复校合法', () => {
+    const hand = [card(RANK.FIVE, '5a'), card(RANK.SMALL_JOKER, 'js'), card(RANK.BIG_JOKER, 'jb')];
+    const prev = identifyHand([card(RANK.FOUR)])!;
+    const ranked = rankPlaysWithDouZero(
+      {
+        seat: 0,
+        landlordSeat: 0,
+        hand,
+        prev,
+        bottom: [],
+        handCounts: { 0: 3, 1: 17, 2: 17 },
+        history: [],
+      },
+      // 模型给王炸更高分：提示应优先王炸；但安全链仍只允许 canPlay 过的牌。
+      { choosePlay: () => [5], rankPlays: () => [{ action: [20, 30], score: 0.8 }, { action: [5], score: 0.2 }] },
+      3,
+    );
+    expect(ranked.map((r) => r.cards.map((c) => c.id))).toEqual([['js', 'jb'], ['5a']]);
+    expect(ranked[0]!.score).toBe(0.8);
+  });
+
+  it('rankPlaysWithDouZero：模型输出越超集牌型（我方规则不接）会被复校过滤掉', () => {
+    const hand = [
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.THREE, `3-${i}`)),
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.FOUR, `4-${i}`)),
+      ...Array.from({ length: 4 }, (_, i) => card(RANK.FIVE, `5-${i}`)),
+      card(RANK.SIX, '6a'),
+    ];
+    // 模型给一个我方规则判非法的飞机同点翅动作高分；合法动作应被保留、非法被滤。
+    const ranked = rankPlaysWithDouZero(
+      { seat: 0, landlordSeat: 0, hand, prev: null, bottom: [], handCounts: { 0: 13, 1: 17, 2: 17 }, history: [] },
+      { choosePlay: () => [3], rankPlays: () => [{ action: [3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6], score: 0.99 }] },
+      3,
+    );
+    // 该非法动作不在我方合法集 → 启发式 fallback 接手，返回非空且全部合法
+    expect(ranked.length).toBeGreaterThan(0);
+    for (const r of ranked) expect(identifyHand(r.cards)).not.toBeNull();
+  });
+
+  it('rankLegalActionsHeuristic：非炸弹优先、最小代价管上排序在前', () => {
+    const hand = [card(RANK.FIVE, '5a'), card(RANK.SIX, '6a'), card(RANK.SMALL_JOKER, 'js'), card(RANK.BIG_JOKER, 'jb')];
+    const prev = identifyHand([card(RANK.FOUR)])!;
+    const ordered = rankLegalActionsHeuristic(hand, prev).map((cs) => cs.map((c) => c.id).sort().join(','));
+    // 单 5 应排在王炸之前
+    expect(ordered[0]).toBe('5a');
+    expect(ordered.indexOf('5a')).toBeLessThan(ordered.indexOf('jb,js'));
+  });
+
+  it('rankPlaysWithDouZero：无适配器时回退启发式，仍只返回合法出牌', () => {
+    const hand = [card(RANK.FIVE), card(RANK.SIX)];
+    const prev = identifyHand([card(RANK.FOUR)])!;
+    const ranked = rankPlaysWithDouZero(
+      { seat: 0, landlordSeat: 0, hand, prev, bottom: [], handCounts: { 0: 2, 1: 17, 2: 17 }, history: [] },
+      undefined,
+      5,
+    );
+    expect(ranked.length).toBeGreaterThan(0);
+    expect(ranked[0]!.cards.map((c) => c.rank)).toEqual([RANK.FIVE]);
+    expect(ranked.every((r) => identifyHand(r.cards) !== null)).toBe(true);
+  });
+
+  it('rankPlaysWithDouZero：领出时不含空过牌动作（提示只给“出什么”）', () => {
+    const ranked = rankPlaysWithDouZero(
+      { seat: 0, landlordSeat: 0, hand: [card(RANK.THREE), card(RANK.FIVE)], prev: null, bottom: [], handCounts: { 0: 2, 1: 17, 2: 17 }, history: [] },
+      undefined,
+      3,
+    );
+    expect(ranked.every((r) => r.cards.length > 0)).toBe(true);
   });
 });

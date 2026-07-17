@@ -338,3 +338,63 @@ describe('bot AI 占位（最小合法）', () => {
     expect(['claim', 'pass']).toContain(botBid([card(RANK.THREE)]));
   });
 });
+
+describe('GameRoom · 出牌提示 hint（LRM-135）', () => {
+  it('本人回合返回 top-N 合法建议，事件只私发给请求者', () => {
+    const r = landlordAt0(); // 地主=0、轮到 0 出牌（领出）
+    const res = r.handleHint(0, 3);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    // 全部事件 scope 必须为 { seat: 0 }（私有，不广播）
+    expect(res.events.every((e) => e.scope !== 'room' && e.scope.seat === 0)).toBe(true);
+    const hintEvent = res.events.find((e) => e.scope !== 'room' && e.event.type === 'hint');
+    expect(hintEvent).toBeDefined();
+    if (!hintEvent || hintEvent.scope === 'room') return;
+    const suggestions = hintEvent.event.type === 'hint' ? hintEvent.event.suggestions : [];
+    expect(suggestions.length).toBeGreaterThan(0);
+    expect(suggestions.length).toBeLessThanOrEqual(3);
+    // 每条都是我方规则合法牌型，且牌 id 都在请求者手里
+    const handIds = new Set(r.players[0]!.hand.map((c) => c.id));
+    for (const s of suggestions) {
+      expect(identifyHand(s.hand.cards)).not.toBeNull();
+      expect(s.hand.cards.every((c) => handIds.has(c.id))).toBe(true);
+    }
+  });
+
+  it('不是本人回合 / 非出牌阶段 → 拒', () => {
+    const r = landlordAt0(); // turn=0
+    const off = r.handleHint(1, 3);
+    expect(off.ok).toBe(false);
+    if (!off.ok) expect(off.code).toBe('not_your_turn');
+
+    // 叫地主阶段拒
+    const bidding = threeHumans();
+    bidding.start();
+    const duringBid = bidding.handleHint(0, 3);
+    expect(duringBid.ok).toBe(false);
+    if (!duringBid.ok) expect(duringBid.code).toBe('invalid_action_for_phase');
+  });
+
+  it('提示不推进状态机、不触发机器人行棋（只读）', () => {
+    const r = landlordAt0();
+    const beforePhase = r.phase;
+    const beforeTurn = r.turnSeat;
+    const beforeHistory = r.playHistory.length;
+    r.handleHint(0, 3);
+    expect(r.phase).toBe(beforePhase);
+    expect(r.turnSeat).toBe(beforeTurn);
+    expect(r.playHistory.length).toBe(beforeHistory);
+  });
+
+  it('handleAction 路由 hint 动作（与 bid/play/pass 同一入口）', () => {
+    const r = landlordAt0();
+    const res = r.handleAction(0, { type: 'hint', topN: 2 });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const hintEvent = res.events.find((e) => e.scope !== 'room' && e.event.type === 'hint');
+    expect(hintEvent).toBeDefined();
+    if (hintEvent && hintEvent.scope !== 'room' && hintEvent.event.type === 'hint') {
+      expect(hintEvent.event.suggestions.length).toBeLessThanOrEqual(2);
+    }
+  });
+});

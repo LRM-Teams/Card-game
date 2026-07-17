@@ -264,6 +264,17 @@ def act(info, legal):
     return legal[best], dbg
 
 
+def ranked_payload(action, legal, vals, top_n):
+    """Build {action, ranked} so the TS adapter can expose top-N hints (same forward pass)."""
+    order = sorted(range(len(legal)), key=lambda i: vals[i], reverse=True)
+    ranked = [
+        {"action": [int(c) for c in legal[i]], "score": float(vals[i])}
+        for i in order[: max(1, int(top_n))]
+        if i < len(legal) and len(legal[i]) > 0
+    ]
+    return {"action": [int(c) for c in action], "ranked": ranked}
+
+
 def main():
     raw = sys.stdin.read()
     try:
@@ -281,7 +292,11 @@ def main():
     if os.environ.get("DOUZERO_DEBUG"):
         sys.stderr.write(json.dumps(dbg, separators=(",", ":")) + "\n")
         sys.stderr.flush()
-    sys.stdout.write(json.dumps([int(c) for c in action]))
+    if os.environ.get("DOUZERO_RETURN_RANKED"):
+        top_n = int(os.environ.get("DOUZERO_RANK_TOP_N", "3") or "3")
+        sys.stdout.write(json.dumps(ranked_payload(action, legal, dbg["values"], top_n)))
+    else:
+        sys.stdout.write(json.dumps([int(c) for c in action]))
     return 0
 
 

@@ -41,6 +41,14 @@ export DOUZERO_INFER_COMMAND='python3 apps/server/scripts/douzero-infer.example.
 {"action":[3,3,3,4]}
 ```
 
+For the play-hint feature (LRM-135), the TS adapter additionally calls the same command with the env `DOUZERO_RETURN_RANKED=1` (and optional `DOUZERO_RANK_TOP_N`, default 3). When set, the wrapper must print an object with both the best action and a `ranked` array of `{action, score}` sorted by score descending — this is the same forward pass, just exposing top-N instead of only argmax (AI takes argmax, hints take top-N):
+
+```json
+{"action":[3,3,3,4],"ranked":[{"action":[3,3,3,4],"score":0.91},{"action":[5],"score":0.42}]}
+```
+
+If the wrapper does not support ranked output, the adapter returns `null` and hints fall back to the heuristic legal-action ranking, so the feature still works (just not model-scored).
+
 Card encoding uses DouZero official rank values:
 
 ```text
