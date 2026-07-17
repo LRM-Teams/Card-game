@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-label="LRM-140 visual asset preview covering lobby, bidding, play and settlement">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#183d2a"/><stop offset="1" stop-color="#5b1d16"/></linearGradient>
+    <linearGradient id="panel" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fff1bf"/><stop offset="1" stop-color="#c68a35"/></linearGradient>
+    <filter id="s"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#120807" flood-opacity=".35"/></filter>
+  </defs>
+  <rect width="1280" height="900" fill="url(#bg)"/>
+  <text x="640" y="54" text-anchor="middle" font-family="sans-serif" font-size="34" font-weight="900" fill="#fff5cf">LRM-140 前端图形资产预览</text>
+  <text x="640" y="84" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#f6d89b">扑克 / 大小王 / 地主农民 / 加倍炸弹春天 / 结算四状态覆盖</text>
+
+  <g transform="translate(50 120)" filter="url(#s)">
+    <rect width="560" height="330" rx="28" fill="#0f5132" stroke="#d6a84f" stroke-width="5"/>
+    <text x="28" y="44" font-family="sans-serif" font-size="24" font-weight="900" fill="#fff4c4">大厅 Lobby</text>
+    <circle cx="438" cy="90" r="42" fill="#7d1416" stroke="#f6c65b" stroke-width="4"/>
+    <image href="../identity/landlord-character.svg" x="396" y="48" width="84" height="84"/>
+    <image href="../cards/card-front-template.svg" x="126" y="96" width="82" height="116" transform="rotate(-10 167 154)"/>
+    <image href="../cards/joker-big.svg" x="218" y="88" width="82" height="116"/>
+    <image href="../cards/card-back.svg" x="310" y="96" width="82" height="116" transform="rotate(10 351 154)"/>
+    <rect x="176" y="246" width="208" height="54" rx="18" fill="url(#panel)" stroke="#fff2b4" stroke-width="2"/>
+    <text x="280" y="281" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="900" fill="#7a1414">快速开始</text>
+  </g>
+
+  <g transform="translate(670 120)" filter="url(#s)">
+    <rect width="560" height="330" rx="28" fill="#123e2b" stroke="#d6a84f" stroke-width="5"/>
+    <text x="28" y="44" font-family="sans-serif" font-size="24" font-weight="900" fill="#fff4c4">叫抢 / 加倍 Bidding</text>
+    <ellipse cx="280" cy="178" rx="205" ry="94" fill="#0c5a36" stroke="#8a4d12" stroke-width="12"/>
+    <image href="../cards/card-front-template.svg" x="190" y="142" width="62" height="88"/>
+    <image href="../cards/card-front-template.svg" x="250" y="142" width="62" height="88"/>
+    <image href="../cards/card-front-template.svg" x="310" y="142" width="62" height="88"/>
+    <image href="../states/double-badge.svg" x="404" y="70" width="92" height="92"/>
+    <rect x="124" y="260" width="130" height="42" rx="15" fill="url(#panel)"/><text x="189" y="288" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="900" fill="#7a1414">抢地主</text>
+    <rect x="280" y="260" width="130" height="42" rx="15" fill="#365246" stroke="#b9c4d6"/><text x="345" y="288" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="900" fill="#eef6ed">不抢</text>
+  </g>
+
+  <g transform="translate(50 510)" filter="url(#s)">
+    <rect width="560" height="330" rx="28" fill="#173324" stroke="#d6a84f" stroke-width="5"/>
+    <text x="28" y="44" font-family="sans-serif" font-size="24" font-weight="900" fill="#fff4c4">牌桌出牌 Play</text>
+    <ellipse cx="280" cy="170" rx="220" ry="100" fill="#0f5a38" stroke="#7a481b" stroke-width="14"/>
+    <image href="../identity/farmer-character.svg" x="34" y="92" width="74" height="74"/>
+    <image href="../identity/landlord-character.svg" x="452" y="92" width="74" height="74"/>
+    <image href="../cards/card-front-template.svg" x="214" y="124" width="62" height="88"/>
+    <image href="../cards/joker-small.svg" x="278" y="124" width="62" height="88"/>
+    <image href="../states/bomb.svg" x="326" y="70" width="120" height="90"/>
+    <image href="../cards/card-back.svg" x="190" y="242" width="42" height="60"/><image href="../cards/card-back.svg" x="228" y="242" width="42" height="60"/><image href="../cards/card-back.svg" x="266" y="242" width="42" height="60"/><image href="../cards/joker-big.svg" x="304" y="232" width="52" height="74"/>
+  </g>
+
+  <g transform="translate(670 510)" filter="url(#s)">
+    <rect width="560" height="330" rx="28" fill="#2b2532" stroke="#d6a84f" stroke-width="5"/>
+    <text x="28" y="44" font-family="sans-serif" font-size="24" font-weight="900" fill="#fff4c4">结算 Settlement</text>
+    <rect x="96" y="72" width="368" height="218" rx="28" fill="#fff1bf" stroke="#c68a35" stroke-width="5"/>
+    <image href="../states/victory-badge.svg" x="124" y="86" width="152" height="118"/>
+    <image href="../states/defeat-badge.svg" x="286" y="96" width="134" height="104" opacity=".72"/>
+    <image href="../identity/landlord-character.svg" x="152" y="190" width="72" height="72"/>
+    <image href="../states/spring.svg" x="244" y="200" width="110" height="82"/>
+    <rect x="364" y="224" width="82" height="38" rx="14" fill="url(#panel)"/>
+    <text x="405" y="250" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="900" fill="#7a1414">再来一局</text>
+  </g>
+</svg>

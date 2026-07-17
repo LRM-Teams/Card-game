@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Double multiplier badge">
+  <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffe89a"/><stop offset="1" stop-color="#d0661f"/></linearGradient></defs>
+  <circle cx="60" cy="60" r="50" fill="url(#g)" stroke="#6d2a12" stroke-width="6"/>
+  <circle cx="60" cy="60" r="39" fill="none" stroke="#fff5bc" stroke-width="3" opacity=".8"/>
+  <text x="60" y="72" text-anchor="middle" font-family="Impact, sans-serif" font-size="42" fill="#7a1214">×2</text>
+</svg>

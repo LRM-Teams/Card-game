@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Landlord identity character">
+  <defs><linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#ffe38c"/><stop offset="1" stop-color="#c67b1f"/></linearGradient><linearGradient id="red" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#db3f2e"/><stop offset="1" stop-color="#7d1416"/></linearGradient></defs>
+  <circle cx="80" cy="82" r="64" fill="#321311" opacity=".25"/>
+  <path d="M40 62l16-28 24 24 24-24 16 28v22H40z" fill="url(#gold)" stroke="#6b390c" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="56" cy="35" r="7" fill="#ef3329"/><circle cx="104" cy="35" r="7" fill="#ef3329"/><circle cx="80" cy="55" r="7" fill="#ef3329"/>
+  <path d="M35 88c8-25 82-25 90 0v32c0 16-18 28-45 28s-45-12-45-28z" fill="url(#red)" stroke="#f3bd54" stroke-width="5"/>
+  <path d="M56 107h48M64 124h32" stroke="#ffe38c" stroke-width="8" stroke-linecap="round"/>
+  <text x="80" y="103" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="900" fill="#fff4c7">地主</text>
+</svg>
