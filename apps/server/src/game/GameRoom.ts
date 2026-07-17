@@ -469,9 +469,43 @@ export class GameRoom {
         return this.handlePass(seat);
       case 'start':
         return this.start(action.fillBots ?? false);
+      case 'hint':
+        return this.handleHint(seat);
       default:
         return err('invalid_action_for_phase', `当前阶段不支持动作：${action.type}`);
     }
+  }
+
+  /**
+   * AI 出牌提示：私发给请求者，返回按模型分从高到低的合法出牌建议。
+   * 当前实现返回 DouZero argmax（top-1）；top-N 带分扩展见 LRM-135（@actor_9）。
+   * 不改变对局状态，仅基于当前局面计算并私发；建议来自规则合法动作，安全链不变。
+   */
+  private handleHint(seat: Seat): ActionResult {
+    if (this.phase !== GamePhase.PLAYING || this.turnSeat !== seat) {
+      return err('not_your_turn', '出牌提示仅在自己的出牌回合可用');
+    }
+    const p = this.players[seat];
+    if (!p) return err('illegal_play', '座位无玩家');
+    const prev = this.lastPlay ? this.lastPlay.hand : null;
+    const cards = choosePlayWithDouZero(
+      {
+        seat,
+        landlordSeat: this.landlordSeat!,
+        hand: p.hand,
+        prev,
+        bottom: this.bottom,
+        handCounts: {
+          0: this.players[0]!.hand.length,
+          1: this.players[1]!.hand.length,
+          2: this.players[2]!.hand.length,
+        },
+        history: this.playHistory,
+      },
+      this.aiAdapter,
+    );
+    const suggestions = cards && cards.length > 0 ? [cards.map((c) => c.id)] : [];
+    return ok([{ scope: { seat }, event: { type: 'hint', suggestions } }]);
   }
 
   /** 生成全量公开快照（不含任何玩家手牌；底牌未公开前不下发）。 */

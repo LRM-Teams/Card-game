@@ -17,6 +17,9 @@ export function GameTable() {
   const lastError = useGameStore((s) => s.lastError);
   const toggleSelect = useGameStore((s) => s.toggleSelect);
   const clearSelect = useGameStore((s) => s.clearSelect);
+  const requestHint = useGameStore((s) => s.requestHint);
+  const hintMessage = useGameStore((s) => s.hintMessage);
+  const hints = useGameStore((s) => s.hints);
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
@@ -171,7 +174,7 @@ export function GameTable() {
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
 
       <div className="controls">
-        <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{liveHint}</div>
+        <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>
 
         {phase === GamePhase.BIDDING && isMyTurn ? (
           <div className="btn-row">
@@ -182,6 +185,14 @@ export function GameTable() {
           <div className="btn-row">
             <button className="btn" onClick={clearSelect} disabled={selected.length === 0}>
               清空
+            </button>
+            <button
+              className="btn"
+              onClick={requestHint}
+              disabled={!(isMyTurn && phase === GamePhase.PLAYING)}
+              title="AI 出牌提示（DouZero）"
+            >
+              提示{hints.length > 1 ? ` ${hintIndexLabel(hints.length)}` : ''}
             </button>
             <button
               className="btn"
@@ -244,4 +255,9 @@ function phaseLabel(phase: GamePhase): string {
     default:
       return String(phase);
   }
+}
+
+/** 提示按钮后缀：有多组建议时显示组数，提示可重复点切换。 */
+function hintIndexLabel(count: number): string {
+  return count > 1 ? ` ·${count}组` : '';
 }

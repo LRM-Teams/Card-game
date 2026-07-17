@@ -36,6 +36,12 @@ interface UiState {
   selected: string[];
   snapshot: GameStateSnapshot | null;
   lastError: UiError | null;
+  /** AI 出牌提示：按模型分从高到低的合法出牌建议（每组 card id）；为空表示无建议。 */
+  hints: string[][];
+  /** 当前选用的提示组下标；点「提示」时循环切换。 */
+  hintIndex: number;
+  /** 提示文案：如 AI 建议不出（管不上）。 */
+  hintMessage: string | null;
 
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
@@ -46,6 +52,10 @@ interface UiState {
   pass: () => void;
   toggleSelect: (id: string) => void;
   clearSelect: () => void;
+  /** 请求 AI 出牌提示（服务端 DouZero top-N）。 */
+  requestHint: () => void;
+  /** 在已有提示组中循环切换下一组（top-N 时可用）。 */
+  cycleHint: () => void;
   dismissError: () => void;
 }
 
@@ -58,6 +68,9 @@ export const useGameStore = create<UiState>((set, get) => ({
   selected: [],
   snapshot: null,
   lastError: null,
+  hints: [],
+  hintIndex: 0,
+  hintMessage: null,
 
   init: () => {
     connect();
@@ -67,9 +80,15 @@ export const useGameStore = create<UiState>((set, get) => ({
         case 'you_joined':
           set({ mySeat: e.seat, roomId: e.roomId });
           break;
-        case 'snapshot':
-          set({ snapshot: e.state });
+        case 'snapshot': {
+          const prevTurn = get().snapshot?.turnSeat;
+          const turnChanged = prevTurn !== undefined && prevTurn !== e.state.turnSeat;
+          set({
+            snapshot: e.state,
+            ...(turnChanged ? { hints: [], hintIndex: 0, hintMessage: null } : {}),
+          });
           break;
+        }
         case 'dealt': {
           const hand = e.hand
             .map((id) => cardOf(id))
@@ -85,6 +104,16 @@ export const useGameStore = create<UiState>((set, get) => ({
               myHand: st.myHand.filter((card) => !playedIds.has(card.id)),
               selected: st.selected.filter((id) => !playedIds.has(id)),
             }));
+          }
+          break;
+        }
+        case 'hint': {
+          // 服务端按模型分从高到低返回合法出牌建议；空表示建议不出。
+          const groups = e.suggestions;
+          if (groups.length === 0) {
+            set({ hints: [], hintIndex: 0, selected: [], hintMessage: 'AI 建议不出（管不上）' });
+          } else {
+            set({ hints: groups, hintIndex: 0, selected: groups[0] ?? [], hintMessage: null });
           }
           break;
         }
@@ -107,6 +136,9 @@ export const useGameStore = create<UiState>((set, get) => ({
       selected: [],
       snapshot: null,
       lastError: null,
+      hints: [],
+      hintIndex: 0,
+      hintMessage: null,
     });
     send({ type: 'join', name, roomId: roomId?.trim() || undefined });
   },
@@ -135,6 +167,24 @@ export const useGameStore = create<UiState>((set, get) => ({
     })),
 
   clearSelect: () => set({ selected: [] }),
+
+  requestHint: () => {
+    // 若本回合已有提示组，直接循环下一组，避免重复推理；否则向服务端请求。
+    const { hints } = get();
+    if (hints.length > 0) {
+      get().cycleHint();
+      return;
+    }
+    set({ hintMessage: null });
+    send({ type: 'hint' });
+  },
+
+  cycleHint: () =>
+    set((st) => {
+      if (st.hints.length === 0) return {};
+      const next = (st.hintIndex + 1) % st.hints.length;
+      return { hintIndex: next, selected: st.hints[next] ?? [], hintMessage: null };
+    }),
 
   dismissError: () => set({ lastError: null }),
 }));
