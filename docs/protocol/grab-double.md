@@ -1,7 +1,8 @@
 # 抢地主 + 加倍 消息协议（对标腾讯欢乐斗地主）
 
-> 状态：协议层已定义（老胡），MVP 服务端仍为单轮叫地主；多轮结算 + 倍数由 game-rules 补齐（大伟），UI 由小林落地。
-> 单一事实来源：`packages/game-rules/src/protocol.ts`。本文件只做流程说明。
+> 状态：**协议 + 服务端状态机 + 倍数规则均已实现并测过**（老胡）。UI（叫/抢按钮气泡、加倍面板）待小林。
+> 单一事实来源：`packages/game-rules/src/protocol.ts`（协议类型）、`bidding.ts`/`multiplier.ts`（规则）。本文件做流程说明。
+> 叫抢采用单轮线性 A 方案（阿策 #110 定）：每人各表态一次，最后 claim 者当地主；如需「反抢多轮」是另一条规则决策，找阿策拍板。
 
 ## 阶段（GamePhase）
 
@@ -38,15 +39,17 @@ WAITING → DEALING → BIDDING → DOUBLING → PLAYING → SETTLED
 | `bids: { seat, choice, round }[]` | 叫/抢公开历史，供气泡/回顾 |
 | `doubles: { seat, choice }[]` | 加倍环节各家选择（公开） |
 
-## 倍数口径（对标欢乐斗地主，由 game-rules `multiplier` 统一折算 —— 大伟）
+## 倍数口径（对标欢乐斗地主，由 game-rules 统一折算）
 
-- 叫地主：基础倍数 1。
-- 每一次「抢/反抢」：×2。
-- 加倍 `double` ×2、超级加倍 `super` ×4、不加倍 ×1。
+累积顺序：`createMultiplier` → `applyGrab`（抢地主）→ `applyDoubles`（加倍环节）→ 出牌时 `applyPlay`（炸弹/王炸）。
+
+- 叫地主：基础倍数 1（`grabFactor`：首个 claim 不翻）。
+- 每多一次「抢」：×2（`grabFactor` = 2^抢次数）。
+- 加倍 `double` ×2、超级加倍 `super` ×4、不加倍 ×1；各家连乘（`applyDoubles`）。
 - 炸弹/王炸/春天/明牌沿用现有 `multiplier` 规则。
 
-## 待办依赖
+## 实现与分工
 
-- **@大伟（game-rules）**：`resolveBidding` 现为单轮线性（最后 claim 者胜）；需多轮 `call → grab → 反抢` resolver + 基于叫/抢/加倍的倍数累积函数。
-- **@小林（client）**：叫/抢按钮与气泡、加倍面板，渲染新增快照字段。
-- **老胡（server）**：BIDDING 增加 grab 轮状态机 + DOUBLING 阶段驱动，接上上面的 resolver。当前 MVP 仍走单轮，`bidRound` 恒为 `call`、`doubles` 恒为空。
+- **game-rules（已实现）**：`grabFactor` / `roundAt`（bidding.ts）、`applyGrab` / `applyDoubles` / `doubleFactor`（multiplier.ts）；单测覆盖。→ 请大伟 review 规则口径。
+- **server（已实现）**：BIDDING 输出 `round` 标签、地主敲定后 `applyGrab` → 进 `DOUBLING`（地主先、两农民后）→ `applyDoubles` → PLAYING；bot 自动叫/抢/加倍；snapshot 填 `bidRound`/`bids`/`doubles`。
+- **client（待做，@小林）**：叫/抢按钮与气泡（读 `bids[].round`）、加倍面板（`double` action + `doubled` 事件 + `doubles` 快照）。

@@ -3,6 +3,34 @@ import type { Seat } from './types';
 /** 单次叫 / 抢选择：claim=叫或抢（要当地主），pass=不叫 / 不抢。 */
 export type BidChoice = 'claim' | 'pass';
 
+/**
+ * 叫/抢地主的轮次标签（对标腾讯欢乐斗地主：先「叫地主」，首个 claim 之后转「抢地主」）。
+ * 客户端据此选气泡/按钮文案（叫地主/不叫 vs 抢地主/不抢）。
+ */
+export type BidRound = 'call' | 'grab';
+
+/** 加倍选择（DOUBLING 阶段，每名玩家一次）：不加倍 ×1 / 加倍 ×2 / 超级加倍 ×4。 */
+export type DoubleChoice = 'double' | 'super' | 'pass';
+
+/**
+ * 抢地主产生的倍数因子（单一事实来源）。
+ * 规则（对标欢乐斗地主）：首个 claim 是「叫地主」（基础，不翻倍）；其后每一个 claim 都是「抢地主」，各 ×2。
+ * @returns 2^(抢的次数)。无人叫/只有一人叫 → 1。
+ */
+export function grabFactor(entries: readonly BidEntry[]): number {
+  const claims = entries.filter((e) => e.choice === 'claim').length;
+  const grabs = Math.max(0, claims - 1);
+  return 2 ** grabs;
+}
+
+/** 给定叫抢序列，返回某次出价属于「叫」还是「抢」轮（首个 claim 之前均为 call，其后为 grab）。 */
+export function roundAt(entries: readonly BidEntry[], index: number): BidRound {
+  for (let i = 0; i < index && i < entries.length; i++) {
+    if (entries[i]!.choice === 'claim') return 'grab';
+  }
+  return 'call';
+}
+
 /** 一位玩家的出价记录（按实际叫牌顺序收集）。 */
 export interface BidEntry {
   seat: Seat;

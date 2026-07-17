@@ -1,3 +1,4 @@
+import type { DoubleChoice } from './bidding';
 import { HandType, type Hand } from './types';
 
 /**
@@ -59,4 +60,26 @@ export function applyAntiSpring(state: MultiplierState): MultiplierState {
 /** 明牌（地主开局亮明手牌）→ 倍数 ×2。是否明牌由地主选择（客户端 UI + 服务端流程触发）。 */
 export function applyReveal(state: MultiplierState): MultiplierState {
   return { ...state, multiplier: state.multiplier * 2 };
+}
+
+/** 单个加倍选择的倍数因子：不加倍 ×1、加倍 ×2、超级加倍 ×4。 */
+export function doubleFactor(choice: DoubleChoice): number {
+  return choice === 'super' ? 4 : choice === 'double' ? 2 : 1;
+}
+
+/**
+ * 抢地主翻倍：把抢的次数折算进倍数（每抢一次 ×2）。服务端在地主敲定后调用一次。
+ * factor 来自 game-rules 的 {@link grabFactor}（叫抢序列 → 2^抢次数）。
+ */
+export function applyGrab(state: MultiplierState, factor: number): MultiplierState {
+  return { ...state, multiplier: state.multiplier * factor };
+}
+
+/**
+ * 加倍环节：把各家（地主+农民）的加倍选择连乘进倍数。服务端在 DOUBLING 阶段结束后调用一次。
+ * 例：地主 super(×4) + 一农民 double(×2) + 一农民 pass(×1) → ×8。
+ */
+export function applyDoubles(state: MultiplierState, choices: readonly DoubleChoice[]): MultiplierState {
+  const factor = choices.reduce((f, c) => f * doubleFactor(c), 1);
+  return { ...state, multiplier: state.multiplier * factor };
 }
