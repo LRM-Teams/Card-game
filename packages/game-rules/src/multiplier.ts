@@ -1,4 +1,5 @@
 import { HandType, type Hand } from './types';
+import type { DoubleChoice } from './protocol';
 
 /**
  * 倍数状态（纯数据，不可变更新）。
@@ -59,4 +60,51 @@ export function applyAntiSpring(state: MultiplierState): MultiplierState {
 /** 明牌（地主开局亮明手牌）→ 倍数 ×2。是否明牌由地主选择（客户端 UI + 服务端流程触发）。 */
 export function applyReveal(state: MultiplierState): MultiplierState {
   return { ...state, multiplier: state.multiplier * 2 };
+}
+
+/**
+ * 一次「抢/反抢」→ 倍数 ×2（叫地主本身不翻倍，是基础 1）。
+ *
+ * 与 {@link resolveBidding} 的 `biddingMultiplier` 口径一致：叫=1、每次抢/反抢 ×2。
+ * 服务端可对每次 grab claim 调一次，或用 {@link applyGrabClaims} 一次性折算。
+ */
+export function applyGrab(state: MultiplierState): MultiplierState {
+  return { ...state, multiplier: state.multiplier * 2 };
+}
+
+/** 一次性折算 `grabClaims` 次抢/反抢：倍数 ×`2 ** grabClaims`。 */
+export function applyGrabClaims(state: MultiplierState, grabClaims: number): MultiplierState {
+  if (grabClaims <= 0) return state;
+  return { ...state, multiplier: state.multiplier * 2 ** grabClaims };
+}
+
+/** 单个加倍选择的倍数系数：加倍 ×2、超级加倍 ×4、不加倍 ×1。 */
+export function doubleFactor(choice: DoubleChoice): number {
+  switch (choice) {
+    case 'double':
+      return 2;
+    case 'super':
+      return 4;
+    case 'pass':
+      return 1;
+  }
+}
+
+/**
+ * 应用一名玩家的加倍选择（DOUBLING 阶段）→ 新倍数状态。
+ * 加倍 ×2、超级加倍 ×4、不加倍不变。多名玩家各自的选择相乘累积。
+ */
+export function applyDouble(state: MultiplierState, choice: DoubleChoice): MultiplierState {
+  const f = doubleFactor(choice);
+  return f === 1 ? state : { ...state, multiplier: state.multiplier * f };
+}
+
+/** 一次性折算全部玩家的加倍选择：各系数连乘。 */
+export function applyDoubles(
+  state: MultiplierState,
+  choices: readonly DoubleChoice[],
+): MultiplierState {
+  let st = state;
+  for (const c of choices) st = applyDouble(st, c);
+  return st;
 }
