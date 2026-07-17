@@ -16,6 +16,17 @@
 
 ---
 
+## 图形资产门禁（LRM-140）
+
+前端视觉不能只靠 CSS 占位；扑克牌、大小王、牌背、地主/农民身份、加倍/炸弹/春天/结算等关键状态必须有可落地 SVG/图片/组件资产。当前资产规格与路径见 `docs/front-end-visual-assets.md`，交付给小林接入时必须逐项标明：路径、尺寸、用途、状态、版权/来源。
+
+P0 资产已冻结为内部自绘 SVG：
+- 扑克牌：`docs/assets/cards/card-front-template.svg`、`card-back.svg`、`joker-small.svg`、`joker-big.svg`。
+- 身份：`docs/assets/identity/landlord-character.svg`、`farmer-character.svg`。
+- 状态：`docs/assets/states/double-badge.svg`、`bomb.svg`、`spring.svg`、`victory-badge.svg`、`defeat-badge.svg`。
+
+---
+
 ## 状态 1：大厅 / Lobby
 
 | 维度 | 基准目标(欢乐斗地主) | 现状(main) | 差距/动作 | 校准 |
@@ -70,3 +81,4 @@
 
 ## 变更记录
 - v1（2026-07-17，小雅）：初稿，按四状态×六维度起草，待校准项改为 `[需澄清]` 并标明负责人；本文先作为 v7 起唯一 diff 基准，后续由对应负责人补校准。
+- v1.1（2026-07-17，小雅）：补 LRM-140 图形资产门禁，冻结扑克/大小王/地主农民/关键状态 P0 SVG 资产路径，详见 `docs/front-end-visual-assets.md`。
