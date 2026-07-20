@@ -24,7 +24,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: pnpm
 
       - name: Install dependencies
         run: corepack enable && pnpm install --frozen-lockfile --ignore-scripts
@@ -45,9 +44,13 @@ jobs:
         run: |
           set -euo pipefail
           CLIENT_DIST="$PWD/apps/client/dist"
-          PORT=3099 CLIENT_DIST="$CLIENT_DIST" pnpm --filter @card-game/server start &
+          PORT=3099 CLIENT_DIST="$CLIENT_DIST" \
+            pnpm --filter @card-game/server exec tsx src/index.ts &
           SERVER_PID=$!
-          cleanup() { kill "$SERVER_PID" 2>/dev/null || true; }
+          cleanup() {
+            kill "$SERVER_PID" 2>/dev/null || true
+            wait "$SERVER_PID" 2>/dev/null || true
+          }
           trap cleanup EXIT
 
           for i in $(seq 1 60); do
