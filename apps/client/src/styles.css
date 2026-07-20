@@ -537,11 +537,43 @@ body::before {
 }
 .opponents {
   display: grid;
-  grid-template-columns: 1fr minmax(250px, 1.3fr) 1fr;
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: var(--ddz-space-3);
   position: relative;
   z-index: 1;
+  min-height: 168px;
+}
+.table-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: clamp(200px, 34vh, 280px);
+}
+.meta-corner {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: var(--ddz-space-3);
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: var(--ddz-text-xs);
+  color: var(--ddz-cream);
+  opacity: 0.62;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 243, 196, 0.1);
+  pointer-events: none;
+}
+.table-center-play {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: min(94%, 560px);
+  pointer-events: none;
 }
 .seat-badge {
   padding: 16px 14px 14px;
@@ -582,15 +614,17 @@ body::before {
   opacity: 0.55;
 }
 .last-play {
-  min-height: 156px;
+  min-height: 132px;
   text-align: center;
   padding: 12px 14px 10px;
   border-radius: 22px;
   background:
-    radial-gradient(circle at center, rgba(245, 197, 66, 0.1), transparent 60%),
-    rgba(0, 0, 0, 0.22);
-  border: 2px solid rgba(245, 197, 66, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    radial-gradient(circle at center, rgba(245, 197, 66, 0.12), transparent 62%),
+    rgba(0, 0, 0, 0.28);
+  border: 2px dashed rgba(245, 197, 66, 0.28);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 8px 28px rgba(0, 0, 0, 0.22);
 }
 .last-label {
   font-size: var(--ddz-text-md);
@@ -653,6 +687,9 @@ body::before {
 }
 .last-cards .card {
   animation: ddz-card-fly-in 160ms ease-out both;
+}
+.last-cards .card.is-table-play {
+  animation: ddz-card-fly-to-center 220ms ease-out both;
 }
 .last-cards .card:nth-child(2) { animation-delay: 18ms; }
 .last-cards .card:nth-child(3) { animation-delay: 36ms; }
@@ -730,10 +767,10 @@ body::before {
   width: var(--ddz-card-w);
   height: var(--ddz-card-h);
   margin-left: -18px;
-  border: 1px solid rgba(28, 28, 28, 0.18);
+  border: 1px solid rgba(200, 155, 79, 0.55);
   border-radius: var(--ddz-radius-card);
   background:
-    linear-gradient(145deg, #ffffff, var(--ddz-paper) 58%, #eadfb4),
+    linear-gradient(145deg, #fffdf4 0%, #f8f0da 55%, #ecd7a8 100%),
     var(--ddz-paper);
   color: var(--ddz-ink);
   display: flex;
@@ -942,6 +979,16 @@ body::before {
     transform: translateY(0) scale(1);
   }
 }
+@keyframes ddz-card-fly-to-center {
+  from {
+    opacity: 0;
+    transform: translateY(72px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 @keyframes ddz-danger-pulse {
   50% {
     transform: scale(1.08);
@@ -976,13 +1023,18 @@ body::before {
   .opponents {
     grid-template-columns: 1fr 1fr;
   }
+  .table-center-play {
+    top: 50%;
+    width: min(100%, 100%);
+  }
+  .meta-corner {
+    top: 12px;
+    font-size: 10px;
+    gap: var(--ddz-space-2);
+  }
   .room-code-card {
     grid-template-columns: 1fr;
     text-align: center;
-  }
-  .center {
-    grid-column: 1 / -1;
-    order: -1;
   }
   .card {
     width: 40px;

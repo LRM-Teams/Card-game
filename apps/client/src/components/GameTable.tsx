@@ -111,13 +111,18 @@ export function GameTable() {
 
   return (
     <div className="table">
-      <div className="opponents">
-        <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
-        <div className="center">
-          <div className="meta-row">
-            <span>倍数 ×{snapshot.multiplier}</span>
-            <span>阶段：{phaseLabel(phase)}</span>
-          </div>
+      <div className="meta-corner" aria-hidden="true">
+        <span>倍数 ×{snapshot.multiplier}</span>
+        <span>阶段：{phaseLabel(phase)}</span>
+      </div>
+
+      <div className="table-stage">
+        <div className="opponents">
+          <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
+          <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
+        </div>
+
+        <div className="table-center-play" aria-label="桌面中央出牌区">
           <div className="last-play">
             {lastPlay ? (
               <>
@@ -127,12 +132,12 @@ export function GameTable() {
                 </div>
                 <div className="last-cards">
                   {lastPlay.hand.cards.map((c) => (
-                    <CardView key={c.id} card={c} small />
+                    <CardView key={c.id} card={c} small tablePlay />
                   ))}
                 </div>
               </>
             ) : (
-              <div className="last-label muted">桌面空空，自由出牌</div>
+              <div className="last-label muted">桌面出牌区 · 自由出牌</div>
             )}
           </div>
           {snapshot.bottomRevealed && snapshot.bottom.length > 0 && (
@@ -140,12 +145,11 @@ export function GameTable() {
               <span className="last-label">底牌：</span>
               {snapshot.bottom.map((id) => {
                 const c = cardOf(id);
-                return c ? <CardView key={id} card={c} small /> : null;
+                return c ? <CardView key={id} card={c} small tablePlay /> : null;
               })}
             </div>
           )}
         </div>
-        <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
