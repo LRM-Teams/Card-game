@@ -39,6 +39,19 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 若已有默认 server 块占用 80，删/禁用 default 后再启用本配置。
 
+## 89 试玩环境（82.157.184.89）
+
+- **对外入口**：`http://82.157.184.89:8088/`（**不要**用根路径 `:80`，该端口可能仍 502 且非本服务）。
+- 容器内应用**只监听 3000**；宿主机映射须为 **`宿主机端口:3000`**，例如：
+  ```bash
+  docker run -d --name ddz --restart unless-stopped \
+    -p 127.0.0.1:3000:3000 \
+    -p 8088:3000 -p 8888:3000 \
+    ddz:latest
+  ```
+- 错误示例 `-p 8088:8088` → 对外 502（2026-07-20 线上事故）。
+- 部署后：`curl http://127.0.0.1:8088/health` 与 `curl http://82.157.184.89:8088/health` 均应 200；issue 举证写 **commit SHA + live bundle 名**。
+
 ## 验证
 - `curl http://127.0.0.1:3000/health` → `{"ok":true,...}`
 - `curl http://127.0.0.1:3000/` → 返回前端 index.html
