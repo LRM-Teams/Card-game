@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import type {
-  BidChoice,
-  Card,
+import {
   GamePhase,
-  GameResult,
-  GameStateSnapshot,
-  PlayRecord,
+  type BidChoice,
+  type Card,
+  type GameResult,
+  type GameStateSnapshot,
+  type HandType,
+  type PlayRecord,
 } from '@card-game/rules';
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
@@ -27,6 +28,15 @@ export interface UiError {
   at: number;
 }
 
+/** 三家各自最近一次有效出牌（分座展示，LRM-156）。 */
+export type SeatLastPlays = [PlayRecord | null, PlayRecord | null, PlayRecord | null];
+
+export interface PlayFxPulse {
+  seat: number;
+  handType: HandType;
+  id: number;
+}
+
 interface UiState {
   status: ConnStatus;
   myName: string;
@@ -42,6 +52,8 @@ interface UiState {
   hintIndex: number;
   /** 提示文案：如 AI 建议不出（管不上）。 */
   hintMessage: string | null;
+  seatLastPlays: SeatLastPlays;
+  playFx: PlayFxPulse | null;
 
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
@@ -57,6 +69,7 @@ interface UiState {
   /** 在已有提示组中循环切换下一组（top-N 时可用）。 */
   cycleHint: () => void;
   dismissError: () => void;
+  clearPlayFx: () => void;
 }
 
 export const useGameStore = create<UiState>((set, get) => ({
@@ -71,6 +84,8 @@ export const useGameStore = create<UiState>((set, get) => ({
   hints: [],
   hintIndex: 0,
   hintMessage: null,
+  seatLastPlays: [null, null, null],
+  playFx: null,
 
   init: () => {
     connect();
@@ -81,11 +96,22 @@ export const useGameStore = create<UiState>((set, get) => ({
           set({ mySeat: e.seat, roomId: e.roomId });
           break;
         case 'snapshot': {
-          const prevTurn = get().snapshot?.turnSeat;
+          const prev = get().snapshot;
+          const prevTurn = prev?.turnSeat;
           const turnChanged = prevTurn !== undefined && prevTurn !== e.state.turnSeat;
+          const roundCleared =
+            prev?.phase === GamePhase.PLAYING &&
+            e.state.phase === GamePhase.PLAYING &&
+            prev.lastPlay != null &&
+            e.state.lastPlay === null;
+          const phaseLeftPlaying =
+            prev?.phase === GamePhase.PLAYING && e.state.phase !== GamePhase.PLAYING;
           set({
             snapshot: e.state,
             ...(turnChanged ? { hints: [], hintIndex: 0, hintMessage: null } : {}),
+            ...(roundCleared || phaseLeftPlaying
+              ? { seatLastPlays: [null, null, null] as SeatLastPlays, playFx: null }
+              : {}),
           });
           break;
         }
@@ -98,13 +124,21 @@ export const useGameStore = create<UiState>((set, get) => ({
         }
         case 'played': {
           const mySeat = get().mySeat;
-          if (e.seat === mySeat) {
-            const playedIds = new Set(e.hand.cards.map((card) => card.id));
-            set((st) => ({
-              myHand: st.myHand.filter((card) => !playedIds.has(card.id)),
-              selected: st.selected.filter((id) => !playedIds.has(id)),
-            }));
-          }
+          const playedIds = new Set(e.hand.cards.map((card) => card.id));
+          set((st) => {
+            const seatLastPlays = [...st.seatLastPlays] as SeatLastPlays;
+            seatLastPlays[e.seat] = { seat: e.seat, hand: e.hand };
+            return {
+              seatLastPlays,
+              playFx: { seat: e.seat, handType: e.hand.type, id: Date.now() },
+              ...(e.seat === mySeat
+                ? {
+                    myHand: st.myHand.filter((card) => !playedIds.has(card.id)),
+                    selected: st.selected.filter((id) => !playedIds.has(id)),
+                  }
+                : {}),
+            };
+          });
           break;
         }
         case 'hint': {
@@ -139,9 +173,13 @@ export const useGameStore = create<UiState>((set, get) => ({
       hints: [],
       hintIndex: 0,
       hintMessage: null,
+      seatLastPlays: [null, null, null],
+      playFx: null,
     });
     send({ type: 'join', name, roomId: roomId?.trim() || undefined });
   },
+
+  clearPlayFx: () => set({ playFx: null }),
 
   start: (fillBots) => send({ type: 'start', fillBots }),
 

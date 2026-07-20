@@ -1,10 +1,12 @@
-import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { GamePhase, canPlay, identifyHand } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
+import { SeatPlayZone } from './SeatPlayZone';
+import { relativeSeats } from '../lib/playFx';
 import { useNavigate } from '@tanstack/react-router';
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
@@ -25,6 +27,9 @@ export function GameTable() {
   const bid = useGameStore((s) => s.bid);
   const start = useGameStore((s) => s.start);
   const dismissError = useGameStore((s) => s.dismissError);
+  const seatLastPlays = useGameStore((s) => s.seatLastPlays);
+  const playFx = useGameStore((s) => s.playFx);
+  const clearPlayFx = useGameStore((s) => s.clearPlayFx);
   const navigate = useNavigate();
 
   const selectedCards = useMemo(
@@ -41,6 +46,12 @@ export function GameTable() {
     }, 1000);
     return () => window.clearInterval(timer);
   }, [snapshot?.phase, snapshot?.turnSeat, snapshot?.lastPlay?.seat, snapshot?.lastPlay?.hand.cards.length]);
+
+  useEffect(() => {
+    if (!playFx) return;
+    const t = window.setTimeout(() => clearPlayFx(), 2000);
+    return () => window.clearTimeout(t);
+  }, [playFx, clearPlayFx]);
 
   if (status !== 'connected') {
     return (
@@ -63,7 +74,11 @@ export function GameTable() {
   const phase = snapshot.phase;
   const isMyTurn = snapshot.turnSeat === mySeat;
   const me = snapshot.players.find((p) => p.seat === mySeat);
-  const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
+  const seats =
+    mySeat != null ? relativeSeats(mySeat) : { left: 0, right: 1 };
+  const playerAt = (seat: number) => snapshot.players.find((p) => p.seat === seat);
+  const leftPlayer = playerAt(seats.left);
+  const rightPlayer = playerAt(seats.right);
   const lastPlay = snapshot.lastPlay;
   const botThinkingSeat = snapshot.botThinkingSeat;
   const nameOf = (seat: number | null | undefined) =>
@@ -119,28 +134,31 @@ export function GameTable() {
 
       <div className="table-stage">
         <div className="opponents">
-          <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
-          <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
+          <SeatBadge
+            p={leftPlayer}
+            active={snapshot.turnSeat === leftPlayer?.seat}
+            play={
+              <SeatPlayZone
+                record={seatLastPlays[seats.left]}
+                fxActive={playFx?.seat === seats.left}
+                align="left"
+              />
+            }
+          />
+          <SeatBadge
+            p={rightPlayer}
+            active={snapshot.turnSeat === rightPlayer?.seat}
+            play={
+              <SeatPlayZone
+                record={seatLastPlays[seats.right]}
+                fxActive={playFx?.seat === seats.right}
+                align="right"
+              />
+            }
+          />
         </div>
 
-        <div className="table-center-play" aria-label="桌面中央出牌区">
-          <div className="last-play">
-            {lastPlay ? (
-              <>
-                <div className="last-label">
-                  <b className="last-player">{nameOf(lastPlay.seat)}</b> 出了
-                  <b>{HAND_TYPE_LABEL[lastPlay.hand.type]}</b>
-                </div>
-                <div className="last-cards">
-                  {lastPlay.hand.cards.map((c) => (
-                    <CardView key={c.id} card={c} small tablePlay />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="last-label muted">桌面出牌区 · 自由出牌</div>
-            )}
-          </div>
+        <div className="table-center-play" aria-label="桌面中央区">
           {snapshot.bottomRevealed && snapshot.bottom.length > 0 && (
             <div className="bottom-row">
               <span className="last-label">底牌：</span>
@@ -179,6 +197,16 @@ export function GameTable() {
         {me?.role === 'landlord' && <RoleBadge role="landlord" />}
         {me?.role === 'farmer' && <RoleBadge role="farmer" />}
       </div>
+
+      {mySeat != null && (
+        <div className="self-seat-play">
+          <SeatPlayZone
+            record={seatLastPlays[mySeat]}
+            fxActive={playFx?.seat === mySeat}
+            align="center"
+          />
+        </div>
+      )}
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
 
@@ -229,9 +257,11 @@ export function GameTable() {
 function SeatBadge({
   p,
   active,
+  play,
 }: {
   p: { name: string; isBot: boolean; handSize: number; role?: string } | undefined;
   active: boolean;
+  play?: ReactNode;
 }) {
   if (!p) return <div className="seat-badge" />;
   const roleAsset = p.role === 'landlord' ? '/identity/landlord-character.svg' : p.role === 'farmer' ? '/identity/farmer-character.svg' : null;
@@ -243,6 +273,7 @@ function SeatBadge({
       </div>
       <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
+      {play}
     </div>
   );
 }
