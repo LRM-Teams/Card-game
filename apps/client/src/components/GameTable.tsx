@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
-import { GamePhase, canPlay, identifyHand } from '@card-game/rules';
+import { GamePhase, canPlay, identifyHand, type Seat } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
+import { bidStatusForSeat, biddingHasClaim } from '../lib/biddingUi';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
@@ -28,6 +29,7 @@ export function GameTable() {
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
+  const bidHistory = useGameStore((s) => s.bidHistory);
   const start = useGameStore((s) => s.start);
   const dismissError = useGameStore((s) => s.dismissError);
   const navigate = useNavigate();
@@ -77,6 +79,10 @@ export function GameTable() {
   const beats = identified != null && canPlay(lastPlay?.hand ?? null, selectedCards);
   const canPlayNow = isMyTurn && phase === GamePhase.PLAYING && identified != null && beats;
 
+  const inBidding = phase === GamePhase.BIDDING;
+  const hasAnyClaim = biddingHasClaim(bidHistory);
+  const myBidStatus = mySeat != null && inBidding ? bidStatusForSeat(bidHistory, mySeat as Seat) : null;
+
   const liveHint =
     selectedCards.length === 0
       ? lastPlay
@@ -115,7 +121,13 @@ export function GameTable() {
   return (
     <div className="table">
       <div className="opponents">
-        <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
+        <SeatBadge
+          p={opponents[0]}
+          active={snapshot.turnSeat === opponents[0]?.seat}
+          bidStatus={
+            opponents[0] != null && inBidding ? bidStatusForSeat(bidHistory, opponents[0].seat) : null
+          }
+        />
         <div className="center">
           <div className="meta-row">
             <span>倍数 ×{snapshot.multiplier}</span>
@@ -148,7 +160,13 @@ export function GameTable() {
             </div>
           )}
         </div>
-        <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
+        <SeatBadge
+          p={opponents[1]}
+          active={snapshot.turnSeat === opponents[1]?.seat}
+          bidStatus={
+            opponents[1] != null && inBidding ? bidStatusForSeat(bidHistory, opponents[1].seat) : null
+          }
+        />
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
@@ -162,10 +180,14 @@ export function GameTable() {
           </span>
         )}
         <span>
-          {phase === GamePhase.BIDDING
+          {inBidding
             ? isMyTurn
-              ? '👉 轮到你叫地主'
-              : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
+              ? hasAnyClaim
+                ? '👉 轮到你抢地主'
+                : '👉 轮到你叫地主'
+              : hasAnyClaim
+                ? `等待 ${nameOf(snapshot.turnSeat ?? null)} 抢地主`
+                : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
             : phase === GamePhase.PLAYING
               ? isMyTurn
                 ? '👉 轮到你出牌'
@@ -174,6 +196,7 @@ export function GameTable() {
         </span>
         {me?.role === 'landlord' && <span className="badge">地主</span>}
         {me?.role === 'farmer' && <span className="badge farmer">农民</span>}
+        {myBidStatus && <span className="bid-status">{myBidStatus}</span>}
       </div>
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
@@ -182,9 +205,13 @@ export function GameTable() {
         <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>
 
         {phase === GamePhase.BIDDING && isMyTurn ? (
-          <div className="btn-row">
-            <button className="btn primary" onClick={() => bid('claim')}>叫地主</button>
-            <button className="btn" onClick={() => bid('pass')}>不叫</button>
+          <div className="btn-row bidding-actions">
+            <button className="btn primary" onClick={() => bid('claim')}>
+              {hasAnyClaim ? '抢地主' : '叫地主'}
+            </button>
+            <button className="btn" onClick={() => bid('pass')}>
+              {hasAnyClaim ? '不抢' : '不叫'}
+            </button>
           </div>
         ) : (
           <div className="btn-row">
@@ -225,9 +252,11 @@ export function GameTable() {
 function SeatBadge({
   p,
   active,
+  bidStatus,
 }: {
   p: { name: string; isBot: boolean; handSize: number; role?: string } | undefined;
   active: boolean;
+  bidStatus?: string | null;
 }) {
   if (!p) return <div className="seat-badge" />;
   const roleIcon = p.role === 'landlord' ? crownIcon : p.role === 'farmer' ? wheatIcon : null;
@@ -245,6 +274,7 @@ function SeatBadge({
         )}
       </div>
       <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
+      {bidStatus && <div className="bid-status">{bidStatus}</div>}
       <div className="seat-count">剩 {p.handSize}</div>
     </div>
   );
