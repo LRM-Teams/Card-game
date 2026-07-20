@@ -48,6 +48,11 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: clip;
+  scrollbar-gutter: stable;
+}
+
 html,
 body,
 #root {
@@ -82,6 +87,7 @@ body::before {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 16px;
@@ -89,11 +95,14 @@ body::before {
 .app--game {
   max-width: min(100%, 1360px);
   width: 100%;
-  padding-inline: 12px;
+  padding-inline: clamp(8px, 1.6vw, 20px);
 }
 .app--game .content {
   padding-inline: 4px;
   overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .topnav {
@@ -487,7 +496,7 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: var(--ddz-space-5);
-  width: min(1180px, 96vw);
+  width: min(1180px, 100%);
   min-height: clamp(420px, 56vh, 590px);
   margin-inline: auto;
   padding: 40px 56px 32px;
@@ -546,13 +555,58 @@ body::before {
   margin: 0;
 }
 .opponents {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: start;
-  gap: var(--ddz-space-3);
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  min-height: 168px;
+  pointer-events: none;
+}
+.opponent-anchor {
+  position: absolute;
+  top: clamp(4px, 5%, 28px);
+  width: min(220px, 30%);
+  pointer-events: auto;
+}
+.opponent-anchor.left {
+  left: clamp(6px, 3.5%, 40px);
+}
+.opponent-anchor.right {
+  right: clamp(6px, 3.5%, 40px);
+}
+.table-shell .seat-placeholder {
+  min-height: 172px;
+  opacity: 0.35;
+  border-style: dashed;
+}
+.table-shell-status {
+  color: var(--ddz-cream);
+  font-weight: 700;
+}
+.table-shell-sub {
+  margin: -8px auto 0;
+  max-width: 36rem;
+  text-align: center;
+  font-size: var(--ddz-text-xs);
+  color: var(--ddz-cream);
+  opacity: 0.78;
+}
+.hand-skeleton {
+  min-height: 176px;
+  visibility: hidden;
+}
+.controls-skeleton {
+  min-height: 108px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.btn-skeleton {
+  display: inline-block;
+  min-width: 112px;
+  min-height: 46px;
+  visibility: hidden;
+}
+.table-shell-hint {
+  visibility: visible;
+  opacity: 1;
 }
 .table-stage {
   position: relative;
@@ -1185,7 +1239,7 @@ body::before {
 
 @media (max-width: 680px) {
   .table {
-    width: min(100%, 96vw);
+    width: 100%;
     min-height: 520px;
     padding: 20px 16px 14px;
     border-radius: 46px;
@@ -1206,9 +1260,11 @@ body::before {
   .panel {
     padding: 20px;
   }
-  .seats-preview,
-  .opponents {
+  .seats-preview {
     grid-template-columns: 1fr 1fr;
+  }
+  .opponent-anchor {
+    width: min(168px, 42%);
   }
   .table-center-play {
     top: 50%;

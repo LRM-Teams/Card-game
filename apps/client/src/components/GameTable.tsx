@@ -55,19 +55,19 @@ export function GameTable() {
 
   if (status !== 'connected') {
     return (
-      <div className="panel">
-        <h1 className="title">未连接服务器</h1>
-        <p className="subtitle">请先启动 apps/server（:3000），客户端会自动重连。</p>
-      </div>
+      <TableShell
+        message={status === 'connecting' ? '正在连接服务器…' : '未连接服务器'}
+        sub="连接恢复后将自动同步牌桌；也可返回大厅重新匹配。"
+      />
     );
   }
 
   if (!snapshot) {
     return (
-      <div className="panel">
-        <h1 className="title">等待对局…</h1>
-        <p className="subtitle">先回大厅匹配并开始游戏。</p>
-      </div>
+      <TableShell
+        message="正在恢复对局…"
+        sub="强刷后会自动重回房间；若长时间无响应请返回大厅。"
+      />
     );
   }
 
@@ -134,28 +134,32 @@ export function GameTable() {
 
       <div className="table-stage">
         <div className="opponents">
-          <SeatBadge
-            p={leftPlayer}
-            active={snapshot.turnSeat === leftPlayer?.seat}
-            play={
-              <SeatPlayZone
-                record={seatLastPlays[seats.left]}
-                fxActive={playFx?.seat === seats.left}
-                align="left"
-              />
-            }
-          />
-          <SeatBadge
-            p={rightPlayer}
-            active={snapshot.turnSeat === rightPlayer?.seat}
-            play={
-              <SeatPlayZone
-                record={seatLastPlays[seats.right]}
-                fxActive={playFx?.seat === seats.right}
-                align="right"
-              />
-            }
-          />
+          <div className="opponent-anchor left">
+            <SeatBadge
+              p={leftPlayer}
+              active={snapshot.turnSeat === leftPlayer?.seat}
+              play={
+                <SeatPlayZone
+                  record={seatLastPlays[seats.left]}
+                  fxActive={playFx?.seat === seats.left}
+                  align="left"
+                />
+              }
+            />
+          </div>
+          <div className="opponent-anchor right">
+            <SeatBadge
+              p={rightPlayer}
+              active={snapshot.turnSeat === rightPlayer?.seat}
+              play={
+                <SeatPlayZone
+                  record={seatLastPlays[seats.right]}
+                  fxActive={playFx?.seat === seats.right}
+                  align="right"
+                />
+              }
+            />
+          </div>
         </div>
 
         <div className="table-center-play" aria-label="桌面中央区">
@@ -250,6 +254,36 @@ export function GameTable() {
           ⚠️ {lastError.message}（{lastError.code}）— 点击关闭
         </div>
       )}
+    </div>
+  );
+}
+
+/** 牌桌占位壳：加载/重连时保持与对局相同的尺寸，避免强刷后布局坍缩跳动。 */
+function TableShell({ message, sub }: { message: string; sub?: string }) {
+  return (
+    <div className="table table-shell" aria-busy="true">
+      <div className="table-stage">
+        <div className="opponents">
+          <div className="opponent-anchor left">
+            <div className="seat-badge seat-placeholder" aria-hidden="true" />
+          </div>
+          <div className="opponent-anchor right">
+            <div className="seat-badge seat-placeholder" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+      <div className="turn-line table-shell-status">
+        <span>{message}</span>
+      </div>
+      {sub ? <p className="table-shell-sub">{sub}</p> : null}
+      <div className="hand hand-skeleton" aria-hidden="true" />
+      <div className="controls controls-skeleton" aria-hidden="true">
+        <div className="hint warn table-shell-hint">同步中…</div>
+        <div className="btn-row">
+          <span className="btn btn-skeleton" />
+          <span className="btn btn-skeleton primary" />
+        </div>
+      </div>
     </div>
   );
 }
