@@ -56,6 +56,7 @@ body,
 
 body {
   margin: 0;
+  overflow-x: clip;
   font-family: var(--ddz-font-body);
   color: #fff8dc;
   background:
@@ -84,6 +85,15 @@ body::before {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 16px;
+}
+.app--game {
+  max-width: min(100%, 1360px);
+  width: 100%;
+  padding-inline: 12px;
+}
+.app--game .content {
+  padding-inline: 4px;
+  overflow-x: clip;
 }
 
 .topnav {
@@ -580,17 +590,18 @@ body::before {
   z-index: 2;
   margin: 0 auto 4px;
   max-width: min(96%, 520px);
+  min-height: 76px;
   pointer-events: none;
 }
 .seat-play-zone {
   position: relative;
   margin-top: 8px;
-  min-height: 52px;
+  min-height: 76px;
   pointer-events: none;
 }
 .seat-play-zone.empty {
-  min-height: 0;
-  margin-top: 0;
+  min-height: 76px;
+  margin-top: 8px;
 }
 .seat-play-zone.align-left .seat-play-cards {
   justify-content: flex-start;
@@ -747,8 +758,12 @@ body::before {
   position: relative;
   padding: 26px 8px 14px;
   min-height: 176px;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
   align-items: flex-end;
   perspective: 1200px;
+  scrollbar-width: thin;
 }
 .hand::before {
   content: '';
@@ -972,6 +987,13 @@ body::before {
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 243, 196, 0.12);
+  min-height: 2.75em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.35;
+  max-width: min(100%, 640px);
 }
 .hint.ok {
   color: #7ef0a8;
