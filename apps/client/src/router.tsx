@@ -1,4 +1,11 @@
-import { createRouter, createRootRoute, createRoute, Outlet, Link } from '@tanstack/react-router';
+import {
+  createRouter,
+  createRootRoute,
+  createRoute,
+  Outlet,
+  Link,
+  useRouterState,
+} from '@tanstack/react-router';
 import { Lobby } from './components/Lobby';
 import { Room } from './components/Room';
 import { GameTable } from './components/GameTable';
@@ -13,8 +20,9 @@ function ConnBadge() {
 }
 
 function RootLayout() {
+  const isGame = useRouterState({ select: (s) => s.location.pathname.startsWith('/game') });
   return (
-    <div className="app">
+    <div className={`app${isGame ? ' app--game' : ''}`}>
       <nav className="topnav">
         <Link to="/" className="brand">♠ 斗地主</Link>
         <ConnBadge />
