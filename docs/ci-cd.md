@@ -13,7 +13,7 @@
 | **server health** | 起进程 `PORT=3099 CLIENT_DIST=<client dist> pnpm --filter @card-game/server start`，`curl -sf http://127.0.0.1:3099/health` 含 `"ok":true` | ✓ |
 | **client health** | 同上进程，`curl -sf http://127.0.0.1:3099/` 返回 HTML 且含 `root` 或 `index` | ✓ |
 
-实现 issue：子单由老胡落 `.github/workflows/ci.yml`；本文件为验收对照。
+实现：`.github/workflows/ci.yml`（PR / main 推送触发）；本文件为验收对照。
 
 ## 部署后（89 / 生产）
 

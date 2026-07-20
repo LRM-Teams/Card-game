@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Rules tests
+        run: pnpm --filter @card-game/rules test
+
+      - name: Server tests
+        run: pnpm --filter @card-game/server test
+
+      - name: Server typecheck
+        run: pnpm --filter @card-game/server exec tsc --noEmit
+
+      - name: Client build
+        run: VITE_SERVER_URL="" pnpm --filter @card-game/client build
+
+      - name: Server health
+        env:
+          CLIENT_DIST: ${{ github.workspace }}/apps/client/dist
+        run: |
+          set -euo pipefail
+          PORT=3099 pnpm --filter @card-game/server start &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -sf "http://127.0.0.1:3099/health" | grep -q '"ok":true'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "server /health did not become ready in time"
+          exit 1
+
+      - name: Client health (static via server)
+        env:
+          CLIENT_DIST: ${{ github.workspace }}/apps/client/dist
+        run: |
+          set -euo pipefail
+          PORT=3099 pnpm --filter @card-game/server start &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            body=$(curl -sf "http://127.0.0.1:3099/" || true)
+            if echo "$body" | grep -qiE 'root|index'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "client static entry did not become ready in time"
+          exit 1
