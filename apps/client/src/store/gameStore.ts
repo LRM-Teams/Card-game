@@ -10,6 +10,20 @@ import {
 } from '@card-game/rules';
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
+import { readPlayerSession, savePlayerSession, shouldAutoRejoinPath } from '../lib/session';
+
+let autoRejoinAttempted = false;
+
+function tryAutoRejoin(): void {
+  if (autoRejoinAttempted || !shouldAutoRejoinPath()) return;
+  const st = useGameStore.getState();
+  if (st.snapshot || st.mySeat != null) return;
+  const session = readPlayerSession();
+  if (!session) return;
+  autoRejoinAttempted = true;
+  send({ type: 'join', name: session.name, roomId: session.roomId ?? undefined });
+  useGameStore.setState({ myName: session.name });
+}
 
 /**
  * 客户端游戏状态 = 「镜像服务端」。
@@ -89,7 +103,10 @@ export const useGameStore = create<UiState>((set, get) => ({
 
   init: () => {
     connect();
-    onStatus((s) => set({ status: s }));
+    onStatus((s) => {
+      set({ status: s });
+      if (s === 'connected') tryAutoRejoin();
+    });
     onEvent((e) => {
       switch (e.type) {
         case 'you_joined':
@@ -162,6 +179,8 @@ export const useGameStore = create<UiState>((set, get) => ({
   },
 
   join: (name, roomId) => {
+    savePlayerSession(name, roomId);
+    autoRejoinAttempted = true;
     set({
       myName: name,
       mySeat: null,
