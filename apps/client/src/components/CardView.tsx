@@ -8,10 +8,12 @@ interface Props {
   onClick?: () => void;
   /** 小尺寸（用于对手 / 牌桌展示）。 */
   small?: boolean;
+  /** 桌面中央出牌区（LRM-131/138：与手牌区分离）。 */
+  tablePlay?: boolean;
   style?: CSSProperties;
 }
 
-export function CardView({ card, selected, onClick, small, style }: Props) {
+export function CardView({ card, selected, onClick, small, tablePlay, style }: Props) {
   const color = cardColor(card);
   const symbol = card.suit ? SUIT_SYMBOL[card.suit] : '';
   const isJoker = !card.suit;
@@ -19,7 +21,7 @@ export function CardView({ card, selected, onClick, small, style }: Props) {
   return (
     <button
       type="button"
-      className={`card ${color} ${isJoker ? 'is-joker' : ''} ${selected ? 'is-selected' : ''} ${small ? 'is-small' : ''}`}
+      className={`card ${color} ${isJoker ? 'is-joker' : ''} ${selected ? 'is-selected' : ''} ${small ? 'is-small' : ''} ${tablePlay ? 'is-table-play' : ''}`}
       onClick={onClick}
       disabled={!onClick}
       title={card.display}
