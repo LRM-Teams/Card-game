@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { canPlay } from '@card-game/rules';
 import type { Card, Hand, Seat } from '@card-game/rules';
 import { botChoosePlay } from './bot';
+import { refinePlaySuggestions } from './hintPostProcess';
 
 export type DouZeroPosition = 'landlord' | 'landlord_up' | 'landlord_down';
 /** DouZero official rank encoding: 3..14(A), 17(2), 20(small joker), 30(big joker). */
@@ -492,5 +493,5 @@ export async function rankPlaySuggestions(
     seen.add(key);
     suggestions.push(cards);
   }
-  return suggestions;
+  return refinePlaySuggestions(ctx.hand, suggestions);
 }
