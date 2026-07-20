@@ -41,6 +41,7 @@ import type {
   Seat,
 } from '@card-game/rules';
 import { botBid, botName } from './bot';
+import { botThinkDelayMs, sleep } from './botTiming';
 import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
 import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
@@ -82,6 +83,8 @@ export class GameRoom {
   result: GameResult | null = null;
   /** 出牌/过牌历史，供 DouZero 适配层构造观测状态。 */
   playHistory: BotPlayHistoryEntry[] = [];
+  /** 机器人思考中（已广播 snapshot，动作尚未执行）。 */
+  botThinkingSeat: Seat | null = null;
 
   private botCounter = 0;
 
@@ -220,7 +223,6 @@ export class GameRoom {
     }
     events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
 
-    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
@@ -233,7 +235,6 @@ export class GameRoom {
     if (choice !== 'claim' && choice !== 'pass') return err('invalid_bid', '叫地主动作必须是 claim 或 pass');
 
     const events: RoomEvent[] = this.iBid(seat, choice);
-    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
@@ -330,7 +331,6 @@ export class GameRoom {
     }
 
     const events: RoomEvent[] = this.iPlay(seat, cards);
-    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
@@ -363,7 +363,6 @@ export class GameRoom {
     if (this.lastPlay === null) return err('must_play_when_leading', '你领出，必须出牌，不能 pass');
 
     const events: RoomEvent[] = this.iPass(seat);
-    events.push(...(await this.autoBots()));
     return ok(events);
   }
 
@@ -409,53 +408,83 @@ export class GameRoom {
 
   // ---------------- 机器人自动行棋 ----------------
 
-  /** 当轮到机器人（叫牌/出牌）时自动推进，直到轮到真人或局面终结。 */
-  private async autoBots(): Promise<RoomEvent[]> {
-    const events: RoomEvent[] = [];
-    for (let guard = 0; guard < BOT_LOOP_GUARD; guard++) {
-      if (this.phase === GamePhase.SETTLED) break;
-
-      if (this.phase === GamePhase.BIDDING && this.bid) {
-        const seat = this.bid.order[this.bid.index]!;
-        const p = this.players[seat];
-        if (!p || !p.isBot) break;
-        events.push(...this.iBid(seat, botBid(p.hand)));
-        continue;
-      }
-
-      if (this.phase === GamePhase.PLAYING) {
-        const seat = this.turnSeat;
-        if (seat === null) break;
-        const p = this.players[seat];
-        if (!p || !p.isBot) break;
-        const prev = this.lastPlay ? this.lastPlay.hand : null;
-        const cards = await choosePlayWithDouZero(
-          {
-            seat,
-            landlordSeat: this.landlordSeat!,
-            hand: p.hand,
-            prev,
-            bottom: this.bottom,
-            handCounts: {
-              0: this.players[0]!.hand.length,
-              1: this.players[1]!.hand.length,
-              2: this.players[2]!.hand.length,
-            },
-            history: this.playHistory,
-          },
-          this.aiAdapter,
-        );
-        if (cards && cards.length > 0) events.push(...this.iPlay(seat, cards));
-        else if (this.lastPlay === null) {
-          events.push(...this.iPlay(seat, smallestFallback(p.hand))); // 领出兜底
-        } else {
-          events.push(...this.iPass(seat));
-        }
-        continue;
-      }
-      break;
+  /** 当前是否轮到机器人且需要推进（叫牌或出牌）。 */
+  private pendingBotSeat(): Seat | null {
+    if (this.phase === GamePhase.SETTLED) return null;
+    if (this.phase === GamePhase.BIDDING && this.bid) {
+      const seat = this.bid.order[this.bid.index]!;
+      const p = this.players[seat];
+      return p?.isBot ? seat : null;
     }
-    return events;
+    if (this.phase === GamePhase.PLAYING && this.turnSeat !== null) {
+      const p = this.players[this.turnSeat];
+      return p?.isBot ? this.turnSeat : null;
+    }
+    return null;
+  }
+
+  private async runOneBotAction(): Promise<RoomEvent[]> {
+    if (this.phase === GamePhase.BIDDING && this.bid) {
+      const seat = this.bid.order[this.bid.index]!;
+      const p = this.players[seat];
+      if (!p || !p.isBot) return [];
+      return this.iBid(seat, botBid(p.hand));
+    }
+    if (this.phase === GamePhase.PLAYING) {
+      const seat = this.turnSeat;
+      if (seat === null) return [];
+      const p = this.players[seat];
+      if (!p || !p.isBot) return [];
+      const prev = this.lastPlay ? this.lastPlay.hand : null;
+      const cards = await choosePlayWithDouZero(
+        {
+          seat,
+          landlordSeat: this.landlordSeat!,
+          hand: p.hand,
+          prev,
+          bottom: this.bottom,
+          handCounts: {
+            0: this.players[0]!.hand.length,
+            1: this.players[1]!.hand.length,
+            2: this.players[2]!.hand.length,
+          },
+          history: this.playHistory,
+        },
+        this.aiAdapter,
+      );
+      if (cards && cards.length > 0) return this.iPlay(seat, cards);
+      if (this.lastPlay === null) return this.iPlay(seat, smallestFallback(p.hand));
+      return this.iPass(seat);
+    }
+    return [];
+  }
+
+  /**
+   * 推进所有机器人回合。`emit` 存在时按步下发（思考 snapshot → 延迟 → 动作），供 Socket 层实时展示；
+   * 测试可省略 emit 并设 BOT_THINK_MS_MIN=0 快速跑完。
+   */
+  async drainBots(emit?: (events: RoomEvent[]) => void | Promise<void>): Promise<RoomEvent[]> {
+    const collected: RoomEvent[] = [];
+    const flush = async (batch: RoomEvent[]) => {
+      if (batch.length === 0) return;
+      collected.push(...batch);
+      if (emit) await emit(batch);
+    };
+
+    for (let guard = 0; guard < BOT_LOOP_GUARD; guard++) {
+      const seat = this.pendingBotSeat();
+      if (seat === null) break;
+
+      this.botThinkingSeat = seat;
+      await flush([{ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } }]);
+      await sleep(botThinkDelayMs());
+
+      this.botThinkingSeat = null;
+      const step = await this.runOneBotAction();
+      await flush(step);
+      if (step.length === 0) break;
+    }
+    return collected;
   }
 
   // ---------------- 路由 / 视图 ----------------
@@ -538,6 +567,7 @@ export class GameRoom {
       passCount: this.passCount,
       multiplier: this.mult.multiplier,
       result: this.result,
+      botThinkingSeat: this.botThinkingSeat,
     };
   }
 }

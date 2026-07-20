@@ -65,6 +65,7 @@ export function GameTable() {
   const me = snapshot.players.find((p) => p.seat === mySeat);
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
   const lastPlay = snapshot.lastPlay;
+  const botThinkingSeat = snapshot.botThinkingSeat;
   const nameOf = (seat: number | null | undefined) =>
     seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
 
@@ -163,7 +164,9 @@ export function GameTable() {
           </span>
         )}
         <span>
-          {phase === GamePhase.BIDDING
+          {botThinkingSeat != null
+            ? `🤔 ${nameOf(botThinkingSeat)} 思考中…`
+            : phase === GamePhase.BIDDING
             ? isMyTurn
               ? '👉 轮到你叫地主'
               : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`

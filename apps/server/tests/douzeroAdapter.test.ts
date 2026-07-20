@@ -199,6 +199,7 @@ describe('DouZero adapter', () => {
       const room = new GameRoom('e2e-mock', adapter);
 
       expect((await room.start(true)).ok).toBe(true);
+      await room.drainBots();
       // 全机器人局，全部出牌都经真实子进程推理推进到结算
       expect(room.phase).toBe('settled');
       expect(room.result).not.toBeNull();
@@ -366,6 +367,7 @@ describe('DouZero adapter', () => {
     });
 
     expect((await room.start(true)).ok).toBe(true);
+    await room.drainBots();
     expect(room.phase).toBe('settled');
     expect(room.result).not.toBeNull();
     expect(room.playHistory.length).toBeGreaterThan(0);

@@ -289,7 +289,8 @@ describe('GameRoom · 倍数与结算（规则在 game-rules.multiplier / settle
 describe('GameRoom · 全机器人局跑完整一局', () => {
   it('3 机器人自动行棋直到 SETTLED，结果自洽', async () => {
     const r = new GameRoom('auto');
-    expect((await r.start(true)).ok).toBe(true); // 0 人 → 补 3 机器人 → 全自动到结算
+    expect((await r.start(true)).ok).toBe(true); // 0 人 → 补 3 机器人
+    await r.drainBots();
     expect(r.phase).toBe('settled');
     expect(r.result).not.toBeNull();
     const winner: Seat = r.result!.winnerSeat;
@@ -303,10 +304,12 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
     const r = new GameRoom('mixed');
     r.addHuman('真人');
     await r.start(true);
+    await r.drainBots();
     const human: Seat = 0;
     for (let guard = 0; guard < 500 && r.phase !== 'settled'; guard++) {
       if (r.phase === 'bidding' && r.bid && r.bid.order[r.bid.index] === human) {
         await r.handleBid(human, botBid(r.players[human]!.hand));
+        await r.drainBots();
         continue;
       }
       if (r.phase === 'playing' && r.turnSeat === human) {
@@ -315,9 +318,11 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
         if (cards && cards.length) await r.handlePlay(human, cards.map((c) => c.id));
         else if (r.lastPlay === null) await r.handlePlay(human, [r.players[human]!.hand[0]!.id]);
         else await r.handlePass(human);
+        await r.drainBots();
         continue;
       }
-      break;
+      await r.drainBots();
+      continue;
     }
     expect(r.phase).toBe('settled');
     expect(r.result).not.toBeNull();
