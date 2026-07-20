@@ -437,6 +437,18 @@ body::before {
   opacity: 0.84;
   margin-top: 4px;
 }
+.bid-status {
+  margin-top: 4px;
+  font-size: var(--ddz-text-xs);
+  font-weight: 700;
+  color: var(--ddz-gold-300);
+  opacity: 0.92;
+}
+.turn-line .bid-status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+}
 .seat-host {
   display: inline-block;
   margin-top: 8px;

@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import type {
-  BidChoice,
-  Card,
+import {
   GamePhase,
-  GameResult,
-  GameStateSnapshot,
-  PlayRecord,
+  type BidChoice,
+  type BidEntry,
+  type Card,
+  type GameResult,
+  type GameStateSnapshot,
+  type PlayRecord,
 } from '@card-game/rules';
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
@@ -42,6 +43,8 @@ interface UiState {
   hintIndex: number;
   /** 提示文案：如 AI 建议不出（管不上）。 */
   hintMessage: string | null;
+  /** 当前轮叫牌顺序记录（来自服务端 bid 事件；发牌/重发时清空）。 */
+  bidHistory: BidEntry[];
 
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
@@ -71,6 +74,7 @@ export const useGameStore = create<UiState>((set, get) => ({
   hints: [],
   hintIndex: 0,
   hintMessage: null,
+  bidHistory: [],
 
   init: () => {
     connect();
@@ -85,15 +89,21 @@ export const useGameStore = create<UiState>((set, get) => ({
           const turnChanged = prevTurn !== undefined && prevTurn !== e.state.turnSeat;
           set({
             snapshot: e.state,
+            ...(e.state.phase !== GamePhase.BIDDING ? { bidHistory: [] } : {}),
             ...(turnChanged ? { hints: [], hintIndex: 0, hintMessage: null } : {}),
           });
           break;
         }
+        case 'bid':
+          set((st) => ({
+            bidHistory: [...st.bidHistory, { seat: e.seat, choice: e.choice }],
+          }));
+          break;
         case 'dealt': {
           const hand = e.hand
             .map((id) => cardOf(id))
             .filter((c): c is Card => !!c);
-          set({ myHand: hand, selected: [] });
+          set({ myHand: hand, selected: [], bidHistory: [] });
           break;
         }
         case 'played': {
@@ -139,6 +149,7 @@ export const useGameStore = create<UiState>((set, get) => ({
       hints: [],
       hintIndex: 0,
       hintMessage: null,
+      bidHistory: [],
     });
     send({ type: 'join', name, roomId: roomId?.trim() || undefined });
   },
