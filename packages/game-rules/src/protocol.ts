@@ -7,7 +7,7 @@
  * 状态以服务端为准，客户端只做展示与乐观更新；权威判定走 game-rules。
  * 叫地主 / 倍数 / 结算的语义统一引用 game-rules 的 bidding / multiplier / settlement。
  */
-import type { BidChoice } from './bidding';
+import type { BidChoice, BidEntry } from './bidding';
 import type { Side } from './settlement';
 import type { Hand, Seat } from './types';
 
@@ -87,6 +87,12 @@ export interface GameStateSnapshot {
   passCount: number;
   /** 当前倍数（炸弹/王炸累积），便于客户端展示。 */
   multiplier: number;
+  /**
+   * 本局叫牌顺序（与 game-rules `BidEntry` 一致；BIDDING 阶段随表态递增）。
+   * 客户端据此展示各座叫/抢结果；断线重连不依赖补发历史 `bid` 事件。
+   * 非 BIDDING 阶段为空数组。
+   */
+  bids: BidEntry[];
   result: GameResult | null;
 }
 

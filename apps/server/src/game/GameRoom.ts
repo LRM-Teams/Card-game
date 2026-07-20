@@ -537,6 +537,8 @@ export class GameRoom {
       lastPlay: this.lastPlay ? { seat: this.lastPlay.seat, hand: this.lastPlay.hand } : null,
       passCount: this.passCount,
       multiplier: this.mult.multiplier,
+      bids:
+        this.phase === GamePhase.BIDDING && this.bid ? [...this.bid.entries] : [],
       result: this.result,
     };
   }

@@ -94,6 +94,7 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
     const bid = await r.handleBid(0, 'pass');
     expect(bid.ok).toBe(true);
     expect(r.turnSeat).toBe(1);
+    expect(r.snapshot().bids).toEqual([{ seat: 0, choice: 'pass' }]);
     if (bid.ok) {
       expect(bid.events.some((e) => e.event.type === 'turn' && e.event.seat === 1)).toBe(true);
     }
