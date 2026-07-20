@@ -88,6 +88,8 @@ export interface GameStateSnapshot {
   /** 当前倍数（炸弹/王炸累积），便于客户端展示。 */
   multiplier: number;
   result: GameResult | null;
+  /** 机器人正在「思考」的座位；出牌/叫牌动作尚未落盘，供客户端展示思考态。 */
+  botThinkingSeat: Seat | null;
 }
 
 /** 客户端 → 服务端动作。 */

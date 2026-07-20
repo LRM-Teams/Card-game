@@ -5,11 +5,6 @@ import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
-// 开源可商用图标（Iconify MDI 集，Apache-2.0），离线打包避免运行时网络依赖。
-// 来源：https://icon-sets.iconify.sh/mdi/  License: https://github.com/Templarian/MaterialDesign/blob/master/LICENSE
-import { Icon } from '@iconify/react';
-import crownIcon from '@iconify-icons/mdi/crown';
-import wheatIcon from '@iconify-icons/mdi/wheat';
 import { useNavigate } from '@tanstack/react-router';
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
@@ -70,6 +65,7 @@ export function GameTable() {
   const me = snapshot.players.find((p) => p.seat === mySeat);
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
   const lastPlay = snapshot.lastPlay;
+  const botThinkingSeat = snapshot.botThinkingSeat;
   const nameOf = (seat: number | null | undefined) =>
     seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
 
@@ -91,9 +87,11 @@ export function GameTable() {
     const myWin =
       (r.winnerSide === 'landlord' && mySeat === r.landlordSeat) ||
       (r.winnerSide === 'farmer' && mySeat !== r.landlordSeat);
+    const resultAsset = myWin ? '/states/victory-badge.svg' : '/states/defeat-badge.svg';
     return (
       <div className="table settled">
         <div className="result-card">
+          <img className="result-badge" src={resultAsset} alt="" aria-hidden="true" />
           <h2>{myWin ? '🎉 你赢了' : '😞 你输了'}</h2>
           <p>
             {r.winnerSide === 'landlord' ? '地主' : '农民'}胜 · 倍数 ×{r.multiplier} · 单注 {r.unit}
@@ -114,13 +112,18 @@ export function GameTable() {
 
   return (
     <div className="table">
-      <div className="opponents">
-        <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
-        <div className="center">
-          <div className="meta-row">
-            <span>倍数 ×{snapshot.multiplier}</span>
-            <span>阶段：{phaseLabel(phase)}</span>
-          </div>
+      <div className="meta-corner" aria-hidden="true">
+        <span>倍数 ×{snapshot.multiplier}</span>
+        <span>阶段：{phaseLabel(phase)}</span>
+      </div>
+
+      <div className="table-stage">
+        <div className="opponents">
+          <SeatBadge p={opponents[0]} active={snapshot.turnSeat === opponents[0]?.seat} />
+          <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
+        </div>
+
+        <div className="table-center-play" aria-label="桌面中央出牌区">
           <div className="last-play">
             {lastPlay ? (
               <>
@@ -130,12 +133,12 @@ export function GameTable() {
                 </div>
                 <div className="last-cards">
                   {lastPlay.hand.cards.map((c) => (
-                    <CardView key={c.id} card={c} small />
+                    <CardView key={c.id} card={c} small tablePlay />
                   ))}
                 </div>
               </>
             ) : (
-              <div className="last-label muted">桌面空空，自由出牌</div>
+              <div className="last-label muted">桌面出牌区 · 自由出牌</div>
             )}
           </div>
           {snapshot.bottomRevealed && snapshot.bottom.length > 0 && (
@@ -143,12 +146,11 @@ export function GameTable() {
               <span className="last-label">底牌：</span>
               {snapshot.bottom.map((id) => {
                 const c = cardOf(id);
-                return c ? <CardView key={id} card={c} small /> : null;
+                return c ? <CardView key={id} card={c} small tablePlay /> : null;
               })}
             </div>
           )}
         </div>
-        <SeatBadge p={opponents[1]} active={snapshot.turnSeat === opponents[1]?.seat} />
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
@@ -162,7 +164,9 @@ export function GameTable() {
           </span>
         )}
         <span>
-          {phase === GamePhase.BIDDING
+          {botThinkingSeat != null
+            ? `🤔 ${nameOf(botThinkingSeat)} 思考中…`
+            : phase === GamePhase.BIDDING
             ? isMyTurn
               ? '👉 轮到你叫地主'
               : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
@@ -172,8 +176,8 @@ export function GameTable() {
                 : `等待 ${nameOf(snapshot.turnSeat ?? null)} 出牌`
               : phaseLabel(phase)}
         </span>
-        {me?.role === 'landlord' && <span className="badge">地主</span>}
-        {me?.role === 'farmer' && <span className="badge farmer">农民</span>}
+        {me?.role === 'landlord' && <RoleBadge role="landlord" />}
+        {me?.role === 'farmer' && <RoleBadge role="farmer" />}
       </div>
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
@@ -230,23 +234,25 @@ function SeatBadge({
   active: boolean;
 }) {
   if (!p) return <div className="seat-badge" />;
-  const roleIcon = p.role === 'landlord' ? crownIcon : p.role === 'farmer' ? wheatIcon : null;
+  const roleAsset = p.role === 'landlord' ? '/identity/landlord-character.svg' : p.role === 'farmer' ? '/identity/farmer-character.svg' : null;
   const roleLabel = p.role === 'landlord' ? '地主' : p.role === 'farmer' ? '农民' : null;
   return (
     <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
       <div className="avatar">
-        <PlayerAvatar kind="player" />
-        {roleIcon && (
-          <Icon
-            className="role-icon"
-            icon={roleIcon}
-            aria-label={roleLabel ?? undefined}
-          />
-        )}
+        {roleAsset ? <img className="role-character" src={roleAsset} alt={roleLabel ?? ''} /> : <PlayerAvatar kind="player" />}
       </div>
       <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
     </div>
+  );
+}
+
+function RoleBadge({ role }: { role: 'landlord' | 'farmer' }) {
+  const label = role === 'landlord' ? '地主' : '农民';
+  return (
+    <span className={`badge ${role === 'farmer' ? 'farmer' : ''}`}>
+      <img src={`/badges/${role}.svg`} alt="" aria-hidden="true" />{label}
+    </span>
   );
 }
 

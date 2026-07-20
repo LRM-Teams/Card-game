@@ -9,6 +9,7 @@
 import type { Server as IoServer } from 'socket.io';
 import type { ClientAction, ErrorCode, Seat, ServerEvent } from '@card-game/rules';
 import type { ActionResult, RoomEvent } from './game/types';
+import type { GameRoom } from './game/GameRoom';
 import { RoomRegistry } from './registry';
 
 export function createGame(io: IoServer): RoomRegistry {
@@ -42,6 +43,12 @@ export function createGame(io: IoServer): RoomRegistry {
           if (sid) io.to(sid).emit('event', re.event);
         }
       }
+    };
+
+    const pumpBots = async (room: GameRoom, roomId: string): Promise<void> => {
+      await room.drainBots((events) => {
+        apply(roomId, events);
+      });
     };
 
     socket.on('action', async (action: ClientAction) => {
@@ -78,6 +85,7 @@ export function createGame(io: IoServer): RoomRegistry {
           return;
         }
         apply(roomId, result.events);
+        await pumpBots(room, roomId);
       });
     });
 
