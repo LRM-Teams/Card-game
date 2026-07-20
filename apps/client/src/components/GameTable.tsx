@@ -69,6 +69,8 @@ export function GameTable() {
   const isMyTurn = snapshot.turnSeat === mySeat;
   const me = snapshot.players.find((p) => p.seat === mySeat);
   const opponents = snapshot.players.filter((p) => p.seat !== mySeat);
+  const turnPlayer =
+    snapshot.turnSeat != null ? snapshot.players.find((p) => p.seat === snapshot.turnSeat) : undefined;
   const lastPlay = snapshot.lastPlay;
   const nameOf = (seat: number | null | undefined) =>
     seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
@@ -165,11 +167,15 @@ export function GameTable() {
           {phase === GamePhase.BIDDING
             ? isMyTurn
               ? '👉 轮到你叫地主'
-              : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
+              : turnPlayer?.isBot
+                ? `${nameOf(snapshot.turnSeat ?? null)} 思考中…`
+                : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
             : phase === GamePhase.PLAYING
               ? isMyTurn
                 ? '👉 轮到你出牌'
-                : `等待 ${nameOf(snapshot.turnSeat ?? null)} 出牌`
+                : turnPlayer?.isBot
+                  ? `${nameOf(snapshot.turnSeat ?? null)} 思考中…`
+                  : `等待 ${nameOf(snapshot.turnSeat ?? null)} 出牌`
               : phaseLabel(phase)}
         </span>
         {me?.role === 'landlord' && <span className="badge">地主</span>}

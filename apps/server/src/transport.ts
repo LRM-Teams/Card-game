@@ -72,12 +72,15 @@ export function createGame(io: IoServer): RoomRegistry {
       const seat = binding.seat;
       // 按房间串行：机器人异步推理期间，同一房间的动作排队处理。
       runRoomAction(roomId, async () => {
-        const result: ActionResult = await room.handleAction(seat, action);
+        const result: ActionResult = await room.handleAction(seat, action, 'defer');
         if (!result.ok) {
           fail(result.code, result.message);
           return;
         }
         apply(roomId, result.events);
+        await room.runBotPump((chunk) => {
+          apply(roomId, chunk);
+        });
       });
     });
 

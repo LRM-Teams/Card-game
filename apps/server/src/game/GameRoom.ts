@@ -41,9 +41,13 @@ import type {
   Seat,
 } from '@card-game/rules';
 import { botBid, botName } from './bot';
+import { botThinkDelay } from './botPacing';
 import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
 import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
+
+/** 联机传输层 defer 机器人推进，由 transport 分步下发并插入思考延迟。 */
+export type BotAdvanceMode = 'inline' | 'defer';
 
 const SEATS: readonly Seat[] = [0, 1, 2];
 const MAX_REDEALS = 5;
@@ -160,15 +164,15 @@ export class GameRoom {
    * 开局：fillBots=true 时不足 3 人补机器人；默认 fillBots=false 要求 3 名真人（纯人对战）。
    * 产品上由真人触发（transport 层保证至少 1 名真人）；引擎允许全机器人局，便于联机/自动化测试。
    */
-  async start(fillBots = false): Promise<ActionResult> {
-    if (this.phase === GamePhase.SETTLED) return this.dealAndBeginBid(); // 再来一局：保留座位重新发牌
+  async start(fillBots = false, botMode: BotAdvanceMode = 'inline'): Promise<ActionResult> {
+    if (this.phase === GamePhase.SETTLED) return this.dealAndBeginBid(botMode); // 再来一局：保留座位重新发牌
     if (this.phase !== GamePhase.WAITING) return err('invalid_action_for_phase', '当前阶段不能开局');
     if (fillBots) {
       this.fillBots();
     } else if (this.humanCount < 3) {
       return err('not_enough_players', '人数不足 3 人，等人加入或选择补机器人');
     }
-    return this.dealAndBeginBid();
+    return this.dealAndBeginBid(botMode);
   }
 
   private fillBots(): void {
@@ -187,7 +191,7 @@ export class GameRoom {
     }
   }
 
-  private async dealAndBeginBid(): Promise<ActionResult> {
+  private async dealAndBeginBid(botMode: BotAdvanceMode = 'inline'): Promise<ActionResult> {
     const { hands, bottom } = deal();
     for (const seat of SEATS) {
       const p = this.players[seat]!;
@@ -220,20 +224,20 @@ export class GameRoom {
     }
     events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
 
-    events.push(...(await this.autoBots()));
+    events.push(...(await this.maybeDrainBots(botMode)));
     return ok(events);
   }
 
   // ---------------- 叫地主（抢地主，规则在 game-rules.resolveBidding） ----------------
 
-  async handleBid(seat: Seat, choice: BidChoice): Promise<ActionResult> {
+  async handleBid(seat: Seat, choice: BidChoice, botMode: BotAdvanceMode = 'inline'): Promise<ActionResult> {
     if (this.phase !== GamePhase.BIDDING || !this.bid) return err('invalid_action_for_phase', '当前不是叫地主阶段');
     const b = this.bid;
     if (seat !== b.order[b.index]) return err('not_your_turn', '还没轮到你叫');
     if (choice !== 'claim' && choice !== 'pass') return err('invalid_bid', '叫地主动作必须是 claim 或 pass');
 
     const events: RoomEvent[] = this.iBid(seat, choice);
-    events.push(...(await this.autoBots()));
+    events.push(...(await this.maybeDrainBots(botMode)));
     return ok(events);
   }
 
@@ -308,7 +312,7 @@ export class GameRoom {
 
   // ---------------- 出牌回合（合法性走 game-rules，倍数走 multiplier） ----------------
 
-  async handlePlay(seat: Seat, cardIds: readonly string[]): Promise<ActionResult> {
+  async handlePlay(seat: Seat, cardIds: readonly string[], botMode: BotAdvanceMode = 'inline'): Promise<ActionResult> {
     if (this.phase !== GamePhase.PLAYING) return err('invalid_action_for_phase', '当前不是出牌阶段');
     if (this.turnSeat !== seat) return err('not_your_turn', '还没轮到你出');
     const p = this.players[seat]!;
@@ -330,7 +334,7 @@ export class GameRoom {
     }
 
     const events: RoomEvent[] = this.iPlay(seat, cards);
-    events.push(...(await this.autoBots()));
+    events.push(...(await this.maybeDrainBots(botMode)));
     return ok(events);
   }
 
@@ -357,13 +361,13 @@ export class GameRoom {
     return events;
   }
 
-  async handlePass(seat: Seat): Promise<ActionResult> {
+  async handlePass(seat: Seat, botMode: BotAdvanceMode = 'inline'): Promise<ActionResult> {
     if (this.phase !== GamePhase.PLAYING) return err('invalid_action_for_phase', '当前不是出牌阶段');
     if (this.turnSeat !== seat) return err('not_your_turn', '还没轮到你');
     if (this.lastPlay === null) return err('must_play_when_leading', '你领出，必须出牌，不能 pass');
 
     const events: RoomEvent[] = this.iPass(seat);
-    events.push(...(await this.autoBots()));
+    events.push(...(await this.maybeDrainBots(botMode)));
     return ok(events);
   }
 
@@ -409,68 +413,103 @@ export class GameRoom {
 
   // ---------------- 机器人自动行棋 ----------------
 
-  /** 当轮到机器人（叫牌/出牌）时自动推进，直到轮到真人或局面终结。 */
-  private async autoBots(): Promise<RoomEvent[]> {
+  /** 当前是否轮到机器人行动（叫牌或出牌）。 */
+  isBotTurn(): boolean {
+    if (this.phase === GamePhase.SETTLED) return false;
+    if (this.phase === GamePhase.BIDDING && this.bid) {
+      const seat = this.bid.order[this.bid.index]!;
+      const p = this.players[seat];
+      return !!p?.isBot;
+    }
+    if (this.phase === GamePhase.PLAYING && this.turnSeat !== null) {
+      return !!this.players[this.turnSeat]?.isBot;
+    }
+    return false;
+  }
+
+  private async maybeDrainBots(mode: BotAdvanceMode): Promise<RoomEvent[]> {
+    if (mode === 'defer') return [];
+    return this.drainAllBots();
+  }
+
+  /** 单测 / 直连 API：无延迟，一口气推进到真人回合或终局。 */
+  async drainAllBots(): Promise<RoomEvent[]> {
     const events: RoomEvent[] = [];
     for (let guard = 0; guard < BOT_LOOP_GUARD; guard++) {
-      if (this.phase === GamePhase.SETTLED) break;
-
-      if (this.phase === GamePhase.BIDDING && this.bid) {
-        const seat = this.bid.order[this.bid.index]!;
-        const p = this.players[seat];
-        if (!p || !p.isBot) break;
-        events.push(...this.iBid(seat, botBid(p.hand)));
-        continue;
-      }
-
-      if (this.phase === GamePhase.PLAYING) {
-        const seat = this.turnSeat;
-        if (seat === null) break;
-        const p = this.players[seat];
-        if (!p || !p.isBot) break;
-        const prev = this.lastPlay ? this.lastPlay.hand : null;
-        const cards = await choosePlayWithDouZero(
-          {
-            seat,
-            landlordSeat: this.landlordSeat!,
-            hand: p.hand,
-            prev,
-            bottom: this.bottom,
-            handCounts: {
-              0: this.players[0]!.hand.length,
-              1: this.players[1]!.hand.length,
-              2: this.players[2]!.hand.length,
-            },
-            history: this.playHistory,
-          },
-          this.aiAdapter,
-        );
-        if (cards && cards.length > 0) events.push(...this.iPlay(seat, cards));
-        else if (this.lastPlay === null) {
-          events.push(...this.iPlay(seat, smallestFallback(p.hand))); // 领出兜底
-        } else {
-          events.push(...this.iPass(seat));
-        }
-        continue;
-      }
-      break;
+      const step = await this.autoBotOnce();
+      if (step.length === 0) break;
+      events.push(...step);
     }
     return events;
+  }
+
+  /**
+   * 联机：每步机器人行动前等待 0.5–1s，并通过 emit 分步下发（避免客户端一次收齐秒出）。
+   */
+  async runBotPump(emit: (events: RoomEvent[]) => void | Promise<void>): Promise<void> {
+    for (let guard = 0; guard < BOT_LOOP_GUARD; guard++) {
+      if (!this.isBotTurn()) break;
+      await botThinkDelay();
+      const step = await this.autoBotOnce();
+      if (step.length === 0) break;
+      await emit(step);
+    }
+  }
+
+  /** 执行至多一步机器人叫牌/出牌。 */
+  private async autoBotOnce(): Promise<RoomEvent[]> {
+    if (this.phase === GamePhase.SETTLED) return [];
+
+    if (this.phase === GamePhase.BIDDING && this.bid) {
+      const seat = this.bid.order[this.bid.index]!;
+      const p = this.players[seat];
+      if (!p || !p.isBot) return [];
+      return this.iBid(seat, botBid(p.hand));
+    }
+
+    if (this.phase === GamePhase.PLAYING) {
+      const seat = this.turnSeat;
+      if (seat === null) return [];
+      const p = this.players[seat];
+      if (!p || !p.isBot) return [];
+      const prev = this.lastPlay ? this.lastPlay.hand : null;
+      const cards = await choosePlayWithDouZero(
+        {
+          seat,
+          landlordSeat: this.landlordSeat!,
+          hand: p.hand,
+          prev,
+          bottom: this.bottom,
+          handCounts: {
+            0: this.players[0]!.hand.length,
+            1: this.players[1]!.hand.length,
+            2: this.players[2]!.hand.length,
+          },
+          history: this.playHistory,
+        },
+        this.aiAdapter,
+      );
+      if (cards && cards.length > 0) return this.iPlay(seat, cards);
+      if (this.lastPlay === null) return this.iPlay(seat, smallestFallback(p.hand));
+      return this.iPass(seat);
+    }
+
+    return [];
   }
 
   // ---------------- 路由 / 视图 ----------------
 
   /** 按动作类型路由（join 由 registry 处理，这里只处理座位绑定的动作）。 */
-  async handleAction(seat: Seat, action: ClientAction): Promise<ActionResult> {
+  async handleAction(seat: Seat, action: ClientAction, botMode: BotAdvanceMode = 'inline'): Promise<ActionResult> {
     switch (action.type) {
       case 'bid':
-        return this.handleBid(seat, action.choice);
+        return this.handleBid(seat, action.choice, botMode);
       case 'play':
-        return this.handlePlay(seat, action.cards);
+        return this.handlePlay(seat, action.cards, botMode);
       case 'pass':
-        return this.handlePass(seat);
+        return this.handlePass(seat, botMode);
       case 'start':
-        return this.start(action.fillBots ?? false);
+        return this.start(action.fillBots ?? false, botMode);
       case 'hint':
         return this.handleHint(seat);
       default:

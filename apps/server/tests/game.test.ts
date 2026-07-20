@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { identifyHand, RANK } from '@card-game/rules';
 import type { Card, Seat } from '@card-game/rules';
 import { botBid, botChoosePlay } from '../src/game/bot';
+import { botThinkDelay } from '../src/game/botPacing';
 import { GameRoom } from '../src/game/GameRoom';
 import { RoomRegistry } from '../src/registry';
 
@@ -286,6 +287,30 @@ describe('GameRoom · 倍数与结算（规则在 game-rules.multiplier / settle
   });
 });
 
+describe('GameRoom · 机器人思考节奏', () => {
+  it('botThinkDelay 在 0.5–1s 窗口内 resolve', async () => {
+    vi.useFakeTimers();
+    let done = false;
+    const p = botThinkDelay().then(() => {
+      done = true;
+    });
+    await vi.advanceTimersByTimeAsync(499);
+    expect(done).toBe(false);
+    await vi.advanceTimersByTimeAsync(501);
+    await p;
+    expect(done).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('defer 开局不内联推进，transport 可 runBotPump 分步', async () => {
+    const r = new GameRoom('pace');
+    expect((await r.start(true, 'defer')).ok).toBe(true);
+    expect(r.isBotTurn()).toBe(true);
+    await r.drainAllBots();
+    expect(r.isBotTurn()).toBe(false);
+  });
+});
+
 describe('GameRoom · 全机器人局跑完整一局', () => {
   it('3 机器人自动行棋直到 SETTLED，结果自洽', async () => {
     const r = new GameRoom('auto');
@@ -315,6 +340,10 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
         if (cards && cards.length) await r.handlePlay(human, cards.map((c) => c.id));
         else if (r.lastPlay === null) await r.handlePlay(human, [r.players[human]!.hand[0]!.id]);
         else await r.handlePass(human);
+        continue;
+      }
+      if (r.isBotTurn()) {
+        await r.drainAllBots();
         continue;
       }
       break;
