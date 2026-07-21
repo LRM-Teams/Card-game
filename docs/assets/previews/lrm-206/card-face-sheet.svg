@@ -1,44 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="320" viewBox="0 0 720 320" role="img" aria-label="LRM-206 card face preview sheet">
   <rect width="720" height="320" fill="#0f2a1c"/>
-  <text x="24" y="36" font-family="system-ui,sans-serif" font-size="18" font-weight="700" fill="#f3e7c5">LRM-206 card face preview (self-drawn)</text>
-  <text x="24" y="58" font-family="system-ui,sans-serif" font-size="12" fill="#9bb5a4">paper front / red-black suits / big-joker red rail / small-joker blue rail / lattice back</text>
+  <text x="24" y="36" font-family="system-ui,sans-serif" font-size="18" font-weight="700" fill="#f3e7c5">LRM-206 牌面精修预览</text>
+  <text x="24" y="58" font-family="system-ui,sans-serif" font-size="12" fill="#9bb5a4">红桃 A · 小王 / 大王 · 牌背（自绘纸质感）</text>
 
+  <!-- Heart A -->
   <g transform="translate(36 84)">
-    <rect width="104" height="148" rx="10" fill="#fbf8f0" stroke="#8a7355"/>
-    <text x="14" y="28" font-size="20" font-weight="800" fill="#c62828" font-family="Georgia,serif">A</text>
-    <path d="M52 50 C39 34 24 56 37 74 C44 83 51 90 52 104 C53 90 60 83 67 74 C80 56 65 34 52 50Z" fill="#c62828"/>
-    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">front</text>
+    <rect width="104" height="148" rx="10" fill="#fbf8f0" stroke="#8a7355" stroke-width="1.5"/>
+    <rect x="6" y="6" width="92" height="136" rx="7" fill="none" stroke="#d9cbb5" stroke-width="1"/>
+    <g fill="#c62828">
+      <text x="14" y="28" font-family="Georgia,serif" font-size="22" font-weight="800">A</text>
+      <path d="M19.5 36.5C13.5 29.5 6.5 39.5 13.5 48c3.3 4.5 6 8 6 12.5 0-4.5 2.7-8 6-12.5 7-8.5 0-18.5-6-11.5z"/>
+      <path d="M52 50C39 34 24 56 37 74c7 9 14 16 15 30 1-14 8-21 15-30 13-18-2-40-15-24z" opacity=".94"/>
+    </g>
+    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">红桃 A</text>
   </g>
-  <g transform="translate(168 84)">
-    <rect width="104" height="148" rx="10" fill="#fbf8f0" stroke="#8a7355"/>
-    <text x="14" y="28" font-size="20" font-weight="800" fill="#1a1a1a" font-family="Georgia,serif">K</text>
-    <path d="M52 58 L58 70 L52 82 L46 70 Z" fill="#1a1a1a"/>
-    <path d="M40 70 L52 52 L64 70 L52 66 Z" fill="#1a1a1a"/>
-    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">black suit</text>
+
+  <!-- Small joker (blue rail) -->
+  <g transform="translate(212 84)">
+    <rect width="104" height="148" rx="10" fill="#fbf8f0" stroke="#8a7355" stroke-width="1.5"/>
+    <rect x="8" y="10" width="8" height="128" rx="3" fill="#2f6fed"/>
+    <text x="28" y="34" font-family="system-ui" font-size="13" font-weight="700" fill="#263247">JOKER</text>
+    <path d="M52 58c-10 0-18 8-18 18 0 14 18 34 18 34s18-20 18-34c0-10-8-18-18-18z" fill="#2f6fed"/>
+    <path d="M40 52c4-10 10-14 12-8 2-8 8-10 12-2 2-6 8-4 10 2l-6 10H46z" fill="#263247"/>
+    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">小王</text>
   </g>
-  <g transform="translate(300 84)">
-    <rect width="104" height="148" rx="10" fill="#fbf8f0" stroke="#8a7355"/>
-    <rect x="10" y="12" width="6" height="124" rx="2" fill="#c62828"/>
-    <text x="22" y="40" font-size="14" font-weight="900" fill="#b71c1c" font-family="system-ui">Da Wang</text>
-    <path d="M52 40c10 16 20 24 18 42-1 14-12 24-18 30-6-6-17-16-18-30-2-18 8-26 18-42z" fill="#d32222"/>
-    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">big joker</text>
-  </g>
-  <g transform="translate(432 84)">
-    <rect width="104" height="148" rx="10" fill="#fbf8f0" stroke="#8a7355"/>
-    <rect x="10" y="12" width="6" height="124" rx="2" fill="#263247"/>
-    <text x="22" y="40" font-size="14" font-weight="900" fill="#1a2433" font-family="system-ui">Xiao Wang</text>
+
+  <!-- Big joker (red rail) -->
+  <g transform="translate(388 84)">
+    <rect width="104" height="148" rx="10" fill="#fbf8f0" stroke="#8a7355" stroke-width="1.5"/>
+    <rect x="8" y="10" width="8" height="128" rx="3" fill="#c62828"/>
+    <text x="28" y="34" font-family="system-ui" font-size="13" font-weight="700" fill="#263247">JOKER</text>
     <path d="M32 88c6-24 34-24 40 0l-6 26H38z" fill="#263247"/>
     <path d="M30 88c5-14 4-24 0-32 10 2 16 11 20 26 3-15 10-24 20-26-4 8-5 18 0 32" fill="#efc75a" stroke="#263247" stroke-width="2"/>
-    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">small joker</text>
+    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">大王</text>
   </g>
+
+  <!-- Card back -->
   <g transform="translate(564 84)">
     <rect width="104" height="148" rx="10" fill="#3d1018" stroke="#c9a24a" stroke-width="2"/>
     <rect x="12" y="12" width="80" height="124" rx="6" fill="none" stroke="#e8c56a" stroke-width="1.5"/>
-    <circle cx="52" cy="74" r="18" fill="#140910" stroke="#e8c56a" stroke-width="2"/>
-    <path d="M52 60 L56 70 L67 71 L59 79 L61 90 L52 84 L43 90 L45 79 L37 71 L48 70 Z" fill="#f3df9a"/>
-    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">back</text>
+    <circle cx="52" cy="74" r="18" fill="#140910" stroke="#e8c56a" stroke-width="1.5"/>
+    <path d="M52 62 L58 74 L52 86 L46 74 Z M40 74 L52 68 L64 74 L52 80 Z" fill="#f3df9a"/>
+    <text x="52" y="170" text-anchor="middle" font-size="12" fill="#c9d9cc" font-family="system-ui">牌背</text>
   </g>
 
-  <text x="24" y="290" font-family="system-ui,sans-serif" font-size="11" fill="#7f9a8c">SVG path: apps/client/public/cards/*.svg (mirrored in docs/assets/cards) - size 52x74 / 40x56</text>
-  <text x="24" y="308" font-family="system-ui,sans-serif" font-size="11" fill="#7f9a8c">selected lift 34px - disabled opacity 0.55 - no Tencent original art</text>
+  <text x="24" y="290" font-family="system-ui,sans-serif" font-size="11" fill="#7f9a8c">源：apps/client/public/cards/*.svg · docs/assets/cards · 尺寸 52x74 / 40x56</text>
+  <text x="24" y="308" font-family="system-ui,sans-serif" font-size="11" fill="#7f9a8c">选中抬起 34px · 不可出 opacity 0.55 + 饱和度 -45%</text>
 </svg>
