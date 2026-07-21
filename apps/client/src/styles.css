@@ -40,6 +40,11 @@
   --ddz-shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.30);
   /* v7 别刺眼：金色高光收敛，选中靠边框而非泛光 */
   --ddz-glow-gold: 0 0 0 2px rgba(245, 197, 66, 0.22), 0 0 12px rgba(245, 197, 66, 0.16);
+  /* 大厅暖红金（与牌桌台呢绿区分） */
+  --ddz-lobby-bg-900: #24100e;
+  --ddz-lobby-bg-700: #5a2218;
+  --ddz-lobby-bg-500: #8a3424;
+  --ddz-lobby-muted: rgba(255, 243, 196, 0.42);
 
   color-scheme: dark;
 }
@@ -181,6 +186,169 @@ body::before {
 .room {
   max-width: 680px;
 }
+
+/* LRM-165：大厅暖红金主视觉 + 唯一主 CTA 层级 */
+.panel.lobby {
+  max-width: 560px;
+  padding: 18px 18px 22px;
+  background:
+    linear-gradient(180deg, rgba(90, 34, 24, 0.94), rgba(36, 16, 14, 0.97)),
+    radial-gradient(circle at 50% 0%, rgba(245, 197, 66, 0.18), transparent 46%);
+  border-color: rgba(245, 197, 66, 0.28);
+}
+.panel.lobby::after {
+  display: none;
+}
+.lobby-hero {
+  position: relative;
+  margin: 0 0 var(--ddz-space-4);
+  border-radius: var(--ddz-radius-md);
+  overflow: hidden;
+  isolation: isolate;
+  animation: ddz-lobby-float 4.8s ease-in-out infinite;
+}
+.lobby-hero__art {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+}
+.lobby-hero__copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 14px 12px;
+  background: linear-gradient(180deg, transparent, rgba(20, 8, 6, 0.78));
+  text-align: center;
+  pointer-events: none;
+}
+.lobby-title {
+  margin: 0;
+  font-size: clamp(26px, 7vw, 34px);
+  color: var(--ddz-gold-500);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+.lobby-subtitle {
+  margin: 4px 0 0;
+  opacity: 0.9;
+}
+.lobby-player {
+  margin: 0 0 var(--ddz-space-2);
+}
+.lobby-field {
+  margin: var(--ddz-space-2) 0;
+}
+.lobby-field--compact {
+  margin: 0 0 var(--ddz-space-2);
+}
+.lobby-field span {
+  color: var(--ddz-lobby-muted);
+  font-size: var(--ddz-text-xs);
+  letter-spacing: 0.04em;
+}
+.lobby-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin: var(--ddz-space-3) 0 var(--ddz-space-4);
+}
+.lobby-start {
+  width: 100%;
+  min-height: 58px;
+  font-size: var(--ddz-text-lg);
+  letter-spacing: 0.06em;
+  transition:
+    transform 100ms ease,
+    filter 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+.lobby-start:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 0 0 2px rgba(255, 224, 116, 0.4),
+    0 14px 28px rgba(217, 154, 30, 0.38),
+    inset 0 2px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -4px 0 rgba(150, 96, 0, 0.28);
+}
+.lobby-start:active:not(:disabled) {
+  transform: translateY(2px) scale(0.99);
+  filter: brightness(0.97);
+}
+.lobby-cta-hint {
+  margin: 0;
+  text-align: center;
+  color: var(--ddz-lobby-muted);
+  font-size: var(--ddz-text-xs);
+}
+.lobby-secondary {
+  margin: 0 0 var(--ddz-space-3);
+  padding: var(--ddz-space-3);
+  border: 1px solid rgba(255, 243, 196, 0.12);
+  border-radius: var(--ddz-radius-md);
+  background: rgba(0, 0, 0, 0.22);
+  filter: saturate(0.72) brightness(0.92);
+}
+.lobby-secondary__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ddz-space-2);
+  margin-bottom: var(--ddz-space-2);
+}
+.lobby-secondary__label {
+  color: rgba(255, 243, 196, 0.72);
+  font-size: var(--ddz-text-sm);
+  font-weight: 700;
+}
+.lobby-secondary__mute {
+  color: rgba(255, 243, 196, 0.38);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.lobby-join {
+  width: 100%;
+  min-height: 42px;
+  border-color: rgba(255, 243, 196, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.18));
+  color: rgba(255, 250, 240, 0.82);
+  font-size: var(--ddz-text-sm);
+  font-weight: 700;
+  box-shadow: none;
+  filter: saturate(0.7);
+  transition: transform 100ms ease, filter 150ms ease, opacity 150ms ease;
+}
+.lobby-join:hover:not(:disabled) {
+  filter: saturate(0.82) brightness(1.04);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.lobby-join:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.lobby-tips {
+  margin-top: var(--ddz-space-2);
+  color: rgba(255, 243, 196, 0.48);
+  font-size: var(--ddz-text-xs);
+  line-height: 1.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lobby-hero {
+    animation: none;
+  }
+}
+@keyframes ddz-lobby-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 .title {
   margin: 0 0 var(--ddz-space-1);
   font-family: var(--ddz-font-display);
@@ -227,9 +395,6 @@ body::before {
 }
 .actions {
   justify-content: flex-start;
-}
-.lobby-actions .btn {
-  flex: 1 1 160px;
 }
 .lobby-error {
   cursor: pointer;

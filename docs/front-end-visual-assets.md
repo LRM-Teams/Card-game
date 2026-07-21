@@ -19,6 +19,7 @@
 | 状态 | 加倍徽章 | `docs/assets/states/double-badge.svg` / `apps/client/public/states/double-badge.svg` | 120x120 SVG | 加倍/超级加倍反馈，可由组件替换数字 | 内部自绘，可商用 |
 | 状态 | 胜利徽章 | `docs/assets/states/victory-badge.svg` / `apps/client/public/states/victory-badge.svg` | 180x140 SVG | 结算胜利标题 | 内部自绘，可商用 |
 | 状态 | 惜败徽章 | `docs/assets/states/defeat-badge.svg` / `apps/client/public/states/defeat-badge.svg` | 180x140 SVG | 结算失败标题 | 内部自绘，可商用 |
+| 大厅 | 主视觉插画 | `docs/assets/lobby/hero-illustration.svg` / `apps/client/public/lobby/hero-illustration.svg` | 720x320 SVG | 大厅品牌主视觉（暖红金 + 角色剪影 + 浮牌） | 内部自绘，可商用；见 `docs/assets/lobby/LICENSE.md` |
 
 ## 2. 扑克牌设计规范
 
