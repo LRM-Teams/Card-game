@@ -354,6 +354,16 @@ body::before {
 .seat-badge.active {
   border-color: var(--ddz-gold-500);
   box-shadow: var(--ddz-glow-gold), 0 12px 24px rgba(0, 0, 0, 0.24);
+  animation: ddz-turn-pulse 1.4s ease-in-out infinite;
+}
+.seat-badge.active::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--ddz-radius-md) + 2px);
+  border: 2px solid rgba(245, 197, 66, 0.45);
+  pointer-events: none;
+  animation: ddz-turn-ring 1.4s ease-in-out infinite;
 }
 .seat-card.empty {
   opacity: 0.62;
@@ -724,6 +734,23 @@ body::before {
   background: linear-gradient(135deg, rgba(255, 90, 70, 0.96), rgba(180, 20, 20, 0.92));
   animation: ddz-play-fx-shake 0.45s ease-in-out 2;
 }
+.play-type-fx.fx-bomb .play-type-fx-bomb {
+  display: block;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 4px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+  animation: ddz-bomb-pop 0.9s ease-out both;
+}
+.play-type-fx.fx-rocket .play-type-fx-text {
+  background: linear-gradient(135deg, rgba(255, 140, 60, 0.96), rgba(200, 40, 20, 0.92));
+}
+.play-type-fx.fx-rocket .play-type-fx-bomb {
+  width: 52px;
+  height: 52px;
+  animation-duration: 1.05s;
+}
 .play-type-fx.fx-plane .play-type-fx-text {
   background: linear-gradient(135deg, rgba(160, 255, 200, 0.95), rgba(24, 160, 100, 0.9));
 }
@@ -847,6 +874,10 @@ body::before {
 .hand .card:first-child {
   margin-left: 0;
 }
+.hand--dealing .card {
+  animation: ddz-deal-fan 480ms cubic-bezier(0.22, 0.9, 0.32, 1) both;
+  animation-delay: calc(var(--deal-i, 0) * 28ms);
+}
 .last-cards .card {
   animation: ddz-card-fly-in 160ms ease-out both;
 }
@@ -901,6 +932,7 @@ body::before {
   font-family: var(--ddz-font-display);
   font-weight: 900;
   text-shadow: 0 0 16px rgba(245, 197, 66, 0.36);
+  animation: ddz-turn-text 1.4s ease-in-out infinite;
 }
 .badge {
   display: inline-flex;
@@ -1093,6 +1125,45 @@ body::before {
   border-radius: var(--ddz-radius-lg);
   padding: 32px 38px;
   box-shadow: var(--ddz-shadow-panel);
+  animation: ddz-result-pop 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.result-card.win {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245, 197, 66, 0.34), transparent 42%),
+    linear-gradient(180deg, #7a3a1c, #4a2212 70%, #2a140c);
+}
+.result-card.lose {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(120, 150, 200, 0.22), transparent 42%),
+    linear-gradient(180deg, #2a3548, #1a2230 70%, #121820);
+  border-color: rgba(160, 180, 210, 0.28);
+}
+.result-card.lose h2 {
+  color: #c8d4e8;
+}
+.result-coins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.result-coins span {
+  position: absolute;
+  bottom: 18%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff3c4, #f0c45a 55%, #c8881a);
+  opacity: 0;
+  animation: ddz-coin-rise 1.2s ease-out both;
+}
+.result-coins span:nth-child(1) { left: 18%; animation-delay: 80ms; }
+.result-coins span:nth-child(2) { left: 34%; animation-delay: 160ms; }
+.result-coins span:nth-child(3) { left: 50%; animation-delay: 240ms; }
+.result-coins span:nth-child(4) { left: 66%; animation-delay: 120ms; }
+.result-coins span:nth-child(5) { left: 80%; animation-delay: 200ms; }
+.result-card.lose .result-coins {
+  display: none;
 }
 .result-badge {
   width: 96px;
@@ -1234,6 +1305,88 @@ body::before {
   }
   75% {
     transform: translateX(3px);
+  }
+}
+@keyframes ddz-deal-fan {
+  0% {
+    opacity: 0;
+    transform: translate(-40%, -120%) scale(0.55) rotate(-8deg);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+@keyframes ddz-turn-pulse {
+  0%,
+  100% {
+    box-shadow: var(--ddz-glow-gold), 0 12px 24px rgba(0, 0, 0, 0.24);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(245, 197, 66, 0.34),
+      0 0 18px rgba(245, 197, 66, 0.28),
+      0 12px 24px rgba(0, 0, 0, 0.24);
+  }
+}
+@keyframes ddz-turn-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.02);
+  }
+}
+@keyframes ddz-turn-text {
+  0%,
+  100% {
+    text-shadow: 0 0 12px rgba(245, 197, 66, 0.28);
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(245, 197, 66, 0.42);
+  }
+}
+@keyframes ddz-bomb-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+@keyframes ddz-result-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ddz-coin-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.6);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-72px) scale(1);
   }
 }
 

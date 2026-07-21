@@ -30,6 +30,7 @@ export function GameTable() {
   const seatLastPlays = useGameStore((s) => s.seatLastPlays);
   const playFx = useGameStore((s) => s.playFx);
   const clearPlayFx = useGameStore((s) => s.clearPlayFx);
+  const dealAnimId = useGameStore((s) => s.dealAnimId);
   const navigate = useNavigate();
 
   const selectedCards = useMemo(
@@ -105,7 +106,10 @@ export function GameTable() {
     const resultAsset = myWin ? '/states/victory-badge.svg' : '/states/defeat-badge.svg';
     return (
       <div className="table settled">
-        <div className="result-card">
+        <div className={`result-card${myWin ? ' win' : ' lose'}`}>
+          <div className="result-coins" aria-hidden="true">
+            <span /><span /><span /><span /><span />
+          </div>
           <img className="result-badge" src={resultAsset} alt="" aria-hidden="true" />
           <h2>{myWin ? '🎉 你赢了' : '😞 你输了'}</h2>
           <p>
@@ -212,7 +216,7 @@ export function GameTable() {
         </div>
       )}
 
-      <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
+      <HandView cards={myHand} selected={selected} onToggle={toggleSelect} dealAnimId={dealAnimId} />
 
       <div className="controls">
         <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>

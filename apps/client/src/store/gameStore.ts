@@ -68,6 +68,8 @@ interface UiState {
   hintMessage: string | null;
   seatLastPlays: SeatLastPlays;
   playFx: PlayFxPulse | null;
+  /** 发牌散开动效触发键（LRM-168）；变化时手牌重播散开。 */
+  dealAnimId: number | null;
 
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
@@ -100,6 +102,7 @@ export const useGameStore = create<UiState>((set, get) => ({
   hintMessage: null,
   seatLastPlays: [null, null, null],
   playFx: null,
+  dealAnimId: null,
 
   init: () => {
     connect();
@@ -136,7 +139,7 @@ export const useGameStore = create<UiState>((set, get) => ({
           const hand = e.hand
             .map((id) => cardOf(id))
             .filter((c): c is Card => !!c);
-          set({ myHand: hand, selected: [] });
+          set({ myHand: hand, selected: [], dealAnimId: Date.now() });
           break;
         }
         case 'played': {
@@ -194,6 +197,7 @@ export const useGameStore = create<UiState>((set, get) => ({
       hintMessage: null,
       seatLastPlays: [null, null, null],
       playFx: null,
+      dealAnimId: null,
     });
     send({ type: 'join', name, roomId: roomId?.trim() || undefined });
   },
