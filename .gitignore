@@ -29,3 +29,8 @@ coverage/
 .idea/
 *.log
 npm-debug.log*
+
+# Playwright
+apps/client/test-results/
+apps/client/playwright-report/
+apps/client/blob-report/

@@ -919,7 +919,45 @@ body::before {
 }
 .play-type-fx.fx-bomb .play-type-fx-text {
   background: linear-gradient(135deg, rgba(255, 90, 70, 0.96), rgba(180, 20, 20, 0.92));
-  animation: ddz-play-fx-shake 0.45s ease-in-out 2;
+  animation: ddz-play-fx-shake 0.42s ease-in-out 2;
+}
+.play-type-fx.is-bomb-like {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.play-type-fx-badge {
+  width: 36px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  animation: ddz-bomb-badge-pop 420ms ease-out both;
+}
+.play-type-fx-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 180, 90, 0.55) 0%, rgba(255, 80, 40, 0.2) 45%, transparent 70%);
+  animation: ddz-bomb-burst 420ms ease-out both;
+  /* 硬边界：局部爆点半径 ≤72px，禁止全屏闪光 */
+  max-width: 72px;
+  max-height: 72px;
+}
+.play-type-fx.is-rocket .play-type-fx-burst {
+  animation-duration: 560ms;
+  background: radial-gradient(circle, rgba(255, 210, 120, 0.5) 0%, rgba(220, 60, 40, 0.18) 48%, transparent 72%);
+}
+.play-type-fx.is-rocket .play-type-fx-badge {
+  animation-duration: 560ms;
+}
+.play-type-fx.is-rocket .play-type-fx-text {
+  animation: ddz-play-fx-shake 0.56s ease-in-out 2;
 }
 .play-type-fx.fx-plane .play-type-fx-text {
   background: linear-gradient(135deg, rgba(160, 255, 200, 0.95), rgba(24, 160, 100, 0.9));
@@ -1097,7 +1135,8 @@ body::before {
   color: var(--ddz-gold-500);
   font-family: var(--ddz-font-display);
   font-weight: 900;
-  text-shadow: 0 0 16px rgba(245, 197, 66, 0.36);
+  /* LRM-168：文案轻提示，不强泛光，不抢出牌 CTA */
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 .badge {
   display: inline-flex;
@@ -1376,7 +1415,10 @@ body::before {
   border-radius: var(--ddz-radius-lg);
   padding: 28px 32px 26px;
   box-shadow: var(--ddz-shadow-panel);
-  animation: ddz-settle-pop 180ms ease-out;
+  animation: ddz-settle-pop 180ms ease-out both;
+}
+.result-card[data-fx="settle-pop"] {
+  animation-name: ddz-settle-pop;
 }
 .result-card.win {
   background:
@@ -2063,6 +2105,177 @@ body::before {
   height: 18px;
   accent-color: var(--ddz-gold-500);
   justify-self: start;
+}
+
+
+
+/* —— LRM-168 关键动效包（克制边界） —— */
+.hand.is-dealing .card {
+  animation: ddz-deal-fan 520ms cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+.seat-badge.turn-pulse {
+  animation: ddz-turn-pulse 1200ms ease-in-out infinite;
+}
+.seat-badge.turn-pulse .avatar {
+  animation: ddz-turn-avatar-pulse 1200ms ease-in-out infinite;
+}
+.settle-coins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+.settle-coin {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffe9a0, #d99a1e 70%, #a86a08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translate(var(--coin-x, 0), 0) scale(0.6);
+  animation: ddz-settle-coin 700ms ease-out both;
+  animation-delay: var(--coin-delay, 0ms);
+}
+.settled-lose .result-card {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(80, 100, 140, 0.18), transparent 40%),
+    linear-gradient(180deg, #1a2a3a, var(--ddz-felt-800));
+  border-color: rgba(140, 160, 190, 0.28);
+}
+.settled-lose .result-card h2 {
+  color: #c5d0e0;
+}
+.fx-demo-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.fx-demo-bar h1 {
+  margin: 0;
+  font-size: var(--ddz-text-lg);
+  font-family: var(--ddz-font-display);
+}
+.fx-demo-table {
+  min-height: 420px;
+  padding: 24px 20px;
+}
+.fx-demo-caption {
+  text-align: center;
+  color: var(--ddz-cream);
+  opacity: 0.85;
+  font-size: var(--ddz-text-sm);
+  margin: 0 0 16px;
+}
+.fx-demo-seats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 24px 0;
+}
+.fx-demo-seats .seat-badge {
+  min-width: 120px;
+  padding: 14px 10px;
+}
+.fx-demo-bomb-stage {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 24px 0;
+}
+
+@keyframes ddz-deal-fan {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ddz-turn-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(245, 197, 66, 0.14),
+      0 0 10px rgba(245, 197, 66, 0.12),
+      0 12px 24px rgba(0, 0, 0, 0.24);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(245, 197, 66, 0.26),
+      0 0 14px rgba(245, 197, 66, 0.18),
+      0 12px 24px rgba(0, 0, 0, 0.24);
+  }
+}
+@keyframes ddz-turn-avatar-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+}
+@keyframes ddz-bomb-burst {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.4);
+  }
+  55% {
+    opacity: 0.45;
+    transform: scale(6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(7.2);
+  }
+}
+@keyframes ddz-bomb-badge-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(6px);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.08) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes ddz-settle-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ddz-settle-coin {
+  0% {
+    opacity: 0;
+    transform: translate(var(--coin-x, 0), 8px) scale(0.5);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--coin-x, 0), -56px) scale(0.85);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

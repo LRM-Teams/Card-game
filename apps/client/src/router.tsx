@@ -10,6 +10,7 @@ import { Lobby } from './components/Lobby';
 import { Room } from './components/Room';
 import { GameTable } from './components/GameTable';
 import { AudioSettings } from './components/AudioSettings';
+import { FxDemo } from './components/FxDemo';
 import { useGameStore } from './store/gameStore';
 
 const SERVER_URL = (import.meta.env.VITE_SERVER_URL as string | undefined) ?? 'http://localhost:3000';
@@ -21,7 +22,9 @@ function ConnBadge() {
 }
 
 function RootLayout() {
-  const isGame = useRouterState({ select: (s) => s.location.pathname.startsWith('/game') });
+  const isGame = useRouterState({
+    select: (s) => s.location.pathname.startsWith('/game') || s.location.pathname.startsWith('/fx-demo'),
+  });
   return (
     <div className={`app${isGame ? ' app--game' : ''}`}>
       <nav className="topnav">
@@ -44,8 +47,9 @@ const rootRoute = createRootRoute({ component: RootLayout });
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: Lobby });
 const roomRoute = createRoute({ getParentRoute: () => rootRoute, path: '/room', component: Room });
 const gameRoute = createRoute({ getParentRoute: () => rootRoute, path: '/game', component: GameTable });
+const fxDemoRoute = createRoute({ getParentRoute: () => rootRoute, path: '/fx-demo', component: FxDemo });
 
-const routeTree = rootRoute.addChildren([indexRoute, roomRoute, gameRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, roomRoute, gameRoute, fxDemoRoute]);
 
 export const router = createRouter({ routeTree });
 

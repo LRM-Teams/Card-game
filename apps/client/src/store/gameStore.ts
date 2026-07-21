@@ -72,6 +72,8 @@ interface UiState {
   hintMessage: string | null;
   seatLastPlays: SeatLastPlays;
   playFx: PlayFxPulse | null;
+  /** 发牌散开动效键；每次 dealt 递增。 */
+  dealKey: number;
 
   init: () => void;
   join: (identity: GuestIdentity, roomId?: string) => void;
@@ -106,6 +108,7 @@ export const useGameStore = create<UiState>((set, get) => ({
   hintMessage: null,
   seatLastPlays: [null, null, null],
   playFx: null,
+  dealKey: 0,
 
   init: () => {
     const id = readIdentity();
@@ -169,7 +172,11 @@ export const useGameStore = create<UiState>((set, get) => ({
           const hand = e.hand
             .map((cid) => cardOf(cid))
             .filter((c): c is Card => !!c);
-          set({ myHand: hand, selected: [] });
+          set((st) => ({
+            myHand: hand,
+            selected: [],
+            dealKey: st.dealKey + 1,
+          }));
           break;
         }
         case 'played': {
@@ -256,6 +263,7 @@ export const useGameStore = create<UiState>((set, get) => ({
       hintMessage: null,
       seatLastPlays: [null, null, null],
       playFx: null,
+      dealKey: 0,
     });
     send({
       type: 'join',

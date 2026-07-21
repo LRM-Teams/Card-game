@@ -1,12 +1,14 @@
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from 'react';
-import { GamePhase, canPlay, identifyHand } from '@card-game/rules';
+import { GamePhase, HandType, canPlay, identifyHand } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
 import { SeatPlayZone } from './SeatPlayZone';
+import { SettleCoins } from './SettleCoins';
 import { relativeSeats } from '../lib/playFx';
+import { MOTION } from '../lib/motionSpec';
 import { useNavigate } from '@tanstack/react-router';
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
@@ -29,6 +31,7 @@ export function GameTable() {
   const dismissError = useGameStore((s) => s.dismissError);
   const seatLastPlays = useGameStore((s) => s.seatLastPlays);
   const playFx = useGameStore((s) => s.playFx);
+  const dealKey = useGameStore((s) => s.dealKey);
   const clearPlayFx = useGameStore((s) => s.clearPlayFx);
   const navigate = useNavigate();
 
@@ -49,7 +52,13 @@ export function GameTable() {
 
   useEffect(() => {
     if (!playFx) return;
-    const t = window.setTimeout(() => clearPlayFx(), 2000);
+    const hold =
+      playFx.handType === HandType.ROCKET
+        ? Math.max(MOTION.rocketMs, MOTION.playFxCaptionMs)
+        : playFx.handType === HandType.BOMB
+          ? Math.max(MOTION.bombMs, MOTION.playFxCaptionMs)
+          : MOTION.playFxCaptionMs;
+    const t = window.setTimeout(() => clearPlayFx(), hold);
     return () => window.clearTimeout(t);
   }, [playFx, clearPlayFx]);
 
@@ -111,7 +120,8 @@ export function GameTable() {
         : '/identity/farmer-character.svg';
     return (
       <div className="table settled">
-        <div className={`result-card ${myWin ? 'win' : 'lose'}`}>
+        <div className={`result-card ${myWin ? 'win' : 'lose'}`} data-fx="settle-pop">
+          <SettleCoins win={myWin} />
           <img className="result-badge" src={resultAsset} alt="" aria-hidden="true" />
           <h2 className="result-title">{myWin ? '你赢了' : '你输了'}</h2>
           <div className="result-identity">
@@ -289,7 +299,7 @@ export function GameTable() {
         )
       )}
 
-      <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
+      <HandView cards={myHand} selected={selected} onToggle={toggleSelect} dealKey={dealKey} />
 
       {/* 出牌控件：叫分阶段隐藏，避免底部 sticky 层挡手牌 */}
       {!isBidding && (
@@ -373,7 +383,7 @@ function SeatBadge({
   const roleAsset = p.role === 'landlord' ? '/identity/landlord-character.svg' : p.role === 'farmer' ? '/identity/farmer-character.svg' : null;
   const roleLabel = p.role === 'landlord' ? '地主' : p.role === 'farmer' ? '农民' : null;
   return (
-    <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
+    <div className={`seat-badge ${active ? 'active turn-pulse' : ''} ${p.role ?? ''}`}>
       <div className="avatar">
         {roleAsset ? (
           <img className="role-character" src={roleAsset} alt={roleLabel ?? ''} />
