@@ -343,8 +343,19 @@ export const useGameStore = create<UiState>((set, get) => ({
   cycleHint: () =>
     set((st) => {
       if (st.hints.length === 0) return {};
+      if (st.hints.length === 1) {
+        return {
+          selected: st.hints[0] ?? [],
+          hintMessage: '仅 1 组可用提示',
+        };
+      }
       const next = (st.hintIndex + 1) % st.hints.length;
-      return { hintIndex: next, selected: st.hints[next] ?? [], hintMessage: null };
+      const wrapped = next === 0;
+      return {
+        hintIndex: next,
+        selected: st.hints[next] ?? [],
+        hintMessage: wrapped ? '已轮完，回到第 1 组' : null,
+      };
     }),
 
   dismissError: () => set({ lastError: null }),

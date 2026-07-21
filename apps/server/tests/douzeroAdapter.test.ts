@@ -315,7 +315,7 @@ describe('DouZero adapter', () => {
     });
   });
 
-  it('rankActions 缺失（command 适配器）时退化为 choosePlay top-1', async () => {
+  it('rankActions 缺失（command 适配器）时退化为 choosePlay，并用合法出牌补足 top-N', async () => {
     const adapter = createDouZeroCommandAdapter(
       `node -e "process.stdin.resume();process.stdin.on('data',()=>process.stdout.write(JSON.stringify([5])))"`,
     );
@@ -324,16 +324,42 @@ describe('DouZero adapter', () => {
       {
         seat: 0,
         landlordSeat: 0,
-        hand: [card(RANK.FIVE, '5a')],
+        hand: [card(RANK.FIVE, '5a'), card(RANK.SIX, '6a'), card(RANK.SEVEN, '7a')],
         prev: null,
         bottom: [],
-        handCounts: { 0: 1, 1: 17, 2: 17 },
+        handCounts: { 0: 3, 1: 17, 2: 17 },
         history: [],
       },
       adapter,
       3,
     );
-    expect(suggestions.map((cs) => cs.map((c) => c.rank))).toEqual([[RANK.FIVE]]);
+    expect(suggestions.length).toBeGreaterThanOrEqual(2);
+    expect(suggestions[0]!.map((c) => c.rank)).toEqual([RANK.FIVE]);
+    const rankSets = suggestions.map((cs) => cs.map((c) => c.rank).join(','));
+    expect(new Set(rankSets).size).toBe(rankSets.length);
+  });
+
+  it('模型只回 1 条时仍用规则合法出牌补足，供提示按钮轮换', async () => {
+    await withMockServer((_req, res) => {
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ action: [5], top: [{ action: [5], value: 0.9 }] }));
+    }, async (base) => {
+      const suggestions = await rankPlaySuggestions(
+        {
+          seat: 0,
+          landlordSeat: 0,
+          hand: [card(RANK.FIVE, '5a'), card(RANK.SIX, '6a'), card(RANK.SEVEN, '7a')],
+          prev: null,
+          bottom: [],
+          handCounts: { 0: 3, 1: 17, 2: 17 },
+          history: [],
+        },
+        createDouZeroHttpAdapter(base, { timeoutMs: 2000 }),
+        3,
+      );
+      expect(suggestions.length).toBeGreaterThanOrEqual(2);
+      expect(suggestions.map((cs) => cs.map((c) => c.rank).join(','))).toContain('5');
+    });
   });
 
   it('rankActions 返回的动作不在手牌/合法集会被规则过滤掉', async () => {

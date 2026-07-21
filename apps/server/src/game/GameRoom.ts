@@ -49,8 +49,8 @@ import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from '.
 const SEATS: readonly Seat[] = [0, 1, 2];
 const MAX_REDEALS = 5;
 const BOT_LOOP_GUARD = 2000;
-/** AI 出牌提示一次返回的建议条数（按模型分从高到低，前端可循环切换）。 */
-const HINT_TOP_N = 3;
+/** AI 出牌提示一次返回的建议条数（按模型分从高到低，不足时用合法出牌补足，前端循环切换）。 */
+const HINT_TOP_N = 5;
 
 function ok(events: RoomEvent[]): ActionResult {
   return { ok: true, events };
