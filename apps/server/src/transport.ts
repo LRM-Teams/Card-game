@@ -51,7 +51,19 @@ export function createGame(io: IoServer): RoomRegistry {
     await room.drainBots((events) => {
       apply(roomId, events);
     });
-    if (room.result) registry.applySettlementBeans(room);
+    if (room.result) {
+      const updated = registry.applySettlementBeans(room);
+      for (const seat of [0, 1, 2] as Seat[]) {
+        const p = room.players[seat];
+        if (!p?.guestId || p.isBot) continue;
+        const beans = updated.get(p.guestId);
+        if (beans === undefined) continue;
+        const sid = registry.socketOf(roomId, seat);
+        if (!sid) continue;
+        const ev: ServerEvent = { type: 'beans', beans };
+        io.to(sid).emit('event', ev);
+      }
+    }
   };
 
   const deliverMatch = (formed: MatchFormed): void => {
@@ -84,6 +96,7 @@ export function createGame(io: IoServer): RoomRegistry {
           name: action.name,
           guestId: action.guestId,
           avatarId: action.avatarId,
+          beans: action.beans,
         });
         registry.enqueueMatch(profile, socket.id);
         socket.emit('event', { type: 'matching' } satisfies ServerEvent);
@@ -105,6 +118,7 @@ export function createGame(io: IoServer): RoomRegistry {
           name: action.name,
           guestId: action.guestId,
           avatarId: action.avatarId,
+          beans: action.beans,
         });
         const { room, seat, result } = registry.join(profile, socket.id, action.roomId);
         if (!result.ok) {

@@ -155,14 +155,22 @@ export class RoomRegistry {
     return { ok: true, events: room.markDisconnected(seat) };
   }
 
-  /** 结算后把得分写入游客豆子。 */
-  applySettlementBeans(room: GameRoom): void {
-    const scores = room.result?.scores;
-    if (!scores) return;
+  /** 已对哪个 GameResult 结算过豆子（防 drain 重复加减）。 */
+  private beansApplied = new WeakSet<object>();
+
+  /** 结算后把得分写入游客豆子；返回更新后的 (guestId → beans)。同一 result 只结算一次。 */
+  applySettlementBeans(room: GameRoom): Map<string, number> {
+    const updated = new Map<string, number>();
+    const result = room.result;
+    if (!result || this.beansApplied.has(result)) return updated;
+    this.beansApplied.add(result);
+    const scores = result.scores;
     for (const seat of [0, 1, 2] as Seat[]) {
       const p = room.players[seat];
       if (!p || p.isBot || !p.guestId) continue;
-      this.identities.applyScore(p.guestId, scores[seat] ?? 0);
+      const beans = this.identities.applyScore(p.guestId, scores[seat] ?? 0);
+      updated.set(p.guestId, beans);
     }
+    return updated;
   }
 }
