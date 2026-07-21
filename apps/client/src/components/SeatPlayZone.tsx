@@ -1,6 +1,6 @@
 import type { PlayRecord } from '@card-game/rules';
 import { HAND_TYPE_LABEL } from '../lib/cards';
-import { handTypeFxClass } from '../lib/playFx';
+import { handTypeFxClass, isBombLike } from '../lib/playFx';
 import { CardView } from './CardView';
 
 type Props = {
@@ -18,6 +18,7 @@ export function SeatPlayZone({ record, fxActive, align = 'center' }: Props) {
 
   const label = HAND_TYPE_LABEL[record.hand.type];
   const fxClass = handTypeFxClass(record.hand.type);
+  const bombLike = isBombLike(record.hand.type);
 
   return (
     <div
@@ -26,6 +27,9 @@ export function SeatPlayZone({ record, fxActive, align = 'center' }: Props) {
     >
       {fxActive && (
         <div className={`play-type-fx ${fxClass}`} aria-hidden="true">
+          {bombLike && (
+            <img className="play-type-fx-bomb" src="/states/bomb.svg" alt="" />
+          )}
           <span className="play-type-fx-text">{label}</span>
         </div>
       )}

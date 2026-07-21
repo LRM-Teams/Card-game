@@ -30,6 +30,7 @@ export function GameTable() {
   const seatLastPlays = useGameStore((s) => s.seatLastPlays);
   const playFx = useGameStore((s) => s.playFx);
   const clearPlayFx = useGameStore((s) => s.clearPlayFx);
+  const dealAnimId = useGameStore((s) => s.dealAnimId);
   const navigate = useNavigate();
 
   const selectedCards = useMemo(
@@ -112,6 +113,9 @@ export function GameTable() {
     return (
       <div className="table settled">
         <div className={`result-card ${myWin ? 'win' : 'lose'}`}>
+          <div className="result-coins" aria-hidden="true">
+            <span /><span /><span /><span /><span />
+          </div>
           <img className="result-badge" src={resultAsset} alt="" aria-hidden="true" />
           <h2 className="result-title">{myWin ? '你赢了' : '你输了'}</h2>
           <div className="result-identity">
@@ -289,7 +293,7 @@ export function GameTable() {
         )
       )}
 
-      <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
+      <HandView cards={myHand} selected={selected} onToggle={toggleSelect} dealAnimId={dealAnimId} />
 
       {/* 出牌控件：叫分阶段隐藏，避免底部 sticky 层挡手牌 */}
       {!isBidding && (
