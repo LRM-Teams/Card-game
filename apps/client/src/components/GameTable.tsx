@@ -4,7 +4,7 @@ import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { HandView } from './HandView';
-import { CardView } from './CardView';
+import { CardView, OpponentBackFan } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
 import { SeatPlayZone } from './SeatPlayZone';
 import { SettleCoins } from './SettleCoins';
@@ -451,7 +451,13 @@ export function GameTable() {
         )
       )}
 
-      <HandView cards={myHand} selected={selected} onToggle={toggleSelect} dealKey={dealKey} />
+      <HandView
+        cards={myHand}
+        selected={selected}
+        onToggle={toggleSelect}
+        dealKey={dealKey}
+        muted={phase === GamePhase.PLAYING && !isMyTurn}
+      />
 
       {/* 出牌控件：叫分/明牌/加倍阶段隐藏 */}
       {!isBidding && !isRevealing && !isDoubling && (
@@ -615,6 +621,10 @@ function SeatBadge({
         {p.doubled ? <span className="seat-double-tag">加倍</span> : null}
       </div>
       <div className="seat-count">剩 {p.handSize}</div>
+      {/* LRM-207：非明牌时展示牌背扇，避免只剩数字占位 */}
+      {openCards.length === 0 && p.handSize > 0 ? (
+        <OpponentBackFan count={p.handSize} />
+      ) : null}
       {openCards.length > 0 && (
         <div className="seat-open-hand" aria-label="明牌手牌">
           {openCards.map((c) => (

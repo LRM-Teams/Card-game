@@ -73,6 +73,7 @@ export type FxDemoScene =
   | 'turn'
   | 'timer'
   | 'playFly'
+  | 'cards'
   | 'bomb'
   | 'rocket'
   | 'settle'
@@ -86,6 +87,7 @@ export const FX_DEMO_SCENES: FxDemoScene[] = [
   'turn',
   'timer',
   'playFly',
+  'cards',
   'bomb',
   'rocket',
   'settle',

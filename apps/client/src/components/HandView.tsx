@@ -9,10 +9,12 @@ interface Props {
   onToggle?: (id: string) => void;
   /** 发牌散开动效触发键（dealt 时刷新）。 */
   dealKey?: number;
+  /** 非行动回合：整手不可出态（降饱和）。 */
+  muted?: boolean;
 }
 
 /** 我的手牌：按点数升序排列，可点选；发牌时从中央散开。 */
-export function HandView({ cards, selected, onToggle, dealKey = 0 }: Props) {
+export function HandView({ cards, selected, onToggle, dealKey = 0, muted = false }: Props) {
   const sorted = sortCards(cards);
   const count = sorted.length || 1;
   const [dealing, setDealing] = useState(false);
@@ -49,6 +51,7 @@ export function HandView({ cards, selected, onToggle, dealKey = 0 }: Props) {
             key={c.id}
             card={c}
             selected={selected.includes(c.id)}
+            unplayable={muted}
             onClick={onToggle ? () => onToggle(c.id) : undefined}
             style={
               {

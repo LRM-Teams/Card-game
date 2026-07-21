@@ -13,6 +13,7 @@ import { SeatPlayZone } from './SeatPlayZone';
 import { SettleCoins } from './SettleCoins';
 import { PlayerAvatar } from './PlayerAvatar';
 import { MultiplierBreakdownView } from './MultiplierBreakdownView';
+import { CardView, OpponentBackFan } from './CardView';
 import { FX_DEMO_SCENES, MOTION, type FxDemoScene } from '../lib/motionSpec';
 
 function demoCard(id: string, rank: number, suit: Suit | undefined): Card {
@@ -98,7 +99,7 @@ function readScene(): FxDemoScene {
 
 /**
  * 动效 / UI 演示页：不依赖服务端，供 Playwright 录屏举证。
- * 路由：/fx-demo?scene=deal|select|turn|timer|playFly|bomb|rocket|settle|reveal|double|mult
+ * 路由：/fx-demo?scene=deal|select|turn|timer|playFly|cards|bomb|rocket|settle|reveal|double|mult
  */
 export function FxDemo() {
   const [scene, setScene] = useState<FxDemoScene>(readScene);
@@ -339,6 +340,35 @@ export function FxDemo() {
               重播出牌飞入
             </button>
           </div>
+        </div>
+      )}
+
+      {scene === 'cards' && (
+        <div className="table fx-demo-table" data-fx="cards" data-scene="cards">
+          <p className="fx-demo-caption">
+            LRM-207 牌面资产接入 · 纸面 token + 大小王 SVG + 对手牌背 + 不可出态
+          </p>
+          <div className="fx-demo-seats" style={{ alignItems: 'flex-start', gap: 32 }}>
+            <div>
+              <p className="fx-demo-caption">对手牌背</p>
+              <OpponentBackFan count={12} />
+            </div>
+            <div>
+              <p className="fx-demo-caption">出牌区</p>
+              <SeatPlayZone record={pairPlay} fxActive align="center" />
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              <CardView card={demoCard('jk-s', RANK.SMALL_JOKER, undefined)} />
+              <CardView card={demoCard('jk-b', RANK.BIG_JOKER, undefined)} />
+              <CardView card={demoCard('uh', 14, 'heart')} unplayable />
+            </div>
+          </div>
+          <HandView
+            cards={DEMO_HAND.slice(0, 10)}
+            selected={['d12', 'd8']}
+            onToggle={() => undefined}
+            dealKey={1}
+          />
         </div>
       )}
 
