@@ -213,8 +213,7 @@ export function GameTable() {
           )}
 
           <div className="result-actions">
-            <button className="btn primary cta" onClick={() => start(false)}>
-              <img src="/badges/restart.svg" alt="" className="btn-icon" />
+            <button type="button" className="btn primary cta" onClick={() => start(false)}>
               再来一局
             </button>
             <button className="btn secondary" onClick={() => navigate({ to: '/' })}>
