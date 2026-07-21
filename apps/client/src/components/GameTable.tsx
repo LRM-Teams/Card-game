@@ -24,6 +24,7 @@ export function GameTable() {
   const requestHint = useGameStore((s) => s.requestHint);
   const hintMessage = useGameStore((s) => s.hintMessage);
   const hints = useGameStore((s) => s.hints);
+  const hintIndex = useGameStore((s) => s.hintIndex);
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
@@ -315,7 +316,7 @@ export function GameTable() {
               disabled={!(isMyTurn && phase === GamePhase.PLAYING)}
               title="AI 出牌提示（DouZero）"
             >
-              提示{hints.length > 1 ? ` ${hintIndexLabel(hints.length)}` : ''}
+              提示{hints.length > 0 ? ` ${hintIndexLabel(hintIndex, hints.length)}` : ''}
             </button>
             <button
               className="btn"
@@ -424,7 +425,7 @@ function phaseLabel(phase: GamePhase): string {
   }
 }
 
-/** 提示按钮后缀：有多组建议时显示组数，提示可重复点切换。 */
-function hintIndexLabel(count: number): string {
-  return count > 1 ? ` ·${count}组` : '';
+/** 提示按钮后缀：显示当前组 / 总组数，提示可重复点切换。 */
+function hintIndexLabel(index: number, count: number): string {
+  return ` ${index + 1}/${count}`;
 }

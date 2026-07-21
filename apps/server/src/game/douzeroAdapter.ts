@@ -450,12 +450,41 @@ export async function choosePlayWithDouZero(
   }
 }
 
+function suggestionKey(cards: readonly Card[]): string {
+  return cards
+    .map((c) => c.id)
+    .sort()
+    .join(',');
+}
+
 /**
- * Top-N AI play suggestions for the hint button (LRM-135). Uses the resident
- * adapter's `rankActions` when available; otherwise falls back to a single
- * choosePlay suggestion so the command/smoke path still works. Every suggestion
- * is revalidated by the rule engine (legalActions membership + canPlay) and
- * de-duplicated, so the AI never recommends an illegal or repeated play.
+ * 用规则引擎合法出牌补足 top-N（LRM-186）：模型只回 1 条或 fallback top-1 时，
+ * 连续点「提示」仍可轮换到不同合法牌。排序沿用 LRM-160 后处理。
+ */
+function padSuggestionsFromLegal(
+  ctx: BotPlayContext,
+  suggestions: Card[][],
+  topN: number,
+): Card[][] {
+  if (suggestions.length >= topN) return refinePlaySuggestions(ctx.hand, suggestions);
+  const seen = new Set(suggestions.map(suggestionKey));
+  const legal = listLegalActions(ctx.hand, ctx.prev);
+  const rankedLegal = refinePlaySuggestions(ctx.hand, legal);
+  for (const cards of rankedLegal) {
+    if (suggestions.length >= topN) break;
+    const key = suggestionKey(cards);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    suggestions.push(cards);
+  }
+  return refinePlaySuggestions(ctx.hand, suggestions);
+}
+
+/**
+ * Top-N AI play suggestions for the hint button (LRM-135 / LRM-186). Uses the
+ * resident adapter's `rankActions` when available; otherwise falls back to
+ * choosePlay then pads with rule-engine legal plays so the hint button can
+ * cycle. Every suggestion is revalidated and de-duplicated.
  */
 export async function rankPlaySuggestions(
   ctx: BotPlayContext,
@@ -464,7 +493,8 @@ export async function rankPlaySuggestions(
 ): Promise<Card[][]> {
   if (!adapter || !adapter.rankActions) {
     const cards = await choosePlayWithDouZero(ctx, adapter);
-    return cards && cards.length > 0 ? [cards] : [];
+    const seed = cards && cards.length > 0 ? [cards] : [];
+    return padSuggestionsFromLegal(ctx, seed, topN);
   }
 
   const state = buildDouZeroPlayState(ctx);
@@ -476,7 +506,8 @@ export async function rankPlaySuggestions(
   }
   if (!ranked || ranked.length === 0) {
     const cards = await choosePlayWithDouZero(ctx, adapter);
-    return cards && cards.length > 0 ? [cards] : [];
+    const seed = cards && cards.length > 0 ? [cards] : [];
+    return padSuggestionsFromLegal(ctx, seed, topN);
   }
 
   const seen = new Set<string>();
@@ -488,10 +519,10 @@ export async function rankPlaySuggestions(
     if (!state.legalActions.some((legal) => sameDouZeroAction(legal, action))) continue;
     const cards = fromDouZeroAction(action, ctx.hand);
     if (!cards || !canPlay(ctx.prev, cards)) continue;
-    const key = cards.map((c) => c.id).sort().join(',');
+    const key = suggestionKey(cards);
     if (seen.has(key)) continue;
     seen.add(key);
     suggestions.push(cards);
   }
-  return refinePlaySuggestions(ctx.hand, suggestions);
+  return padSuggestionsFromLegal(ctx, suggestions, topN);
 }
