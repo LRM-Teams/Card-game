@@ -2802,3 +2802,73 @@ body::before {
     max-width: 132px;
   }
 }
+
+/* ─── LRM-194：明牌/加倍 UI 与倍数构成 ─── */
+.meta-mult {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.2;
+}
+.meta-breakdown,
+.mult-breakdown,
+.result-breakdown {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.78;
+  letter-spacing: 0.02em;
+}
+.result-breakdown {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--ddz-text-xs);
+}
+.double-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #c45c26;
+  color: #fff8e7;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.double-pill {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(196, 92, 38, 0.92);
+  color: #fff8e7;
+  font-size: 11px;
+  font-weight: 800;
+}
+.open-hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: 148px;
+  margin-top: 4px;
+  pointer-events: none;
+}
+.open-hand .card {
+  transform: scale(0.72);
+  transform-origin: top left;
+  margin: 0 -4px 0 0;
+}
+.open-hand-more {
+  align-self: center;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.75;
+  color: var(--ddz-cream);
+}
+.seat-badge.is-doubled .seat-name::after {
+  content: '';
+}
