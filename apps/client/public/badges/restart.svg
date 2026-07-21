@@ -1,7 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="56" viewBox="0 0 120 56" role="img" aria-label="再来一局">
-  <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#d99a1e"/></linearGradient></defs>
-  <rect x="2" y="2" width="116" height="52" rx="16" fill="url(#g)" stroke="#b5780f" stroke-width="2"/>
-  <path d="M24 28a16 16 0 1 1 5 11.7" fill="none" stroke="#2a2200" stroke-width="4" stroke-linecap="round"/>
-  <path d="M22 18l8 3-3 8z" fill="#2a2200"/>
-  <text x="78" y="34" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="20" font-weight="900" fill="#2a2200">再来一局</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" aria-hidden="true">
+  <!-- icon-only refresh; no capsule / no「再来一局」text (LRM-197) -->
+  <path
+    d="M12 5a7 7 0 0 1 6.3 4.1"
+    fill="none"
+    stroke="#2c1d00"
+    stroke-width="2.2"
+    stroke-linecap="round"
+  />
+  <path d="M19.2 5.2v4.2h-4.2" fill="none" stroke="#2c1d00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path
+    d="M12 19a7 7 0 0 1-6.3-4.1"
+    fill="none"
+    stroke="#2c1d00"
+    stroke-width="2.2"
+    stroke-linecap="round"
+  />
+  <path d="M4.8 18.8v-4.2h4.2" fill="none" stroke="#2c1d00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

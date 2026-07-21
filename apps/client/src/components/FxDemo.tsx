@@ -279,11 +279,12 @@ export function FxDemo() {
             <p className="result-meta">农民胜 · 单注 8</p>
             <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
             <p className="scores">得分：你 +16　对手 -8　对手 -8</p>
-            <div className="btn-row">
+            <div className="result-actions">
               <button type="button" className="btn primary cta">
+                <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />
                 再来一局
               </button>
-              <button type="button" className="btn">
+              <button type="button" className="btn secondary">
                 返回大厅
               </button>
             </div>

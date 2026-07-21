@@ -213,8 +213,9 @@ export function GameTable() {
           )}
 
           <div className="result-actions">
-            <button className="btn primary cta" onClick={() => start(false)}>
-              <img src="/badges/restart.svg" alt="" className="btn-icon" />
+            {/* LRM-197：icon 仅刷新箭头；文案只在按钮文本，避免 SVG 内嵌「再来一局」胶囊套娃 */}
+            <button type="button" className="btn primary cta" onClick={() => start(false)}>
+              <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />
               再来一局
             </button>
             <button className="btn secondary" onClick={() => navigate({ to: '/' })}>

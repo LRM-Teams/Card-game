@@ -680,8 +680,11 @@ body::before {
 .btn-icon {
   width: 18px;
   height: 18px;
+  /* 强制方形：旧 restart.svg 曾是整颗胶囊按钮图，被压成幽灵套娃 */
+  aspect-ratio: 1;
+  object-fit: contain;
   vertical-align: -3px;
-  margin-right: 4px;
+  margin-right: 6px;
   pointer-events: none;
 }
 .avatar {
@@ -1819,6 +1822,10 @@ body::before {
   order: -1;
   flex: 1 1 180px;
   max-width: 240px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 .result-actions .btn.secondary {
   flex: 0 0 auto;
