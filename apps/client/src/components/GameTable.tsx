@@ -249,9 +249,10 @@ export function GameTable() {
       <div className="meta-corner meta-corner--mult">
         {(showTurnTimer || showDecisionTimer) && (
           <span
-            className={`turn-timer ${secondsLeft <= 3 ? 'danger' : ''}`}
+            className={`turn-timer ${secondsLeft <= MOTION.timerDangerSec ? 'danger' : ''}`}
             style={{ '--timer-deg': `${(secondsLeft / timerMax) * 360}deg` } as CSSProperties}
             aria-label={`倒计时 ${secondsLeft} 秒`}
+            data-timer-danger={secondsLeft <= MOTION.timerDangerSec ? '1' : '0'}
           >
             {secondsLeft}
           </span>
