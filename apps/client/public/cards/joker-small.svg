@@ -1,10 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Small Joker card">
-  <defs><linearGradient id="paper" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fffdf4"/><stop offset="1" stop-color="#ead8ae"/></linearGradient><linearGradient id="jester" x1="0" x2="1"><stop offset="0" stop-color="#263247"/><stop offset="1" stop-color="#50607c"/></linearGradient></defs>
-  <rect x="4" y="4" width="96" height="140" rx="12" fill="url(#paper)" stroke="#c89b4f" stroke-width="2"/>
-  <text x="15" y="31" font-family="Georgia,serif" font-size="15" font-weight="900" fill="#263247">JOKER</text>
-  <text x="17" y="50" font-family="sans-serif" font-size="13" font-weight="900" fill="#263247">小王</text>
-  <path d="M30 78c7-28 37-28 44 0l-8 32H38z" fill="url(#jester)"/>
-  <path d="M29 78c6-16 5-28 0-38 12 3 19 13 23 31 4-18 11-28 23-31-5 10-6 22 0 38" fill="#f4c85b" stroke="#263247" stroke-width="3" stroke-linejoin="round"/>
-  <circle cx="29" cy="40" r="5" fill="#263247"/><circle cx="75" cy="40" r="5" fill="#263247"/><circle cx="52" cy="66" r="6" fill="#263247"/>
-  <text x="88" y="121" font-family="sans-serif" font-size="13" font-weight="900" fill="#263247" transform="rotate(180 88 121)">小王</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Small Joker card v2">
+  <defs>
+    <linearGradient id="paperSJ" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffcf7"/>
+      <stop offset="1" stop-color="#f3eee3"/>
+    </linearGradient>
+    <linearGradient id="capeSJ" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4d6b"/>
+      <stop offset="1" stop-color="#1c2738"/>
+    </linearGradient>
+    <filter id="sjShadow" x="-20%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#1a1008" flood-opacity=".26"/>
+    </filter>
+  </defs>
+  <rect x="3.5" y="3.5" width="97" height="141" rx="10" fill="#e8dfd0" filter="url(#sjShadow)"/>
+  <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#paperSJ)" stroke="#8a7355" stroke-width="1.25"/>
+  <rect x="8" y="8" width="88" height="132" rx="7" fill="none" stroke="#d9cbb5" stroke-width="1"/>
+  <!-- blue identity rail -->
+  <rect x="10" y="12" width="6" height="124" rx="2" fill="#263247"/>
+  <text x="22" y="28" font-family="Georgia, serif" font-size="13" font-weight="900" fill="#263247" letter-spacing="0.5">JOKER</text>
+  <text x="22" y="46" font-family="system-ui, sans-serif" font-size="15" font-weight="900" fill="#1a2433">小王</text>
+  <!-- jester hat -->
+  <path d="M30 80c7-28 37-28 44 0l-7 30H37z" fill="url(#capeSJ)"/>
+  <path d="M29 80c6-16 5-28 0-38 12 3 19 13 23 31 4-18 11-28 23-31-5 10-6 22 0 38"
+        fill="#efc75a" stroke="#263247" stroke-width="2.6" stroke-linejoin="round"/>
+  <circle cx="29" cy="42" r="4.5" fill="#263247"/>
+  <circle cx="75" cy="42" r="4.5" fill="#263247"/>
+  <circle cx="52" cy="68" r="5.5" fill="#263247"/>
+  <g transform="rotate(180 52 74)">
+    <text x="22" y="28" font-family="Georgia, serif" font-size="13" font-weight="900" fill="#263247">JOKER</text>
+    <text x="22" y="46" font-family="system-ui, sans-serif" font-size="15" font-weight="900" fill="#1a2433">小王</text>
+  </g>
 </svg>
