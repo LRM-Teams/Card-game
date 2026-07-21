@@ -1,6 +1,7 @@
 import { useAudioStore } from '../store/audioStore';
+import { useOnboardingStore } from '../store/onboardingStore';
 
-/** 音效 / BGM / 静音设置面板（LRM-176）。 */
+/** 音效 / BGM / 静音设置面板（LRM-176）；含引导重置（LRM-181）。 */
 export function AudioSettings() {
   const open = useAudioStore((s) => s.open);
   const toggleOpen = useAudioStore((s) => s.toggleOpen);
@@ -17,6 +18,9 @@ export function AudioSettings() {
   const setBgmVolume = useAudioStore((s) => s.setBgmVolume);
   const setBgmEnabled = useAudioStore((s) => s.setBgmEnabled);
   const setVoiceEnabled = useAudioStore((s) => s.setVoiceEnabled);
+  const resetGuide = useOnboardingStore((s) => s.reset);
+  const guideActive = useOnboardingStore((s) => s.active);
+  const guideSkipped = useOnboardingStore((s) => s.skipped);
 
   return (
     <div className="audio-settings">
@@ -110,6 +114,23 @@ export function AudioSettings() {
               onChange={(e) => setVoiceEnabled(e.target.checked)}
             />
           </label>
+
+          <div className="audio-row audio-row--stack">
+            <span>新手引导</span>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                resetGuide();
+                setOpen(false);
+              }}
+            >
+              重置引导
+            </button>
+            <span className="hint">
+              {guideSkipped ? '已跳过' : guideActive ? '进行中' : '已完成'} · 重置后刷新大厅可再走一遍
+            </span>
+          </div>
         </div>
       )}
     </div>

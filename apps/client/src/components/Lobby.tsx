@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useGameStore } from '../store/gameStore';
+import { useOnboardingStore } from '../store/onboardingStore';
 import {
   BUILTIN_AVATARS,
   readIdentity,
@@ -8,6 +9,7 @@ import {
   type GuestIdentity,
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
+import { GuideSpot } from './GuideSpot';
 
 /** 大厅：游客身份 + 唯一主 CTA「开始游戏」(匹配) + 次级房间码入口。 */
 export function Lobby() {
@@ -22,6 +24,10 @@ export function Lobby() {
   const beans = useGameStore((s) => s.beans);
   const roomId = useGameStore((s) => s.roomId);
   const snapshot = useGameStore((s) => s.snapshot);
+  const guideActive = useOnboardingStore((s) => s.active);
+  const seenIdentity = useOnboardingStore((s) => s.seenIdentity);
+  const seenStart = useOnboardingStore((s) => s.seenStart);
+  const mark = useOnboardingStore((s) => s.mark);
 
   const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
   const [roomCode, setRoomCode] = useState('');
@@ -30,6 +36,8 @@ export function Lobby() {
   const trimmedRoomCode = roomCode.trim();
   const canAct = trimmedNick.length > 0 && status === 'connected' && !matching;
   const canJoinRoom = canAct && trimmedRoomCode.length > 0;
+  const showIdentityGuide = guideActive && !seenIdentity && !matching;
+  const showStartGuide = guideActive && seenIdentity && !seenStart && !matching;
 
   // 匹配成功入房后跳转
   useEffect(() => {
@@ -44,6 +52,7 @@ export function Lobby() {
   const startMatch = () => {
     if (!canAct) return;
     saveIdentity(identity);
+    if (!seenStart) mark('seenStart');
     match(identity);
   };
 
@@ -95,55 +104,70 @@ export function Lobby() {
         </div>
       ) : (
         <>
-          <section className="lobby-player" aria-label="玩家信息">
-            <div className="lobby-identity">
-              <PlayerAvatar kind="player" avatarId={identity.avatarId} />
-              <div>
-                <div className="lobby-beans">豆子 {beans ?? identity.beans}</div>
-                <div className="hint">游客 ID 已本地保存，刷新不清</div>
+          <GuideSpot
+            show={showIdentityGuide}
+            title="先设昵称和头像"
+            body="游客开玩：改个昵称、选个头像，身份会保存在本机。"
+            onDismiss={() => mark('seenIdentity')}
+          >
+            <section className="lobby-player" aria-label="玩家信息">
+              <div className="lobby-identity">
+                <PlayerAvatar kind="player" avatarId={identity.avatarId} />
+                <div>
+                  <div className="lobby-beans">豆子 {beans ?? identity.beans}</div>
+                  <div className="hint">游客 ID 已本地保存，刷新不清</div>
+                </div>
               </div>
-            </div>
 
-            <label className="field lobby-field">
-              <span>昵称</span>
-              <input
-                type="text"
-                placeholder="给自己起个名字"
-                value={identity.name}
-                onChange={(e) => persist({ ...identity, name: e.target.value })}
-                maxLength={12}
-                autoFocus
-              />
-            </label>
+              <label className="field lobby-field">
+                <span>昵称</span>
+                <input
+                  type="text"
+                  placeholder="给自己起个名字"
+                  value={identity.name}
+                  onChange={(e) => persist({ ...identity, name: e.target.value })}
+                  maxLength={12}
+                  autoFocus
+                />
+              </label>
 
-            <div className="field lobby-field">
-              <span>头像</span>
-              <div className="avatar-picker">
-                {BUILTIN_AVATARS.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`avatar-pick ${identity.avatarId === id ? 'selected' : ''}`}
-                    onClick={() => persist({ ...identity, avatarId: id })}
-                    aria-label={id}
-                  >
-                    <PlayerAvatar kind="player" avatarId={id} />
-                  </button>
-                ))}
+              <div className="field lobby-field">
+                <span>头像</span>
+                <div className="avatar-picker">
+                  {BUILTIN_AVATARS.map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`avatar-pick ${identity.avatarId === id ? 'selected' : ''}`}
+                      onClick={() => persist({ ...identity, avatarId: id })}
+                      aria-label={id}
+                    >
+                      <PlayerAvatar kind="player" avatarId={id} />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </GuideSpot>
 
-          <div className="lobby-cta">
-            <button
-              className="btn primary cta lobby-start"
-              onClick={startMatch}
-              disabled={!canAct}
-            >
-              开始游戏
-            </button>
-            <p className="lobby-cta-hint">快速匹配，自动配桌开局</p>
-          </div>
+          <GuideSpot
+            show={showStartGuide}
+            title="点「开始游戏」"
+            body="快速匹配开局；人不够时会自动补机器人。这是大厅唯一主入口。"
+            onDismiss={() => mark('seenStart')}
+            className="guide-spot--cta"
+          >
+            <div className="lobby-cta">
+              <button
+                className="btn primary cta lobby-start"
+                onClick={startMatch}
+                disabled={!canAct}
+              >
+                开始游戏
+              </button>
+              <p className="lobby-cta-hint">快速匹配，自动配桌开局</p>
+            </div>
+          </GuideSpot>
 
           <section className="lobby-secondary" aria-label="房间入口">
             <div className="lobby-secondary__head">

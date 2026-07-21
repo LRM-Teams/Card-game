@@ -2,11 +2,13 @@ import { type CSSProperties, type ReactNode, useEffect, useMemo, useState } from
 import { GamePhase, HandType, canPlay, identifyHand } from '@card-game/rules';
 import { cardOf, HAND_TYPE_LABEL } from '../lib/cards';
 import { useGameStore } from '../store/gameStore';
+import { useOnboardingStore } from '../store/onboardingStore';
 import { HandView } from './HandView';
 import { CardView } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
 import { SeatPlayZone } from './SeatPlayZone';
 import { SettleCoins } from './SettleCoins';
+import { GuideSpot } from './GuideSpot';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
 import { useNavigate } from '@tanstack/react-router';
@@ -28,6 +30,10 @@ export function GameTable() {
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
+  const guideActive = useOnboardingStore((s) => s.active);
+  const seenBidTip = useOnboardingStore((s) => s.seenBidTip);
+  const seenPlayTip = useOnboardingStore((s) => s.seenPlayTip);
+  const mark = useOnboardingStore((s) => s.mark);
   const start = useGameStore((s) => s.start);
   const dismissError = useGameStore((s) => s.dismissError);
   const seatLastPlays = useGameStore((s) => s.seatLastPlays);
@@ -275,19 +281,41 @@ export function GameTable() {
 
       {/* 叫分主 CTA 弹层：居中于手牌上方，不遮挡手牌点数（baseline 状态2） */}
       {isBidding && isMyTurn ? (
-        <div className="bid-cta-layer" role="group" aria-label="叫地主操作">
-          <div className="bid-cta-panel">
-            <p className="bid-cta-title">请选择</p>
-            <div className="bid-cta-row">
-              <button type="button" className="btn bid-pass" onClick={() => bid('pass')}>
-                不叫
-              </button>
-              <button type="button" className="btn primary cta bid-claim" onClick={() => bid('claim')}>
-                叫地主
-              </button>
+        <GuideSpot
+          show={guideActive && !seenBidTip}
+          title="叫地主是什么？"
+          body="叫地主：争当地主拿底牌，赢了倍数更高；不叫则让下一家决定。选一个就行。"
+          onDismiss={() => mark('seenBidTip')}
+          className="guide-spot--bid"
+        >
+          <div className="bid-cta-layer" role="group" aria-label="叫地主操作">
+            <div className="bid-cta-panel">
+              <p className="bid-cta-title">请选择</p>
+              <div className="bid-cta-row">
+                <button
+                  type="button"
+                  className="btn bid-pass"
+                  onClick={() => {
+                    if (!seenBidTip) mark('seenBidTip');
+                    bid('pass');
+                  }}
+                >
+                  不叫
+                </button>
+                <button
+                  type="button"
+                  className="btn primary cta bid-claim"
+                  onClick={() => {
+                    if (!seenBidTip) mark('seenBidTip');
+                    bid('claim');
+                  }}
+                >
+                  叫地主
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </GuideSpot>
       ) : (
         mySeat != null && (
           <div className="self-seat-play">
@@ -304,32 +332,55 @@ export function GameTable() {
 
       {/* 出牌控件：叫分阶段隐藏，避免底部 sticky 层挡手牌 */}
       {!isBidding && (
-        <div className="controls">
-          <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>
-          <div className="btn-row">
-            <button className="btn" onClick={clearSelect} disabled={selected.length === 0}>
-              清空
-            </button>
-            <button
-              className="btn"
-              onClick={requestHint}
-              disabled={!(isMyTurn && phase === GamePhase.PLAYING)}
-              title="AI 出牌提示（DouZero）"
-            >
-              提示{hints.length > 0 ? ` ${hintIndexLabel(hintIndex, hints.length)}` : ''}
-            </button>
-            <button
-              className="btn"
-              onClick={pass}
-              disabled={!(isMyTurn && phase === GamePhase.PLAYING && lastPlay)}
-            >
-              不出
-            </button>
-            <button className="btn primary cta" onClick={play} disabled={!canPlayNow}>
-              出牌
-            </button>
+        <GuideSpot
+          show={guideActive && !seenPlayTip && isMyTurn && phase === GamePhase.PLAYING}
+          title="出牌操作"
+          body="点选手牌后点「出牌」；压不住可「不出」；「提示」会给出建议（可连点切换）。"
+          onDismiss={() => mark('seenPlayTip')}
+          className="guide-spot--play"
+        >
+          <div
+            className={`controls${guideActive && !seenPlayTip && isMyTurn && phase === GamePhase.PLAYING ? ' controls--guide' : ''}`}
+          >
+            <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>
+            <div className="btn-row">
+              <button className="btn" onClick={clearSelect} disabled={selected.length === 0}>
+                清空
+              </button>
+              <button
+                className="btn guide-hot"
+                onClick={() => {
+                  if (!seenPlayTip) mark('seenPlayTip');
+                  requestHint();
+                }}
+                disabled={!(isMyTurn && phase === GamePhase.PLAYING)}
+                title="AI 出牌提示（DouZero）"
+              >
+                提示{hints.length > 0 ? ` ${hintIndexLabel(hintIndex, hints.length)}` : ''}
+              </button>
+              <button
+                className="btn guide-hot"
+                onClick={() => {
+                  if (!seenPlayTip) mark('seenPlayTip');
+                  pass();
+                }}
+                disabled={!(isMyTurn && phase === GamePhase.PLAYING && lastPlay)}
+              >
+                不出
+              </button>
+              <button
+                className="btn primary cta guide-hot"
+                onClick={() => {
+                  if (!seenPlayTip) mark('seenPlayTip');
+                  play();
+                }}
+                disabled={!canPlayNow}
+              >
+                出牌
+              </button>
+            </div>
           </div>
-        </div>
+        </GuideSpot>
       )}
 
       {lastError && (
