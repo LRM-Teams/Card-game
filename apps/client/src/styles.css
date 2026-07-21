@@ -1,10 +1,14 @@
 :root {
-  --ddz-felt-900: #06281a;
-  --ddz-felt-800: #0a3d26;
-  --ddz-felt-700: #0f5132;
-  --ddz-felt-600: #176b43;
-  --ddz-gold-500: #f5c542;
-  --ddz-gold-600: #d99a1e;
+  /* LRM-166：台呢降饱和 */
+  --ddz-felt-900: #0b2218;
+  --ddz-felt-800: #14352a;
+  --ddz-felt-700: #1b4a37;
+  --ddz-felt-600: #2a6349;
+  --ddz-felt-mid: #1f5540;
+  --ddz-felt-soft: rgba(168, 198, 178, 0.14);
+  /* 金色略降饱和，仅主按钮/强调文字 */
+  --ddz-gold-500: #e8bc3a;
+  --ddz-gold-600: #c49218;
   --ddz-red-500: #d63031;
   --ddz-red-600: #a82020;
   /* 结算胜负配色（baseline 状态4：胜金红暖 / 负蓝灰降饱和） */
@@ -20,8 +24,20 @@
   --ddz-paper: #fbfbf6;
   --ddz-ink: #1c1c1c;
   --ddz-cream: #fff3c4;
-  --ddz-line: rgba(255, 255, 255, 0.16);
+  --ddz-line: rgba(255, 255, 255, 0.14);
   --ddz-shadow: rgba(0, 0, 0, 0.32);
+  --ddz-room-from: #33221a;
+  --ddz-room-mid: #43301f;
+  --ddz-room-to: #241612;
+  /* 桌沿木色 rail */
+  --ddz-rail-thickness: 18px;
+  --ddz-rail-rim: 3px;
+  --ddz-rail-wood-900: #4a2e18;
+  --ddz-rail-wood-700: #6b4424;
+  --ddz-rail-wood-500: #8a5c34;
+  --ddz-rail-inner-line: rgba(255, 243, 196, 0.10);
+  --ddz-rail-thickness-mobile: 8px;
+  --ddz-rail-rim-mobile: 3px;
   --ddz-font-display: "Arial Rounded MT Bold", "Microsoft YaHei", sans-serif;
   --ddz-font-body: "Microsoft YaHei", "PingFang SC", sans-serif;
   --ddz-text-xs: 12px;
@@ -44,14 +60,34 @@
   --ddz-card-h: 74px;
   --ddz-card-small-w: 40px;
   --ddz-card-small-h: 56px;
-  --ddz-avatar-size: 64px;
+  --ddz-avatar-size: 56px;
   --ddz-button-h: 40px;
   --ddz-button-h-lg: 48px;
+  --ddz-button-h-cta: 56px;
+  --ddz-timer-size: 28px;
+  --ddz-meta-opacity: 0.58;
+  --ddz-btn-primary-from: #f0d06a;
+  --ddz-btn-primary-mid: #e0b83a;
+  --ddz-btn-primary-to: #c48a14;
+  --ddz-btn-primary-text: #2c1d00;
+  --ddz-btn-primary-shadow:
+    0 0 0 1px rgba(255, 224, 116, 0.22),
+    0 8px 16px rgba(196, 138, 20, 0.22),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(150, 96, 0, 0.20);
+  --ddz-btn-cta-shadow:
+    0 0 0 2px rgba(255, 224, 116, 0.26),
+    0 10px 22px rgba(196, 138, 20, 0.26),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -4px 0 rgba(150, 96, 0, 0.22);
+  --ddz-btn-secondary-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.14));
+  --ddz-btn-secondary-border: rgba(255, 243, 196, 0.16);
+  --ddz-btn-secondary-text: #fff8e8;
   --ddz-shadow-card: 0 6px 12px rgba(0, 0, 0, 0.22);
   --ddz-shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.30);
-  /* v7 别刺眼：金色高光收敛，选中靠边框而非泛光 */
-  --ddz-glow-gold: 0 0 0 2px rgba(245, 197, 66, 0.22), 0 0 12px rgba(245, 197, 66, 0.16);
-  /* 大厅暖红金（与牌桌台呢绿区分） */
+  /* LRM-166：金色高光收敛，选中靠边框而非泛光 */
+  --ddz-glow-gold: 0 0 0 2px rgba(232, 188, 58, 0.20), 0 0 10px rgba(232, 188, 58, 0.12);
+  /* 大厅暖红金（与牌桌台呢绿区分，LRM-165） */
   --ddz-lobby-bg-900: #24100e;
   --ddz-lobby-bg-700: #5a2218;
   --ddz-lobby-bg-500: #8a3424;
@@ -81,9 +117,9 @@ body {
   font-family: var(--ddz-font-body);
   color: #fff8dc;
   background:
-    radial-gradient(circle at 50% -10%, rgba(255, 218, 140, 0.12), transparent 42%),
-    radial-gradient(circle at 12% 14%, rgba(255, 255, 255, 0.05), transparent 26%),
-    linear-gradient(135deg, #33221a, #43301f 48%, #241612);
+    radial-gradient(circle at 50% -10%, rgba(255, 218, 140, 0.10), transparent 42%),
+    radial-gradient(circle at 12% 14%, rgba(255, 255, 255, 0.04), transparent 26%),
+    linear-gradient(135deg, var(--ddz-room-from), var(--ddz-room-mid) 48%, var(--ddz-room-to));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -442,11 +478,11 @@ body::before {
 }
 .btn {
   appearance: none;
-  min-height: 46px;
+  min-height: var(--ddz-button-h-lg);
   min-width: 112px;
-  border: 1px solid rgba(255, 243, 196, 0.22);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.12));
-  color: #fffaf0;
+  border: 1px solid var(--ddz-btn-secondary-border);
+  background: var(--ddz-btn-secondary-bg);
+  color: var(--ddz-btn-secondary-text);
   padding: 10px 18px;
   border-radius: var(--ddz-radius-md);
   font-family: var(--ddz-font-display);
@@ -454,11 +490,11 @@ body::before {
   font-weight: 800;
   cursor: pointer;
   transition: transform 80ms ease, filter 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
 }
 .btn:hover:not(:disabled) {
-  filter: brightness(1.06);
-  box-shadow: 0 9px 18px rgba(0, 0, 0, 0.26);
+  filter: brightness(1.05);
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.22);
 }
 .btn:active:not(:disabled) {
   transform: translateY(1px);
@@ -468,31 +504,30 @@ body::before {
   cursor: not-allowed;
   box-shadow: none;
 }
+/* L0：全屏唯一金色填充主按钮 */
 .btn.primary {
   border-color: transparent;
-  background: linear-gradient(180deg, #ffeaa0, #f2cf5c 46%, #dca01c 88%, #bf7f10);
-  color: #2c1d00;
-  box-shadow:
-    0 0 0 1px rgba(255, 224, 116, 0.3),
-    0 8px 18px rgba(217, 154, 30, 0.28),
-    inset 0 2px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -3px 0 rgba(150, 96, 0, 0.24);
+  background: linear-gradient(
+    180deg,
+    var(--ddz-btn-primary-from),
+    var(--ddz-btn-primary-mid) 46%,
+    var(--ddz-btn-primary-to) 88%,
+    var(--ddz-gold-600)
+  );
+  color: var(--ddz-btn-primary-text);
+  box-shadow: var(--ddz-btn-primary-shadow);
 }
 .btn.cta {
-  min-height: 56px;
+  min-height: var(--ddz-button-h-cta);
   min-width: 148px;
   font-size: var(--ddz-text-lg);
   padding: 12px 28px;
-  box-shadow:
-    0 0 0 2px rgba(255, 224, 116, 0.34),
-    0 12px 26px rgba(217, 154, 30, 0.34),
-    inset 0 2px 0 rgba(255, 255, 255, 0.58),
-    inset 0 -4px 0 rgba(150, 96, 0, 0.28);
+  box-shadow: var(--ddz-btn-cta-shadow);
 }
 .btn.ghost {
   background: transparent;
   color: var(--ddz-gold-500);
-  border-color: rgba(245, 197, 66, 0.44);
+  border-color: rgba(232, 188, 58, 0.40);
 }
 /* 次按钮：降饱和、降亮度，不与主 CTA 抢权 */
 .btn.secondary {
@@ -687,7 +722,7 @@ body::before {
 .status-dot.error { background: #ff6b6b; }
 .status-error { color: #ffb4b4; }
 
-/* Table */
+/* Table — LRM-166：木色 rail + 降饱和台呢，去金色泛光 */
 .table {
   position: relative;
   display: flex;
@@ -700,15 +735,21 @@ body::before {
   border: 0;
   border-radius: 50% / 34%;
   background:
-    radial-gradient(ellipse at 50% 30%, rgba(120, 190, 148, 0.22), transparent 58%),
-    radial-gradient(ellipse at 50% 40%, rgba(40, 116, 80, 0.98) 0%, rgba(20, 78, 52, 0.98) 60%, rgba(8, 40, 27, 0.98) 100%);
+    radial-gradient(ellipse at 50% 28%, var(--ddz-felt-soft), transparent 56%),
+    radial-gradient(
+      ellipse at 50% 42%,
+      var(--ddz-felt-600) 0%,
+      var(--ddz-felt-mid) 42%,
+      var(--ddz-felt-700) 68%,
+      var(--ddz-felt-900) 100%
+    );
   box-shadow:
-    0 0 0 22px rgba(92, 54, 26, 0.95),
-    0 0 0 26px rgba(150, 98, 42, 0.5),
-    inset 0 0 0 2px rgba(245, 197, 66, 0.32),
-    inset 0 22px 48px rgba(255, 255, 255, 0.045),
-    inset 0 -34px 68px rgba(0, 0, 0, 0.28),
-    0 34px 84px rgba(0, 0, 0, 0.46);
+    0 0 0 var(--ddz-rail-thickness) var(--ddz-rail-wood-700),
+    0 0 0 calc(var(--ddz-rail-thickness) + var(--ddz-rail-rim)) var(--ddz-rail-wood-500),
+    inset 0 0 0 1px var(--ddz-rail-inner-line),
+    inset 0 18px 40px rgba(255, 255, 255, 0.04),
+    inset 0 -28px 56px rgba(0, 0, 0, 0.28),
+    0 28px 64px rgba(0, 0, 0, 0.42);
   overflow: visible;
 }
 .table::before {
@@ -716,8 +757,7 @@ body::before {
   position: absolute;
   inset: 18px 30px 20px;
   border-radius: 50% / 34%;
-  border: 2px solid rgba(245, 197, 66, 0.24);
-  box-shadow: inset 0 0 46px rgba(245, 197, 66, 0.08);
+  border: 1px solid rgba(255, 243, 196, 0.08);
   pointer-events: none;
 }
 .table::after {
@@ -725,8 +765,8 @@ body::before {
   position: absolute;
   inset: 40px 56px 42px;
   border-radius: 50% / 34%;
-  border: 1px solid rgba(255, 243, 196, 0.14);
-  background: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.04), transparent 64%);
+  border: 1px solid rgba(255, 243, 196, 0.08);
+  background: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, 0.03), transparent 64%);
   pointer-events: none;
 }
 .table-head {
@@ -810,6 +850,7 @@ body::before {
   flex: 1 1 auto;
   min-height: clamp(200px, 34vh, 280px);
 }
+/* L3 弱 HUD：倒计时 + 倍数合并，不得与主按钮抢权重 */
 .meta-corner {
   position: absolute;
   top: 22px;
@@ -817,15 +858,22 @@ body::before {
   transform: translateX(-50%);
   z-index: 3;
   display: flex;
-  gap: var(--ddz-space-3);
-  padding: 4px 14px;
+  align-items: center;
+  gap: var(--ddz-space-2);
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: var(--ddz-text-xs);
   color: var(--ddz-cream);
-  opacity: 0.62;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(255, 243, 196, 0.1);
+  opacity: var(--ddz-meta-opacity);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 243, 196, 0.08);
   pointer-events: none;
+}
+.meta-corner .turn-timer {
+  width: var(--ddz-timer-size);
+  height: var(--ddz-timer-size);
+  box-shadow: none;
+  opacity: 1;
 }
 .table-center-play {
   position: absolute;
@@ -1012,11 +1060,11 @@ body::before {
   padding: 12px 14px 10px;
   border-radius: 22px;
   background:
-    radial-gradient(circle at center, rgba(245, 197, 66, 0.12), transparent 62%),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.05), transparent 62%),
     rgba(0, 0, 0, 0.28);
-  border: 2px dashed rgba(245, 197, 66, 0.28);
+  border: 2px dashed rgba(255, 243, 196, 0.16);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
     0 8px 28px rgba(0, 0, 0, 0.22);
 }
 .last-label {
@@ -1112,30 +1160,30 @@ body::before {
   --timer-deg: 360deg;
   display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: var(--ddz-timer-size);
+  height: var(--ddz-timer-size);
   border-radius: 50%;
   background:
     radial-gradient(circle at center, var(--ddz-felt-900) 54%, transparent 56%),
-    conic-gradient(var(--ddz-gold-500) var(--timer-deg), rgba(255, 255, 255, 0.16) 0);
+    conic-gradient(rgba(232, 188, 58, 0.55) var(--timer-deg), rgba(255, 255, 255, 0.14) 0);
   color: var(--ddz-cream);
   font-family: var(--ddz-font-display);
-  font-size: var(--ddz-text-xs);
-  font-weight: 900;
-  box-shadow: 0 0 12px rgba(245, 197, 66, 0.22);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: none;
 }
 .turn-timer.danger {
   color: #fff;
   background:
     radial-gradient(circle at center, var(--ddz-red-600) 54%, transparent 56%),
-    conic-gradient(var(--ddz-red-500) var(--timer-deg), rgba(255, 255, 255, 0.16) 0);
+    conic-gradient(var(--ddz-red-500) var(--timer-deg), rgba(255, 255, 255, 0.14) 0);
   animation: ddz-danger-pulse 650ms ease-in-out infinite;
 }
 .turn-line.mine {
   color: var(--ddz-gold-500);
   font-family: var(--ddz-font-display);
   font-weight: 900;
-  /* LRM-168：文案轻提示，不强泛光，不抢出牌 CTA */
+  /* LRM-166/168：文案轻提示，不强泛光，不抢出牌 CTA */
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 .badge {
@@ -1776,10 +1824,10 @@ body::before {
     padding: 14px 10px 12px;
     border-radius: 28px;
     box-shadow:
-      0 0 0 5px rgba(128, 66, 21, 0.58),
-      0 0 0 8px rgba(245, 197, 66, 0.28),
-      inset 0 0 0 2px rgba(255, 243, 196, 0.14),
-      0 16px 40px rgba(0, 0, 0, 0.36);
+      0 0 0 var(--ddz-rail-thickness-mobile) var(--ddz-rail-wood-700),
+      0 0 0 calc(var(--ddz-rail-thickness-mobile) + var(--ddz-rail-rim-mobile)) var(--ddz-rail-wood-500),
+      inset 0 0 0 1px var(--ddz-rail-inner-line),
+      0 20px 52px rgba(0, 0, 0, 0.36);
   }
   .table::before,
   .table::after {

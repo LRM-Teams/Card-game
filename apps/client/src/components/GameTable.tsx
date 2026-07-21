@@ -197,7 +197,16 @@ export function GameTable() {
 
   return (
     <div className={`table${isBidding ? ' is-bidding' : ''}`}>
-      <div className="meta-corner" aria-hidden="true">
+      <div className="meta-corner">
+        {snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING) && (
+          <span
+            className={`turn-timer ${secondsLeft <= 3 ? 'danger' : ''}`}
+            style={{ '--timer-deg': `${(secondsLeft / 20) * 360}deg` } as CSSProperties}
+            aria-label={`倒计时 ${secondsLeft} 秒`}
+          >
+            {secondsLeft}
+          </span>
+        )}
         <span>倍数 ×{snapshot.multiplier}</span>
         <span>阶段：{phaseLabel(phase)}</span>
       </div>
@@ -246,15 +255,6 @@ export function GameTable() {
       </div>
 
       <div className={`turn-line ${isMyTurn ? 'mine' : ''}`}>
-        {snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING) && (
-          <span
-            className={`turn-timer ${secondsLeft <= 3 ? 'danger' : ''}`}
-            style={{ '--timer-deg': `${(secondsLeft / 20) * 360}deg` } as CSSProperties}
-            aria-label={`倒计时 ${secondsLeft} 秒`}
-          >
-            {secondsLeft}
-          </span>
-        )}
         <span>
           {botThinkingSeat != null
             ? `🤔 ${nameOf(botThinkingSeat)} 思考中…`
