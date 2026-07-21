@@ -1007,9 +1007,21 @@ body::before {
   flex-wrap: wrap;
   gap: 0;
 }
+/* LRM-209：座位出牌飞入 — 明确位移，时长对齐 MOTION.playFlyMs（260ms） */
 .seat-play-cards .card {
-  animation: ddz-card-fly-in 160ms ease-out both;
+  --ddz-play-fly-ms: 260ms;
+  animation: ddz-card-fly-to-center var(--ddz-play-fly-ms) cubic-bezier(0.22, 0.82, 0.28, 1) both;
 }
+.seat-play-zone.align-left .seat-play-cards .card {
+  animation-name: ddz-card-fly-from-left;
+}
+.seat-play-zone.align-right .seat-play-cards .card {
+  animation-name: ddz-card-fly-from-right;
+}
+.seat-play-cards .card:nth-child(2) { animation-delay: 20ms; }
+.seat-play-cards .card:nth-child(3) { animation-delay: 40ms; }
+.seat-play-cards .card:nth-child(4) { animation-delay: 60ms; }
+.seat-play-cards .card:nth-child(n + 5) { animation-delay: 80ms; }
 .play-type-caption {
   font-size: var(--ddz-text-xs);
   margin-bottom: 4px;
@@ -1233,12 +1245,13 @@ body::before {
   animation: ddz-card-fly-in 160ms ease-out both;
 }
 .last-cards .card.is-table-play {
-  animation: ddz-card-fly-to-center 220ms ease-out both;
+  --ddz-play-fly-ms: 260ms;
+  animation: ddz-card-fly-to-center var(--ddz-play-fly-ms) cubic-bezier(0.22, 0.82, 0.28, 1) both;
 }
-.last-cards .card:nth-child(2) { animation-delay: 18ms; }
-.last-cards .card:nth-child(3) { animation-delay: 36ms; }
-.last-cards .card:nth-child(4) { animation-delay: 54ms; }
-.last-cards .card:nth-child(n + 5) { animation-delay: 72ms; }
+.last-cards .card:nth-child(2) { animation-delay: 20ms; }
+.last-cards .card:nth-child(3) { animation-delay: 40ms; }
+.last-cards .card:nth-child(4) { animation-delay: 60ms; }
+.last-cards .card:nth-child(n + 5) { animation-delay: 80ms; }
 .bottom-row {
   align-items: center;
   gap: var(--ddz-space-1);
@@ -1257,6 +1270,7 @@ body::before {
 }
 .turn-timer {
   --timer-deg: 360deg;
+  position: relative;
   display: inline-grid;
   place-items: center;
   width: var(--ddz-timer-size);
@@ -1270,13 +1284,27 @@ body::before {
   font-size: 11px;
   font-weight: 800;
   box-shadow: none;
+  isolation: isolate;
 }
+/* LRM-209：末 3s 红脉冲仅作用 timer 本体（无全屏闪红，不挡手牌/主按钮） */
 .turn-timer.danger {
   color: #fff;
   background:
     radial-gradient(circle at center, var(--ddz-red-600) 54%, transparent 56%),
     conic-gradient(var(--ddz-red-500) var(--timer-deg), rgba(255, 255, 255, 0.14) 0);
-  animation: ddz-danger-pulse 650ms ease-in-out infinite;
+  animation: ddz-danger-pulse 600ms ease-in-out infinite;
+  z-index: 1;
+}
+.turn-timer.danger::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(214, 48, 49, 0.9);
+  box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.45);
+  animation: ddz-danger-ring 600ms ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
 }
 .turn-line.mine {
   color: var(--ddz-gold-500);
@@ -1879,20 +1907,61 @@ body::before {
     transform: translateY(0) scale(1);
   }
 }
+/* 自家/中央：自手牌区向上飞入（~88px，260ms） */
 @keyframes ddz-card-fly-to-center {
   from {
-    opacity: 0;
-    transform: translateY(72px) scale(0.92);
+    opacity: 0.15;
+    transform: translateY(88px) scale(0.88);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
+/* 左家：自左外侧飞入 */
+@keyframes ddz-card-fly-from-left {
+  from {
+    opacity: 0.15;
+    transform: translate(-56px, 28px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+/* 右家：自右外侧飞入 */
+@keyframes ddz-card-fly-from-right {
+  from {
+    opacity: 0.15;
+    transform: translate(56px, 28px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
 @keyframes ddz-danger-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
   50% {
-    transform: scale(1.08);
-    box-shadow: 0 0 18px rgba(214, 48, 49, 0.48);
+    transform: scale(1.1);
+    filter: brightness(1.12);
+  }
+}
+@keyframes ddz-danger-ring {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+    box-shadow: 0 0 10px 2px rgba(214, 48, 49, 0.35);
   }
 }
 @keyframes ddz-play-fx-pop {

@@ -44,12 +44,24 @@ export const MOTION = {
 
   /** 牌型字幕（已有） */
   playFxCaptionMs: 2000,
+
+  /** LRM-209：倒计时末端红脉冲（仅 timer 本体，无全屏闪红） */
+  timerDangerSec: 3,
+  timerDangerPulseMs: 600,
+
+  /** LRM-209：出牌飞向座位出牌区（明确位移，建议 180–320ms） */
+  playFlyMs: 260,
+  playFlyFromY: 88,
+  playFlyFromX: 56,
+  playFlyFromScale: 0.88,
 } as const;
 
 export type FxDemoScene =
   | 'deal'
   | 'select'
   | 'turn'
+  | 'timer'
+  | 'playFly'
   | 'bomb'
   | 'rocket'
   | 'settle'
@@ -61,6 +73,8 @@ export const FX_DEMO_SCENES: FxDemoScene[] = [
   'deal',
   'select',
   'turn',
+  'timer',
+  'playFly',
   'bomb',
   'rocket',
   'settle',

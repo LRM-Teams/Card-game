@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
   HandType,
   RANK,
@@ -98,7 +98,7 @@ function readScene(): FxDemoScene {
 
 /**
  * 动效 / UI 演示页：不依赖服务端，供 Playwright 录屏举证。
- * 路由：/fx-demo?scene=deal|select|turn|bomb|rocket|settle|reveal|double|mult
+ * 路由：/fx-demo?scene=deal|select|turn|timer|playFly|bomb|rocket|settle|reveal|double|mult
  */
 export function FxDemo() {
   const [scene, setScene] = useState<FxDemoScene>(readScene);
@@ -106,6 +106,10 @@ export function FxDemo() {
   const [fxTick, setFxTick] = useState(1);
   /** LRM-196：选中抬起演示（模拟提示命中） */
   const [selectedIds, setSelectedIds] = useState<string[]>(['d12', 'd8', 'd4']);
+  /** LRM-209：倒计时末 3s 红脉冲演示 */
+  const [timerSec, setTimerSec] = useState(3);
+  /** LRM-209：出牌飞入重播 key */
+  const [playFlyKey, setPlayFlyKey] = useState(1);
 
   useEffect(() => {
     const onPop = () => setScene(readScene());
@@ -132,10 +136,43 @@ export function FxDemo() {
       const t = window.setInterval(() => setFxTick((n) => n + 1), ms + 600);
       return () => window.clearInterval(t);
     }
+    if (scene === 'timer') {
+      setTimerSec(MOTION.timerDangerSec);
+      return;
+    }
+    if (scene === 'playFly') {
+      setPlayFlyKey((k) => k + 1);
+      const t = window.setInterval(() => setPlayFlyKey((k) => k + 1), MOTION.playFlyMs + 900);
+      return () => window.clearInterval(t);
+    }
   }, [scene]);
 
   const bombPlay = useMemo(() => bombRecord(), []);
   const rocketPlay = useMemo(() => rocketRecord(), []);
+  const singlePlay = useMemo(
+    (): PlayRecord => ({
+      seat: 0,
+      hand: {
+        type: HandType.SINGLE,
+        cards: [demoCard('fly-1', 10, 'heart')],
+        mainRank: 10,
+        length: 1,
+      },
+    }),
+    [],
+  );
+  const pairPlay = useMemo(
+    (): PlayRecord => ({
+      seat: 0,
+      hand: {
+        type: HandType.PAIR,
+        cards: [demoCard('fly-a', 7, 'spade'), demoCard('fly-b', 7, 'heart')],
+        mainRank: 7,
+        length: 1,
+      },
+    }),
+    [],
+  );
 
   return (
     <div className="fx-demo" data-scene={scene}>
@@ -243,6 +280,63 @@ export function FxDemo() {
             </button>
             <button type="button" className="btn primary cta">
               出牌
+            </button>
+          </div>
+        </div>
+      )}
+
+      {scene === 'timer' && (
+        <div className="table fx-demo-table" data-fx="timer" data-scene="timer">
+          <p className="fx-demo-caption">
+            LRM-209 倒计时末端红脉冲 · 末 {MOTION.timerDangerSec}s · pulse{' '}
+            {MOTION.timerDangerPulseMs}ms · 仅 timer 本体、无全屏闪红
+          </p>
+          <div
+            className="meta-corner meta-corner--mult"
+            style={{ position: 'relative', top: 0, left: 0, transform: 'none', margin: '24px auto' }}
+          >
+            <span
+              className={`turn-timer ${timerSec <= MOTION.timerDangerSec ? 'danger' : ''}`}
+              style={
+                {
+                  '--timer-deg': `${(timerSec / 20) * 360}deg`,
+                } as CSSProperties
+              }
+              aria-label={`倒计时 ${timerSec} 秒`}
+              data-timer-danger={timerSec <= MOTION.timerDangerSec ? '1' : '0'}
+            >
+              {timerSec}
+            </span>
+            <span className="meta-phase">阶段：出牌中</span>
+          </div>
+          <HandView cards={DEMO_HAND.slice(0, 8)} selected={[]} dealKey={1} />
+          <div className="btn-row">
+            <button type="button" className="btn" onClick={() => setTimerSec(5)}>
+              5s（非危险）
+            </button>
+            <button type="button" className="btn primary" onClick={() => setTimerSec(3)}>
+              3s 红脉冲
+            </button>
+            <button type="button" className="btn primary cta">
+              出牌
+            </button>
+          </div>
+        </div>
+      )}
+
+      {scene === 'playFly' && (
+        <div className="table fx-demo-table" data-fx="playFly" data-scene="playFly">
+          <p className="fx-demo-caption">
+            LRM-209 出牌飞入 · {MOTION.playFlyMs}ms · 左/中/右位移路径 · 无瞬移
+          </p>
+          <div className="fx-demo-seats" style={{ alignItems: 'flex-start', gap: 24 }}>
+            <SeatPlayZone key={`L-${playFlyKey}`} record={pairPlay} align="left" />
+            <SeatPlayZone key={`C-${playFlyKey}`} record={singlePlay} fxActive align="center" />
+            <SeatPlayZone key={`R-${playFlyKey}`} record={pairPlay} align="right" />
+          </div>
+          <div className="btn-row">
+            <button type="button" className="btn primary cta" onClick={() => setPlayFlyKey((k) => k + 1)}>
+              重播出牌飞入
             </button>
           </div>
         </div>
