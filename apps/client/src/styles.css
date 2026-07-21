@@ -2444,3 +2444,66 @@ body::before {
     animation: none;
   }
 
+
+/* —— LRM-181 新手引导 —— */
+.guide-spot {
+  position: relative;
+  z-index: 6;
+}
+.guide-spot__target {
+  position: relative;
+  border-radius: var(--ddz-radius-md);
+  box-shadow: 0 0 0 2px rgba(245, 197, 66, 0.55), 0 0 0 8px rgba(245, 197, 66, 0.12);
+}
+.guide-bubble {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: var(--ddz-radius-md);
+  background: linear-gradient(180deg, rgba(36, 28, 16, 0.96), rgba(22, 18, 12, 0.94));
+  border: 1px solid rgba(245, 197, 66, 0.35);
+  box-shadow: var(--ddz-shadow-panel);
+  color: var(--ddz-cream);
+}
+.guide-bubble__title {
+  display: block;
+  font-size: var(--ddz-text-sm);
+  color: #ffe7a0;
+  margin-bottom: 4px;
+}
+.guide-bubble__body {
+  margin: 0 0 10px;
+  font-size: var(--ddz-text-xs);
+  line-height: 1.45;
+  color: rgba(255, 243, 196, 0.86);
+}
+.guide-bubble__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.guide-skip {
+  opacity: 0.85;
+}
+.guide-spot--cta .guide-spot__target,
+.guide-spot--play .guide-spot__target,
+.guide-spot--bid .guide-spot__target {
+  box-shadow: 0 0 0 2px rgba(245, 197, 66, 0.6), 0 0 18px rgba(245, 197, 66, 0.18);
+}
+.controls--guide .guide-hot:not(:disabled) {
+  box-shadow: 0 0 0 2px rgba(245, 197, 66, 0.45);
+}
+.audio-row--stack {
+  grid-template-columns: 72px 1fr;
+  align-items: start;
+}
+.audio-row--stack .btn {
+  justify-self: start;
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: var(--ddz-text-xs);
+}
+.audio-row--stack .hint {
+  grid-column: 2;
+  margin: 4px 0 0;
+}
