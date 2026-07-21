@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { HandType, RANK, type Card, type PlayRecord, type Suit } from '@card-game/rules';
+import {
+  HandType,
+  RANK,
+  type Card,
+  type MultiplierBreakdown,
+  type PlayRecord,
+  type Seat,
+  type Suit,
+} from '@card-game/rules';
 import { HandView } from './HandView';
 import { SeatPlayZone } from './SeatPlayZone';
 import { SettleCoins } from './SettleCoins';
 import { PlayerAvatar } from './PlayerAvatar';
+import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { FX_DEMO_SCENES, MOTION, type FxDemoScene } from '../lib/motionSpec';
 
 function demoCard(id: string, rank: number, suit: Suit | undefined): Card {
@@ -46,6 +55,16 @@ const DEMO_HAND: Card[] = [
   demoCard('d17', RANK.BIG_JOKER, undefined),
 ];
 
+const DEMO_BREAKDOWN: MultiplierBreakdown = {
+  base: 1,
+  reveal: true,
+  doubleCount: 2,
+  doubleSeats: [0, 1] as Seat[],
+  bombCount: 1,
+  spring: false,
+  current: 8,
+};
+
 function bombRecord(): PlayRecord {
   const bombCards = (['spade', 'heart', 'club', 'diamond'] as Suit[]).map((suit, i) =>
     demoCard(`bomb-${i}`, 8, suit),
@@ -78,8 +97,8 @@ function readScene(): FxDemoScene {
 }
 
 /**
- * LRM-168 动效演示页：不依赖服务端，供 Playwright 录屏举证。
- * 路由：/fx-demo?scene=deal|turn|bomb|rocket|settle
+ * 动效 / UI 演示页：不依赖服务端，供 Playwright 录屏举证。
+ * 路由：/fx-demo?scene=deal|turn|bomb|rocket|settle|reveal|double|mult
  */
 export function FxDemo() {
   const [scene, setScene] = useState<FxDemoScene>(readScene);
@@ -119,7 +138,7 @@ export function FxDemo() {
   return (
     <div className="fx-demo" data-scene={scene}>
       <header className="fx-demo-bar">
-        <h1>LRM-168 动效演示</h1>
+        <h1>UI / 动效演示</h1>
         <div className="btn-row">
           {FX_DEMO_SCENES.map((s) => (
             <button
@@ -152,23 +171,33 @@ export function FxDemo() {
           <p className="fx-demo-caption">轮到谁金色脉冲 · {MOTION.turnPulseMs}ms · 局部、无全屏泛光</p>
           <div className="fx-demo-seats">
             <div className="seat-badge">
-              <div className="avatar"><PlayerAvatar kind="player" /></div>
+              <div className="avatar">
+                <PlayerAvatar kind="player" />
+              </div>
               <div className="seat-name">上家</div>
             </div>
             <div className="seat-badge active turn-pulse">
-              <div className="avatar"><PlayerAvatar kind="player" /></div>
+              <div className="avatar">
+                <PlayerAvatar kind="player" />
+              </div>
               <div className="seat-name">当前行动</div>
               <div className="seat-count">剩 12</div>
             </div>
             <div className="seat-badge">
-              <div className="avatar"><PlayerAvatar kind="player" /></div>
+              <div className="avatar">
+                <PlayerAvatar kind="player" />
+              </div>
               <div className="seat-name">下家</div>
             </div>
           </div>
           <div className="turn-line mine">👉 轮到你出牌</div>
           <div className="btn-row">
-            <button type="button" className="btn">不出</button>
-            <button type="button" className="btn primary cta">出牌</button>
+            <button type="button" className="btn">
+              不出
+            </button>
+            <button type="button" className="btn primary cta">
+              出牌
+            </button>
           </div>
         </div>
       )}
@@ -188,7 +217,9 @@ export function FxDemo() {
             />
           </div>
           <div className="btn-row">
-            <button type="button" className="btn primary cta">出牌</button>
+            <button type="button" className="btn primary cta">
+              出牌
+            </button>
           </div>
         </div>
       )}
@@ -199,12 +230,121 @@ export function FxDemo() {
             <SettleCoins win />
             <img className="result-badge" src="/states/victory-badge.svg" alt="" aria-hidden="true" />
             <h2>你赢了</h2>
-            <p>农民胜 · 倍数 ×2 · 单注 1</p>
-            <p className="scores">得分：你 +2　对手 -1　对手 -1</p>
+            <p className="result-meta">农民胜 · 单注 8</p>
+            <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
+            <p className="scores">得分：你 +16　对手 -8　对手 -8</p>
             <div className="btn-row">
-              <button type="button" className="btn primary cta">再来一局</button>
-              <button type="button" className="btn">返回大厅</button>
+              <button type="button" className="btn primary cta">
+                再来一局
+              </button>
+              <button type="button" className="btn">
+                返回大厅
+              </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {scene === 'reveal' && (
+        <div className="table is-bidding fx-demo-table" data-fx="reveal" data-scene="reveal">
+          <p className="fx-demo-caption">LRM-194 明牌决策 CTA（地主窗口）</p>
+          <div
+            className="meta-corner meta-corner--mult"
+            style={{ position: 'relative', top: 0, left: 0, transform: 'none' }}
+          >
+            <MultiplierBreakdownView
+              variant="hud"
+              multiplier={1}
+              breakdown={{
+                ...DEMO_BREAKDOWN,
+                reveal: false,
+                doubleCount: 0,
+                bombCount: 0,
+                current: 1,
+              }}
+            />
+          </div>
+          <div className="turn-line mine">👉 地主可选择明牌（×2）</div>
+          <div className="bid-cta-layer" role="group" aria-label="明牌操作">
+            <div className="bid-cta-panel">
+              <p className="bid-cta-title">是否明牌（×2）</p>
+              <p className="bid-cta-sub">明牌后全员可见你的手牌，本局倍数 ×2</p>
+              <div className="bid-cta-row">
+                <button type="button" className="btn bid-pass">
+                  不明牌
+                </button>
+                <button type="button" className="btn primary cta bid-claim">
+                  明牌
+                </button>
+              </div>
+            </div>
+          </div>
+          <HandView cards={DEMO_HAND} selected={[]} />
+        </div>
+      )}
+
+      {scene === 'double' && (
+        <div className="table is-bidding fx-demo-table" data-fx="double" data-scene="double">
+          <p className="fx-demo-caption">LRM-194 加倍决策 CTA + 座位加倍角标</p>
+          <div className="fx-demo-seats">
+            <div className="seat-badge is-doubled">
+              <div className="avatar">
+                <PlayerAvatar kind="player" />
+                <img
+                  className="double-badge-corner"
+                  src="/states/double-badge.svg"
+                  alt=""
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="seat-name">
+                上家
+                <span className="seat-double-tag">加倍</span>
+              </div>
+            </div>
+            <div className="seat-badge active turn-pulse">
+              <div className="avatar">
+                <PlayerAvatar kind="player" />
+              </div>
+              <div className="seat-name">你</div>
+            </div>
+            <div className="seat-badge">
+              <div className="avatar">
+                <PlayerAvatar kind="player" />
+              </div>
+              <div className="seat-name">下家</div>
+            </div>
+          </div>
+          <div className="turn-line mine">👉 可选择加倍（×2）</div>
+          <div className="bid-cta-layer" role="group" aria-label="加倍操作">
+            <div className="bid-cta-panel">
+              <p className="bid-cta-title">是否加倍（×2）</p>
+              <p className="bid-cta-sub">可选；多人加倍可叠加</p>
+              <div className="bid-cta-row">
+                <button type="button" className="btn bid-pass">
+                  不加倍
+                </button>
+                <button type="button" className="btn primary cta bid-claim">
+                  加倍
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {scene === 'mult' && (
+        <div className="table fx-demo-table" data-fx="mult" data-scene="mult">
+          <p className="fx-demo-caption">LRM-194 桌面倍数构成 HUD（叫分/明牌/加倍/炸弹/春天）</p>
+          <div
+            className="meta-corner meta-corner--mult"
+            style={{ position: 'relative', top: 0, left: 0, transform: 'none', margin: '24px auto' }}
+          >
+            <span className="turn-timer" aria-hidden="true">
+              12
+            </span>
+            <MultiplierBreakdownView variant="hud" multiplier={8} breakdown={DEMO_BREAKDOWN} />
+            <span className="meta-phase">阶段：出牌中</span>
           </div>
         </div>
       )}
