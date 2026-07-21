@@ -1,6 +1,24 @@
-/** 统一的玩家头像占位/剪影，替代廉价感的 emoji（🤖/🙂）。 */
+/** 统一玩家头像：内置色块图集 + 剪影 fallback。 */
 
-export function PlayerAvatar({ kind }: { kind: 'empty' | 'player' }) {
+const AVATAR_COLORS: Record<string, string> = {
+  'av-1': '#c45c26',
+  'av-2': '#2f6fed',
+  'av-3': '#1a9b6c',
+  'av-4': '#8b5cf6',
+  'av-5': '#db2777',
+  'av-6': '#0ea5e9',
+  'av-7': '#ca8a04',
+  'av-8': '#64748b',
+  bot: '#3d5a45',
+};
+
+export function PlayerAvatar({
+  kind,
+  avatarId,
+}: {
+  kind: 'empty' | 'player';
+  avatarId?: string;
+}) {
   if (kind === 'empty') {
     return (
       <span className="avatar-glyph plus" aria-hidden="true">
@@ -8,10 +26,13 @@ export function PlayerAvatar({ kind }: { kind: 'empty' | 'player' }) {
       </span>
     );
   }
+  const id = avatarId && AVATAR_COLORS[avatarId] ? avatarId : 'av-1';
+  const fill = AVATAR_COLORS[id] ?? AVATAR_COLORS['av-1'];
   return (
     <svg className="avatar-silhouette" viewBox="0 0 64 64" aria-hidden="true">
-      <circle cx="32" cy="24" r="13" />
-      <path d="M11 57c0-12.6 9.4-19.5 21-19.5S53 44.4 53 57v3H11z" />
+      <rect width="64" height="64" rx="14" fill={fill} />
+      <circle cx="32" cy="24" r="12" fill="rgba(255,255,255,0.92)" />
+      <path d="M12 57c0-11.5 9-18 20-18s20 6.5 20 18v3H12z" fill="rgba(255,255,255,0.92)" />
     </svg>
   );
 }

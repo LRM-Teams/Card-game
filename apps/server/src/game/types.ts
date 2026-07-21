@@ -9,6 +9,10 @@ import type { BidEntry, Card, ErrorCode, GamePhase, MultiplierState, Role, Seat,
 export interface PlayerState {
   seat: Seat;
   name: string;
+  /** 头像图集 id；机器人用 `bot`。 */
+  avatarId: string;
+  /** 游客 ID；机器人无。 */
+  guestId?: string;
   isBot: boolean;
   connected: boolean;
   role: Role;

@@ -1,21 +1,27 @@
 /**
- * Socket.IO 传输层：把客户端动作接到 GameRoom，把 ServerEvent 下发回去。
+ * Socket.IO 传输层：把客户端动作接到 GameRoom / MatchQueue，把 ServerEvent 下发回去。
  *
  * - 客户端发：socket.emit('action', <ClientAction>)
- * - 服务端收：socket.on('event', <ServerEvent>)  （'room' 事件广播全房；'dealt' 等私发到本人）
+ * - 服务端收：socket.on('event', <ServerEvent>)
  *
  * 传输层不做任何规则判定，只搬运；权威判定全在 GameRoom + @card-game/rules。
  */
-import type { Server as IoServer } from 'socket.io';
+import type { Server as IoServer, Socket } from 'socket.io';
 import type { ClientAction, ErrorCode, Seat, ServerEvent } from '@card-game/rules';
 import type { ActionResult, RoomEvent } from './game/types';
 import type { GameRoom } from './game/GameRoom';
 import { RoomRegistry } from './registry';
+import type { MatchFormed } from './matchQueue';
+
+type Binding = { roomId: string; seat: Seat };
 
 export function createGame(io: IoServer): RoomRegistry {
   const registry = new RoomRegistry();
-  /** 按房间串行化异步动作：机器人推理期间，同房间的真人动作排队，避免状态竞态。 */
+  /** socketId → 当前房间绑定（匹配成桌后也会写入）。 */
+  const bindings = new Map<string, Binding>();
+  /** 按房间串行化异步动作。 */
   const roomLocks = new Map<string, Promise<void>>();
+
   const runRoomAction = (roomId: string, task: () => Promise<void>): void => {
     const prev = roomLocks.get(roomId) ?? Promise.resolve();
     const next = prev.then(task, task).then(
@@ -25,71 +31,118 @@ export function createGame(io: IoServer): RoomRegistry {
     roomLocks.set(roomId, next);
   };
 
-  io.on('connection', (socket) => {
-    let binding: { roomId: string; seat: Seat } | null = null;
+  const fail = (socket: Socket, code: ErrorCode, message: string): void => {
+    const ev: ServerEvent = { type: 'error', code, message };
+    socket.emit('event', ev);
+  };
 
-    const fail = (code: ErrorCode, message: string): void => {
-      const ev: ServerEvent = { type: 'error', code, message };
-      socket.emit('event', ev);
-    };
-
-    const apply = (roomId: string, events: RoomEvent[]): void => {
-      for (const re of events) {
-        if (re.scope === 'room') {
-          io.to(roomId).emit('event', re.event);
-        } else {
-          // 私发到该座位的真人连接（机器人 / 未连接则丢弃）
-          const sid = registry.socketOf(roomId, re.scope.seat);
-          if (sid) io.to(sid).emit('event', re.event);
-        }
+  const apply = (roomId: string, events: RoomEvent[]): void => {
+    for (const re of events) {
+      if (re.scope === 'room') {
+        io.to(roomId).emit('event', re.event);
+      } else {
+        const sid = registry.socketOf(roomId, re.scope.seat);
+        if (sid) io.to(sid).emit('event', re.event);
       }
-    };
+    }
+  };
 
-    const pumpBots = async (room: GameRoom, roomId: string): Promise<void> => {
-      await room.drainBots((events) => {
-        apply(roomId, events);
-      });
-    };
+  const pumpBots = async (room: GameRoom, roomId: string): Promise<void> => {
+    await room.drainBots((events) => {
+      apply(roomId, events);
+    });
+    if (room.result) registry.applySettlementBeans(room);
+  };
 
+  const deliverMatch = (formed: MatchFormed): void => {
+    for (const s of formed.seats) {
+      if (!s.result.ok) continue;
+      bindings.set(s.socketId, { roomId: formed.room.roomId, seat: s.seat });
+      apply(formed.room.roomId, s.result.events);
+      const sock = io.sockets.sockets.get(s.socketId);
+      if (sock) void sock.join(formed.room.roomId);
+    }
+    if (!formed.startResult.ok) return;
+    apply(formed.room.roomId, formed.startResult.events);
+    void pumpBots(formed.room, formed.room.roomId);
+  };
+
+  registry.setMatchFormedHandler(deliverMatch);
+
+  io.on('connection', (socket) => {
     socket.on('action', async (action: ClientAction) => {
-      // join：落座并加入房间（同步，不触发机器人推进）
-      if (action.type === 'join') {
-        const { room, seat, result } = registry.join(action.name, socket.id, action.roomId);
-        if (!result.ok) {
-          fail(result.code, result.message);
+      if (action.type === 'match') {
+        if (bindings.has(socket.id)) {
+          fail(socket, 'already_in_room', '已在房间内，请先离开再匹配');
           return;
         }
-        binding = { roomId: room.roomId, seat };
-        socket.join(room.roomId);
+        if (registry.isMatching(socket.id)) {
+          socket.emit('event', { type: 'matching' } satisfies ServerEvent);
+          return;
+        }
+        const profile = registry.identities.resolve({
+          name: action.name,
+          guestId: action.guestId,
+          avatarId: action.avatarId,
+        });
+        registry.enqueueMatch(profile, socket.id);
+        socket.emit('event', { type: 'matching' } satisfies ServerEvent);
+        return;
+      }
+
+      if (action.type === 'cancel_match') {
+        if (!registry.cancelMatch(socket.id)) {
+          fail(socket, 'not_matching', '当前不在匹配中');
+          return;
+        }
+        socket.emit('event', { type: 'match_cancelled' } satisfies ServerEvent);
+        return;
+      }
+
+      if (action.type === 'join') {
+        if (registry.isMatching(socket.id)) registry.cancelMatch(socket.id);
+        const profile = registry.identities.resolve({
+          name: action.name,
+          guestId: action.guestId,
+          avatarId: action.avatarId,
+        });
+        const { room, seat, result } = registry.join(profile, socket.id, action.roomId);
+        if (!result.ok) {
+          fail(socket, result.code, result.message);
+          return;
+        }
+        bindings.set(socket.id, { roomId: room.roomId, seat });
+        void socket.join(room.roomId);
         apply(room.roomId, result.events);
         return;
       }
 
+      const binding = bindings.get(socket.id);
       if (!binding) {
-        fail('not_in_room', '请先 join 房间');
+        fail(socket, 'not_in_room', '请先 join 房间或完成匹配');
         return;
       }
-      const roomId = binding.roomId;
-      const room = registry.get(roomId);
+      const room = registry.get(binding.roomId);
       if (!room) {
-        fail('not_in_room', '房间不存在');
+        fail(socket, 'not_in_room', '房间不存在');
         return;
       }
 
-      const seat = binding.seat;
-      // 按房间串行：机器人异步推理期间，同一房间的动作排队处理。
-      runRoomAction(roomId, async () => {
-        const result: ActionResult = await room.handleAction(seat, action);
+      runRoomAction(binding.roomId, async () => {
+        const result: ActionResult = await room.handleAction(binding.seat, action);
         if (!result.ok) {
-          fail(result.code, result.message);
+          fail(socket, result.code, result.message);
           return;
         }
-        apply(roomId, result.events);
-        await pumpBots(room, roomId);
+        apply(binding.roomId, result.events);
+        await pumpBots(room, binding.roomId);
       });
     });
 
     socket.on('disconnect', () => {
+      registry.cancelMatch(socket.id);
+      const binding = bindings.get(socket.id);
+      bindings.delete(socket.id);
       if (!binding) return;
       const result = registry.disconnect(binding.roomId, binding.seat, socket.id);
       if (result.ok) apply(binding.roomId, result.events);

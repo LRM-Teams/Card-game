@@ -1,21 +1,31 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { identifyHand, RANK } from '@card-game/rules';
 import type { Card, Seat } from '@card-game/rules';
 import { botBid, botChoosePlay } from '../src/game/bot';
 import { GameRoom } from '../src/game/GameRoom';
 import { RoomRegistry } from '../src/registry';
+import { IdentityStore } from '../src/identity';
 
 /** 构造一张最小 Card（用于白盒构造判定场景）。 */
 function card(rank: number, id?: string): Card {
   return { id: id ?? `c${rank}`, rank, display: String(rank), suit: 'spade' };
 }
 
+function mkHuman(name: string, guestId?: string) {
+  return {
+    name,
+    guestId: guestId ?? `g-${name}`,
+    avatarId: 'av-1',
+    beans: 1000,
+  };
+}
+
 /** 3 真人房间并开局（不补机器人，便于控制叫牌/出牌）。 */
 function threeHumans(): GameRoom {
   const r = new GameRoom('room-test');
-  r.addHuman('A');
-  r.addHuman('B');
-  r.addHuman('C');
+  r.addHuman(mkHuman('A'));
+  r.addHuman(mkHuman('B'));
+  r.addHuman(mkHuman('C'));
   return r;
 }
 
@@ -32,7 +42,7 @@ async function landlordAt0(): Promise<GameRoom> {
 describe('GameRoom · 房间 / 开局', () => {
   it('1 真人 + fillBots 开局自动补机器人到 3 人', async () => {
     const r = new GameRoom('r1');
-    expect(r.addHuman('A').ok).toBe(true);
+    expect(r.addHuman(mkHuman('A')).ok).toBe(true);
     expect((await r.start(true)).ok).toBe(true);
     expect(r.playerCount).toBe(3);
     expect(r.humanCount).toBe(1);
@@ -41,8 +51,8 @@ describe('GameRoom · 房间 / 开局', () => {
 
   it('不足 3 真人且不补机器人 → not_enough_players，不隐式补机器人', async () => {
     const r = new GameRoom('r-wait');
-    expect(r.addHuman('A').ok).toBe(true);
-    expect(r.addHuman('B').ok).toBe(true);
+    expect(r.addHuman(mkHuman('A')).ok).toBe(true);
+    expect(r.addHuman(mkHuman('B')).ok).toBe(true);
     const res = await r.start();
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.code).toBe('not_enough_players');
@@ -63,8 +73,8 @@ describe('GameRoom · 房间 / 开局', () => {
 
   it('首位加入的真人即房主；snapshot 暴露 hostSeat（房主可决定等人/开局）', () => {
     const r = new GameRoom('host');
-    r.addHuman('A');
-    r.addHuman('B');
+    r.addHuman(mkHuman('A'));
+    r.addHuman(mkHuman('B'));
     expect(r.hostSeat).toBe(0); // 创建房间者 = 房主
     const snap = r.snapshot();
     expect(snap.hostSeat).toBe(0);
@@ -74,7 +84,7 @@ describe('GameRoom · 房间 / 开局', () => {
 
   it('房间满后再加人被拒', () => {
     const r = threeHumans();
-    const res = r.addHuman('D');
+    const res = r.addHuman(mkHuman('D'));
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.code).toBe('room_full');
   });
@@ -139,17 +149,17 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
 describe('RoomRegistry · 房间加入 / 断线重连', () => {
   it('指定不存在的 roomId 时拒绝加入，不隐式创建好友房', () => {
     const registry = new RoomRegistry();
-    const res = registry.join('A', 'socket-a', 'missing-room');
+    const res = registry.join(mkHuman('A'), 'socket-a', 'missing-room');
     expect(res.result.ok).toBe(false);
     if (!res.result.ok) expect(res.result.code).toBe('not_in_room');
     expect(registry.get('missing-room')).toBeUndefined();
   });
 
-  it('满房开局后同名玩家可用原 roomId 重连原座位并拿回私有手牌', async () => {
+  it('满房开局后同 guest 可用原 roomId 重连原座位并拿回私有手牌', async () => {
     const registry = new RoomRegistry();
-    const a = registry.join('A', 'socket-a');
-    registry.join('B', 'socket-b', a.room.roomId);
-    registry.join('C', 'socket-c', a.room.roomId);
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
     await a.room.start();
 
     const beforeHand = a.room.players[0]!.hand.map((c) => c.id);
@@ -157,7 +167,7 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     expect(disconnected.ok).toBe(true);
     expect(a.room.players[0]!.connected).toBe(false);
 
-    const reconnected = registry.join('A', 'socket-a2', a.room.roomId);
+    const reconnected = registry.join(mkHuman('A', 'g-a'), 'socket-a2', a.room.roomId);
     expect(reconnected.seat).toBe(0);
     expect(a.room.players[0]!.connected).toBe(true);
     expect(registry.socketOf(a.room.roomId, 0)).toBe('socket-a2');
@@ -170,13 +180,44 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
 
   it('满房没有断线同名座位时仍拒绝新玩家加入', () => {
     const registry = new RoomRegistry();
-    const a = registry.join('A', 'socket-a');
-    registry.join('B', 'socket-b', a.room.roomId);
-    registry.join('C', 'socket-c', a.room.roomId);
+    const a = registry.join(mkHuman('A'), 'socket-a');
+    registry.join(mkHuman('B'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C'), 'socket-c', a.room.roomId);
 
-    const res = registry.join('D', 'socket-d', a.room.roomId);
+    const res = registry.join(mkHuman('D'), 'socket-d', a.room.roomId);
     expect(res.result.ok).toBe(false);
     if (!res.result.ok) expect(res.result.code).toBe('room_full');
+  });
+
+  it('快速匹配：1 人超时后 AI 补位并自动开局', async () => {
+    vi.useFakeTimers();
+    const registry = new RoomRegistry();
+    let formed = false;
+    registry.setMatchFormedHandler((f) => {
+      formed = true;
+      expect(f.seats).toHaveLength(1);
+      expect(f.startResult.ok).toBe(true);
+      expect(f.room.playerCount).toBe(3);
+      expect(f.room.humanCount).toBe(1);
+      expect(f.room.phase).not.toBe('waiting');
+    });
+    registry.enqueueMatch(mkHuman('Solo', 'g-solo'), 'sock-solo');
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(formed).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('IdentityStore：同 guestId 改昵称/头像，豆子连续', () => {
+    const store = new IdentityStore();
+    const a = store.resolve({ name: '甲', guestId: 'g1', avatarId: 'av-2' });
+    expect(a.guestId).toBe('g1');
+    expect(a.avatarId).toBe('av-2');
+    expect(a.beans).toBe(1000);
+    store.applyScore('g1', -100);
+    const b = store.resolve({ name: '甲改', guestId: 'g1', avatarId: 'av-3' });
+    expect(b.name).toBe('甲改');
+    expect(b.avatarId).toBe('av-3');
+    expect(b.beans).toBe(900);
   });
 });
 
@@ -302,7 +343,7 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
 
   it('1 真人 + 2 机器人也能跑完整一局（真人用 bot 逻辑驱动）', async () => {
     const r = new GameRoom('mixed');
-    r.addHuman('真人');
+    r.addHuman(mkHuman('真人'));
     await r.start(true);
     await r.drainBots();
     const human: Seat = 0;
