@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useGameStore } from '../store/gameStore';
+import { useOnboardingStore } from '../store/onboardingStore';
 import {
   BUILTIN_AVATARS,
   readIdentity,
@@ -8,6 +9,7 @@ import {
   type GuestIdentity,
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
+import { CoachTip } from './CoachTip';
 
 /** 大厅：游客身份 + 唯一主 CTA「开始游戏」(匹配) + 次级房间码入口。 */
 export function Lobby() {
@@ -22,6 +24,11 @@ export function Lobby() {
   const beans = useGameStore((s) => s.beans);
   const roomId = useGameStore((s) => s.roomId);
   const snapshot = useGameStore((s) => s.snapshot);
+
+  const lobbyStep = useOnboardingStore((s) => s.lobbyStep);
+  const skipAll = useOnboardingStore((s) => s.skipAll);
+  const markIdentitySeen = useOnboardingStore((s) => s.markIdentitySeen);
+  const markStartSeen = useOnboardingStore((s) => s.markStartSeen);
 
   const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
   const [roomCode, setRoomCode] = useState('');
@@ -44,6 +51,7 @@ export function Lobby() {
   const startMatch = () => {
     if (!canAct) return;
     saveIdentity(identity);
+    markStartSeen();
     match(identity);
   };
 
@@ -95,7 +103,20 @@ export function Lobby() {
         </div>
       ) : (
         <>
-          <section className="lobby-player" aria-label="玩家信息">
+          <section
+            className={`lobby-player${lobbyStep === 'identity' ? ' coach-target' : ''}`}
+            aria-label="玩家信息"
+          >
+            {lobbyStep === 'identity' && (
+              <CoachTip
+                className="lobby-coach"
+                placement="below"
+                message="先起个昵称、选个头像，牌友好认出你。"
+                primaryLabel="下一步"
+                onPrimary={markIdentitySeen}
+                onSkip={skipAll}
+              />
+            )}
             <div className="lobby-identity">
               <PlayerAvatar kind="player" avatarId={identity.avatarId} />
               <div>
@@ -134,7 +155,19 @@ export function Lobby() {
             </div>
           </section>
 
-          <div className="lobby-cta">
+          <div
+            className={`lobby-cta${lobbyStep === 'start' ? ' coach-target' : ''}`}
+          >
+            {lobbyStep === 'start' && (
+              <CoachTip
+                className="lobby-coach"
+                placement="above"
+                message="点「开始游戏」快速匹配开局，人不够时 AI 补位。"
+                primaryLabel="知道了"
+                onPrimary={markStartSeen}
+                onSkip={skipAll}
+              />
+            )}
             <button
               className="btn primary cta lobby-start"
               onClick={startMatch}

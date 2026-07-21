@@ -1,6 +1,7 @@
 import { useAudioStore } from '../store/audioStore';
+import { useOnboardingStore } from '../store/onboardingStore';
 
-/** 音效 / BGM / 静音设置面板（LRM-176）。 */
+/** 音效 / BGM / 静音设置面板（LRM-176）；兼放「重置新手引导」（LRM-181）。 */
 export function AudioSettings() {
   const open = useAudioStore((s) => s.open);
   const toggleOpen = useAudioStore((s) => s.toggleOpen);
@@ -17,6 +18,15 @@ export function AudioSettings() {
   const setBgmVolume = useAudioStore((s) => s.setBgmVolume);
   const setBgmEnabled = useAudioStore((s) => s.setBgmEnabled);
   const setVoiceEnabled = useAudioStore((s) => s.setVoiceEnabled);
+  const resetGuide = useOnboardingStore((s) => s.resetGuide);
+  const skipped = useOnboardingStore((s) => s.skipped);
+  const seenIdentityTip = useOnboardingStore((s) => s.seenIdentityTip);
+  const seenStartTip = useOnboardingStore((s) => s.seenStartTip);
+  const seenBidTip = useOnboardingStore((s) => s.seenBidTip);
+  const seenPlayTip = useOnboardingStore((s) => s.seenPlayTip);
+
+  const guideIdle =
+    skipped || (seenIdentityTip && seenStartTip && seenBidTip && seenPlayTip);
 
   return (
     <div className="audio-settings">
@@ -110,6 +120,24 @@ export function AudioSettings() {
               onChange={(e) => setVoiceEnabled(e.target.checked)}
             />
           </label>
+
+          <div className="audio-settings-guide">
+            <button
+              type="button"
+              className="btn audio-settings-reset-guide"
+              onClick={() => {
+                resetGuide();
+                setOpen(false);
+              }}
+            >
+              重置新手引导
+            </button>
+            <p className="audio-settings-guide-hint">
+              {guideIdle
+                ? '将重新引导：设昵称头像 → 开始游戏 → 首局操作'
+                : '引导进行中；跳过后可在此重置'}
+            </p>
+          </div>
         </div>
       )}
     </div>
