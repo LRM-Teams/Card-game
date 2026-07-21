@@ -1181,8 +1181,8 @@ body::before {
 }
 .hand {
   position: relative;
-  padding: 26px 8px 14px;
-  min-height: 176px;
+  padding: 36px 8px 14px;
+  min-height: 188px;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
@@ -1205,15 +1205,20 @@ body::before {
 }
 .hand .card {
   --card-offset: 0;
-  transform: translateY(0);
+  --card-lift: 0px;
+  transform: translateY(var(--card-lift));
   transform-origin: 50% 100%;
   margin-left: clamp(-20px, -17px, -14px);
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out;
 }
 .hand .card:hover:not(:disabled) {
-  transform: translateY(-14px);
+  --card-lift: -14px;
 }
 .hand .card.is-selected {
-  transform: translateY(-26px);
+  --card-lift: -34px;
+  border-color: var(--ddz-gold-500);
+  box-shadow: var(--ddz-glow-gold), 0 14px 20px rgba(0, 0, 0, 0.38);
+  z-index: 5;
 }
 .hand .card:first-child {
   margin-left: 0;
@@ -2149,16 +2154,16 @@ body::before {
     height: 50px;
     flex: 0 0 auto;
     margin-left: clamp(-24px, var(--hand-fit-gap), -8px);
-    transform: translateY(0);
+    --card-lift: 0px;
   }
   .hand .card:first-child {
     margin-left: 0;
   }
   .hand .card:hover:not(:disabled) {
-    transform: translateY(-10px);
+    --card-lift: -12px;
   }
   .hand .card.is-selected {
-    transform: translateY(-18px);
+    --card-lift: -28px;
   }
   /* 操作条：文档流底部固定感，但不盖住手牌命中区 */
   .controls {
@@ -2242,8 +2247,8 @@ body::before {
     min-height: 40px;
   }
   .hand {
-    min-height: 88px;
-    padding-top: 14px;
+    min-height: 108px;
+    padding-top: 28px;
     padding-bottom: 6px;
   }
   .hand .card {
@@ -2322,7 +2327,8 @@ body::before {
 
 /* —— LRM-168 关键动效包（克制边界） —— */
 .hand.is-dealing .card {
-  animation: ddz-deal-fan 520ms cubic-bezier(0.22, 0.9, 0.28, 1) both;
+  /* backwards：仅开局前应用 from；结束后交还 transform 给 .is-selected 抬起 */
+  animation: ddz-deal-fan 520ms cubic-bezier(0.22, 0.9, 0.28, 1) backwards;
 }
 .seat-badge.turn-pulse {
   animation: ddz-turn-pulse 1200ms ease-in-out infinite;
