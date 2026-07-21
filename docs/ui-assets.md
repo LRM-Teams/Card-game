@@ -164,10 +164,14 @@
 
 ## 9. 资源命名与接入约定
 
-- 目录：`apps/client/src/assets/<界面>/<名称>.<ext>`
-- 卡牌：若用单图，`assets/cards/<rank>-<suit>.png`（如 `11-heart.png`）；大小王 `joker-small.png` / `joker-big.png`。若用拼装，仅给花色 + 点数素材。
-- 矢量优先：Logo、图标、特效用 SVG/Lottie；卡牌给位图（@2x）。
-- 接入：设计师把成品替换进 `src/assets/`，小林负责在组件里接上；改了文件名请在群里同步。
+- **牌桌卡牌（线上口径，LRM-140/152）**：`apps/client/public/cards/`（Vite 以 `/cards/...` 引用）。
+  - 大小王：`joker-small.svg`、`joker-big.svg`（已接入 `CardView`）。
+  - 母版：`card-front-template.svg`、`card-back.svg`；全图迭代在此基础上扩展。
+  - 点数牌单图（待迭代）：`<rank>-<suit>.svg`，`rank` 与 `@card-game/rules` 一致（3–14、17=2），`suit` 为 `spade|heart|club|diamond`（例：`11-heart.svg`）。
+  - **接入**：`CardView` 按「有图用图、无图 fallback CSS」；新增文件名在群里同步。
+- **其它界面资源**：`apps/client/src/assets/<界面>/<名称>.<ext>`（大厅/房间/结算等，与卡牌目录分离）。
+- **设计稿镜像**（可选）：`docs/assets/cards/` 与 `public/cards/` 同名文件，便于 diff 与验收对照。
+- 矢量优先：Logo、图标、特效用 SVG/Lottie；卡牌 P0 以 SVG 为主。
 - 风格基线：一律向腾讯《欢乐斗地主》靠拢（caozs2 2026-07-15 决定）。
 
 ## 8. 进度记录
