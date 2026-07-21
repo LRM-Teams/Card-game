@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>LRM-167 出牌态 · 身份 vs 行动高亮</title>
+  <style>
+    :root {
+      --ddz-felt-900: #06281a;
+      --ddz-felt-800: #0a3d26;
+      --ddz-gold-500: #f5c542;
+      --ddz-cream: #fff3c4;
+      --ddz-radius-md: 12px;
+      --ddz-identity-landlord-ring: 0 0 0 2px rgba(214, 48, 49, 0.42);
+      --ddz-identity-farmer-ring: 0 0 0 2px rgba(46, 139, 87, 0.38);
+      --ddz-action-glow: 0 0 0 2px rgba(245, 197, 66, 0.5), 0 0 14px rgba(245, 197, 66, 0.32);
+      --ddz-badge-corner: 28px;
+      --ddz-badge-corner-farmer: 24px;
+      --ddz-avatar-size: 64px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      background: var(--ddz-felt-900);
+      color: #fff;
+      min-height: 100vh;
+      padding: 32px;
+    }
+    h1 { text-align: center; color: var(--ddz-cream); font-size: 20px; margin: 0 0 28px; }
+    .row { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
+    .panel {
+      width: 280px;
+      padding: 20px;
+      border-radius: 18px;
+      background: radial-gradient(ellipse at 50% 30%, rgba(120, 190, 148, 0.22), transparent 58%),
+        linear-gradient(180deg, #14744e, #0a3d26);
+      border: 1px solid rgba(255,243,196,0.2);
+    }
+    .panel h2 { margin: 0 0 16px; text-align: center; font-size: 14px; font-weight: 700; }
+    .panel.identity h2 { color: #9be0b6; }
+    .panel.turn h2 { color: var(--ddz-gold-500); }
+    .seat-badge {
+      position: relative;
+      text-align: center;
+      padding: 16px 14px 14px;
+      min-height: 172px;
+      border-radius: var(--ddz-radius-md);
+      border: 1px solid rgba(255, 243, 196, 0.18);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(214, 48, 49, 0.1), transparent 48%),
+        linear-gradient(180deg, rgba(6, 40, 26, 0.88), rgba(10, 61, 38, 0.82));
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
+    }
+    .seat-badge.role-farmer {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(46, 139, 87, 0.1), transparent 48%),
+        linear-gradient(180deg, rgba(6, 40, 26, 0.88), rgba(10, 61, 38, 0.82));
+    }
+    .seat-badge.is-turn {
+      border-color: var(--ddz-gold-500);
+      box-shadow: var(--ddz-action-glow), 0 12px 24px rgba(0, 0, 0, 0.24);
+      animation: ddz-turn-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes ddz-turn-pulse {
+      0%, 100% { box-shadow: var(--ddz-action-glow), 0 12px 24px rgba(0, 0, 0, 0.24); }
+      50% {
+        box-shadow:
+          0 0 0 3px rgba(245, 197, 66, 0.72),
+          0 0 22px rgba(245, 197, 66, 0.42),
+          0 12px 24px rgba(0, 0, 0, 0.24);
+      }
+    }
+    .avatar {
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      width: calc(var(--ddz-avatar-size) + 10px);
+      height: calc(var(--ddz-avatar-size) + 10px);
+      margin-bottom: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 25%, #fffdf2, #ffe9a8 44%, #ecc25a);
+      border: 2px solid rgba(255, 243, 196, 0.7);
+    }
+    .seat-badge.role-landlord .avatar {
+      box-shadow: var(--ddz-identity-landlord-ring), inset 0 0 0 1px rgba(0, 0, 0, 0.16), 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .seat-badge.role-farmer .avatar {
+      box-shadow: var(--ddz-identity-farmer-ring), inset 0 0 0 1px rgba(0, 0, 0, 0.16), 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .avatar-silhouette { width: 62%; height: 62%; fill: rgba(116, 70, 12, 0.78); }
+    .role-badge-corner {
+      position: absolute;
+      right: -4px;
+      bottom: -2px;
+      width: var(--ddz-badge-corner);
+      height: var(--ddz-badge-corner);
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .seat-badge.role-farmer .role-badge-corner {
+      width: var(--ddz-badge-corner-farmer);
+      height: var(--ddz-badge-corner-farmer);
+    }
+    .seat-name { font-weight: 900; font-size: 14px; }
+    .seat-count { color: var(--ddz-cream); font-size: 12px; opacity: 0.84; margin-top: 4px; }
+    .note { text-align: center; margin-top: 12px; font-size: 12px; color: rgba(255,243,196,0.7); line-height: 1.5; }
+    .footer { text-align: center; margin-top: 28px; font-size: 12px; color: rgba(255,243,196,0.55); }
+  </style>
+</head>
+<body>
+  <h1>LRM-167 出牌态 · 身份常驻弱权重 vs 行动金色脉冲</h1>
+  <div class="row">
+    <div class="panel identity">
+      <h2>仅身份（非行动位）</h2>
+      <div class="seat-badge role-landlord" aria-label="玩家甲，地主">
+        <div class="avatar">
+          <svg class="avatar-silhouette" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="24" r="13" />
+            <path d="M11 57c0-12.6 9.4-19.5 21-19.5S53 44.4 53 57v3H11z" />
+          </svg>
+          <img class="role-badge-corner" src="../../apps/client/public/badges/landlord.svg" alt="" />
+        </div>
+        <div class="seat-name">玩家甲</div>
+        <div class="seat-count">剩 17</div>
+      </div>
+      <p class="note">静态红环 + 皇冠角标<br/>无脉冲 · 无「地主」文字</p>
+    </div>
+    <div class="panel turn">
+      <h2>身份 + 轮到谁（行动）</h2>
+      <div class="seat-badge role-landlord is-turn" aria-label="玩家甲，地主，行动中">
+        <div class="avatar">
+          <svg class="avatar-silhouette" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="24" r="13" />
+            <path d="M11 57c0-12.6 9.4-19.5 21-19.5S53 44.4 53 57v3H11z" />
+          </svg>
+          <img class="role-badge-corner" src="../../apps/client/public/badges/landlord.svg" alt="" />
+        </div>
+        <div class="seat-name">玩家甲</div>
+        <div class="seat-count">剩 17</div>
+      </div>
+      <p class="note">外框金色脉冲 = 行动<br/>角标/色环仍静态 = 身份</p>
+    </div>
+    <div class="panel identity">
+      <h2>农民身份（弱于地主）</h2>
+      <div class="seat-badge role-farmer" aria-label="玩家乙，农民">
+        <div class="avatar">
+          <svg class="avatar-silhouette" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="24" r="13" />
+            <path d="M11 57c0-12.6 9.4-19.5 21-19.5S53 44.4 53 57v3H11z" />
+          </svg>
+          <img class="role-badge-corner" src="../../apps/client/public/badges/farmer.svg" alt="" />
+        </div>
+        <div class="seat-name">玩家乙</div>
+        <div class="seat-count">剩 15</div>
+      </div>
+      <p class="note">青绿静态环 + 麦穗角标<br/>行动高亮仍用金色，不混身份色</p>
+    </div>
+  </div>
+  <p class="footer">规格：docs/identity-badge-spec.md · baseline 状态3 角色图标行已校准</p>
+</body>
+</html>

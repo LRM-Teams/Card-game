@@ -92,6 +92,12 @@
   --ddz-lobby-bg-700: #5a2218;
   --ddz-lobby-bg-500: #8a3424;
   --ddz-lobby-muted: rgba(255, 243, 196, 0.42);
+  /* LRM-167：身份静态度 vs 行动脉冲，通道分离 */
+  --ddz-identity-landlord-ring: 0 0 0 2px rgba(214, 48, 49, 0.42);
+  --ddz-identity-farmer-ring: 0 0 0 2px rgba(46, 139, 87, 0.38);
+  --ddz-action-glow: 0 0 0 2px rgba(245, 197, 66, 0.5), 0 0 14px rgba(245, 197, 66, 0.32);
+  --ddz-badge-corner: 28px;
+  --ddz-badge-corner-farmer: 24px;
 
   color-scheme: dark;
 }
@@ -2374,3 +2380,67 @@ body::before {
   text-align: center;
   padding: var(--ddz-space-5) 0;
 }
+
+/* LRM-167 identity badge + action highlight */
+.seat-badge.is-turn,
+.seat-badge.active {
+  border-color: var(--ddz-gold-500);
+  box-shadow: var(--ddz-action-glow), 0 12px 24px rgba(0, 0, 0, 0.24);
+  animation: ddz-turn-pulse 1.2s ease-in-out infinite;
+}
+
+.seat-badge.role-landlord .role-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--ddz-gold-500);
+}
+
+.seat-badge.role-landlord .avatar,
+.seat-badge.landlord .avatar {
+  box-shadow: var(--ddz-identity-landlord-ring), inset 0 0 0 1px rgba(0, 0, 0, 0.16), 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.role-badge-corner {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  width: var(--ddz-badge-corner);
+  height: var(--ddz-badge-corner);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.seat-badge.role-farmer .role-badge-corner,
+.seat-badge.farmer .role-badge-corner {
+  width: var(--ddz-badge-corner-farmer);
+  height: var(--ddz-badge-corner-farmer);
+}
+
+.seat-badge.role-landlord,
+.seat-badge.landlord {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(214, 48, 49, 0.1), transparent 48%),
+    linear-gradient(180deg, rgba(6, 40, 26, 0.88), rgba(10, 61, 38, 0.82));
+}
+
+.badge.identity-only,
+.badge.identity-only.farmer {
+  padding: 2px;
+  background: transparent;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+.badge.identity-only img {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+  .seat-badge.is-turn,
+  .seat-badge.active {
+    animation: none;
+  }
+
