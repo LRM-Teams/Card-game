@@ -11,9 +11,15 @@ import { SettleCoins } from './SettleCoins';
 import { GuideSpot } from './GuideSpot';
 import { SocialPanel } from './SocialPanel';
 import { SocialBubble } from './SocialBubble';
+import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
 import { useNavigate } from '@tanstack/react-router';
+
+/** 叫分/出牌回合倒计时（秒）。 */
+const TURN_SECS = 20;
+/** 明牌/加倍决策窗口（与服务端 DECISION_WINDOW_MS=15s 对齐）。 */
+const DECISION_SECS = 15;
 
 /** 对局桌面：渲染服务端 snapshot，出牌/叫地主交互发动作给服务端。 */
 export function GameTable() {
@@ -51,16 +57,26 @@ export function GameTable() {
     () => myHand.filter((c) => selected.includes(c.id)),
     [myHand, selected],
   );
-  const [secondsLeft, setSecondsLeft] = useState(20);
+  const [secondsLeft, setSecondsLeft] = useState(TURN_SECS);
 
   useEffect(() => {
-    setSecondsLeft(20);
-    if (snapshot?.turnSeat == null || snapshot.phase === GamePhase.SETTLED) return;
+    if (!snapshot || snapshot.phase === GamePhase.SETTLED) return;
+    const isDecision =
+      snapshot.phase === GamePhase.REVEALING || snapshot.phase === GamePhase.DOUBLING;
+    const maxSecs = isDecision ? DECISION_SECS : TURN_SECS;
+    setSecondsLeft(maxSecs);
+    if (!isDecision && snapshot.turnSeat == null) return;
     const timer = window.setInterval(() => {
       setSecondsLeft((n) => Math.max(0, n - 1));
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [snapshot?.phase, snapshot?.turnSeat, snapshot?.lastPlay?.seat, snapshot?.lastPlay?.hand.cards.length]);
+  }, [
+    snapshot?.phase,
+    snapshot?.turnSeat,
+    snapshot?.lastPlay?.seat,
+    snapshot?.lastPlay?.hand.cards.length,
+    snapshot?.pendingDoubleSeats?.join(','),
+  ]);
 
   useEffect(() => {
     if (!playFx) return;
@@ -144,21 +160,13 @@ export function GameTable() {
               aria-hidden="true"
             />
             <p className="result-meta">
-              {winnerRoleLabel}胜 · 倍数 ×{r.multiplier} · 单注 {r.unit}
+              {winnerRoleLabel}胜 · 单注 {r.unit}
             </p>
-            {r.multiplierBreakdown && (
-              <p className="result-meta result-breakdown" aria-label="倍数构成">
-                构成：底{r.multiplierBreakdown.base}
-                {r.multiplierBreakdown.reveal ? ' × 明牌2' : ''}
-                {r.multiplierBreakdown.doubleCount > 0
-                  ? ` × 加倍2×${r.multiplierBreakdown.doubleCount}`
-                  : ''}
-                {r.multiplierBreakdown.bombCount > 0
-                  ? ` × 炸弹2×${r.multiplierBreakdown.bombCount}`
-                  : ''}
-                {r.multiplierBreakdown.spring ? ' × 春天2' : ''}
-              </p>
-            )}
+            <MultiplierBreakdownView
+              variant="settle"
+              multiplier={r.multiplier}
+              breakdown={r.multiplierBreakdown ?? snapshot.multiplierBreakdown}
+            />
           </div>
           <ul className="score-list" aria-label="本局得分">
             {r.scores.map((sc, i) => (
@@ -230,20 +238,29 @@ export function GameTable() {
     mySeat != null &&
     (snapshot.pendingDoubleSeats ?? []).some((s) => s === mySeat);
 
+  const showDecisionTimer = isRevealing || isDoubling;
+  const showTurnTimer =
+    snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING);
+  const timerMax = showDecisionTimer ? DECISION_SECS : TURN_SECS;
+
   return (
     <div className={`table${isBidding || isRevealing || isDoubling ? ' is-bidding' : ''}`}>
-      <div className="meta-corner">
-        {snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING) && (
+      <div className="meta-corner meta-corner--mult">
+        {(showTurnTimer || showDecisionTimer) && (
           <span
             className={`turn-timer ${secondsLeft <= 3 ? 'danger' : ''}`}
-            style={{ '--timer-deg': `${(secondsLeft / 20) * 360}deg` } as CSSProperties}
+            style={{ '--timer-deg': `${(secondsLeft / timerMax) * 360}deg` } as CSSProperties}
             aria-label={`倒计时 ${secondsLeft} 秒`}
           >
             {secondsLeft}
           </span>
         )}
-        <span>倍数 ×{snapshot.multiplier}</span>
-        <span>阶段：{phaseLabel(phase)}</span>
+        <MultiplierBreakdownView
+          variant="hud"
+          multiplier={snapshot.multiplier}
+          breakdown={snapshot.multiplierBreakdown}
+        />
+        <span className="meta-phase">阶段：{phaseLabel(phase)}</span>
       </div>
 
       <div className="table-stage">
@@ -251,7 +268,12 @@ export function GameTable() {
           <div className="opponent-anchor left">
             <SeatBadge
               p={leftPlayer}
-              active={snapshot.turnSeat === leftPlayer?.seat}
+              active={
+                snapshot.turnSeat === leftPlayer?.seat ||
+                (isDoubling &&
+                  leftPlayer != null &&
+                  (snapshot.pendingDoubleSeats ?? []).includes(leftPlayer.seat))
+              }
               bubble={<SocialBubble data={socialBubbles[seats.left]} align="left" />}
               play={
                 <SeatPlayZone
@@ -265,7 +287,12 @@ export function GameTable() {
           <div className="opponent-anchor right">
             <SeatBadge
               p={rightPlayer}
-              active={snapshot.turnSeat === rightPlayer?.seat}
+              active={
+                snapshot.turnSeat === rightPlayer?.seat ||
+                (isDoubling &&
+                  rightPlayer != null &&
+                  (snapshot.pendingDoubleSeats ?? []).includes(rightPlayer.seat))
+              }
               bubble={<SocialBubble data={socialBubbles[seats.right]} align="right" />}
               play={
                 <SeatPlayZone
@@ -315,6 +342,11 @@ export function GameTable() {
         </span>
         {me?.role === 'landlord' && <RoleBadge role="landlord" />}
         {me?.role === 'farmer' && <RoleBadge role="farmer" />}
+        {me?.doubled && (
+          <span className="badge double-self" aria-label="已加倍" title="已加倍">
+            <img src="/states/double-badge.svg" alt="" aria-hidden="true" />
+          </span>
+        )}
       </div>
 
       {/* 叫分主 CTA 弹层：居中于手牌上方，不遮挡手牌点数（baseline 状态2） */}
@@ -365,6 +397,7 @@ export function GameTable() {
         <div className="bid-cta-layer" role="group" aria-label="明牌操作">
           <div className="bid-cta-panel">
             <p className="bid-cta-title">是否明牌（×2）</p>
+            <p className="bid-cta-sub">明牌后全员可见你的手牌，本局倍数 ×2</p>
             <div className="bid-cta-row">
               <button type="button" className="btn bid-pass" onClick={() => reveal(false)}>
                 不明牌
@@ -379,6 +412,7 @@ export function GameTable() {
         <div className="bid-cta-layer" role="group" aria-label="加倍操作">
           <div className="bid-cta-panel">
             <p className="bid-cta-title">是否加倍（×2）</p>
+            <p className="bid-cta-sub">可选；多人加倍可叠加</p>
             <div className="bid-cta-row">
               <button type="button" className="btn bid-pass" onClick={() => doubleChoice(false)}>
                 不加倍
@@ -391,6 +425,16 @@ export function GameTable() {
                 加倍
               </button>
             </div>
+          </div>
+        </div>
+      ) : isDoubling &&
+        mySeat != null &&
+        !(snapshot.pendingDoubleSeats ?? []).includes(mySeat as 0 | 1 | 2) ? (
+        <div className="bid-cta-layer" role="status" aria-label="加倍已提交">
+          <div className="bid-cta-panel bid-cta-panel--quiet">
+            <p className="bid-cta-title">
+              {me?.doubled ? '已加倍 · 等待他人' : '已跳过 · 等待他人'}
+            </p>
           </div>
         </div>
       ) : (
@@ -461,7 +505,7 @@ export function GameTable() {
         </GuideSpot>
       )}
 
-      {isBidding && (
+      {(isBidding || isRevealing || isDoubling) && (
         <div className="emote-chat-bid-dock">
           <SocialPanel enabled />
         </div>
@@ -512,7 +556,17 @@ function SeatBadge({
   play,
   bubble,
 }: {
-  p: { name: string; isBot: boolean; handSize: number; role?: string; avatarId?: string } | undefined;
+  p:
+    | {
+        name: string;
+        isBot: boolean;
+        handSize: number;
+        role?: string;
+        avatarId?: string;
+        doubled?: boolean;
+        openHand?: string[];
+      }
+    | undefined;
   active: boolean;
   play?: ReactNode;
   bubble?: ReactNode;
@@ -521,10 +575,16 @@ function SeatBadge({
   const role = p.role === 'landlord' || p.role === 'farmer' ? p.role : null;
   const roleLabel = role === 'landlord' ? '地主' : role === 'farmer' ? '农民' : null;
   const roleClass = role ? `role-${role}` : '';
+  const openCards = (p.openHand ?? [])
+    .map((id) => cardOf(id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+    .slice(0, 8);
   return (
     <div
-      className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}`}
-      aria-label={[p.name, roleLabel, active ? '行动中' : null].filter(Boolean).join('，')}
+      className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}${p.doubled ? ' is-doubled' : ''}`}
+      aria-label={[p.name, roleLabel, p.doubled ? '已加倍' : null, active ? '行动中' : null]
+        .filter(Boolean)
+        .join('，')}
     >
       <div className="avatar-wrap">
         <div className="avatar">
@@ -537,11 +597,32 @@ function SeatBadge({
               aria-hidden="true"
             />
           )}
+          {p.doubled && (
+            <img
+              className="double-badge-corner"
+              src="/states/double-badge.svg"
+              alt=""
+              aria-hidden="true"
+            />
+          )}
         </div>
         {bubble}
       </div>
-      <div className="seat-name">{p.name}</div>
+      <div className="seat-name">
+        {p.name}
+        {p.doubled ? <span className="seat-double-tag">加倍</span> : null}
+      </div>
       <div className="seat-count">剩 {p.handSize}</div>
+      {openCards.length > 0 && (
+        <div className="seat-open-hand" aria-label="明牌手牌">
+          {openCards.map((c) => (
+            <CardView key={c.id} card={c} small />
+          ))}
+          {(p.openHand?.length ?? 0) > openCards.length ? (
+            <span className="seat-open-more">+{(p.openHand?.length ?? 0) - openCards.length}</span>
+          ) : null}
+        </div>
+      )}
       {play}
     </div>
   );

@@ -856,7 +856,7 @@ body::before {
   flex: 1 1 auto;
   min-height: clamp(200px, 34vh, 280px);
 }
-/* L3 弱 HUD：倒计时 + 倍数合并，不得与主按钮抢权重 */
+/* L3 弱 HUD：倒计时 + 倍数构成，不得与主按钮抢权重 */
 .meta-corner {
   position: absolute;
   top: 22px;
@@ -875,10 +875,92 @@ body::before {
   border: 1px solid rgba(255, 243, 196, 0.08);
   pointer-events: none;
 }
+.meta-corner--mult {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: min(96vw, 520px);
+  border-radius: 16px;
+  row-gap: 2px;
+  padding: 6px 12px 7px;
+}
+.meta-corner .meta-phase {
+  opacity: 0.78;
+  white-space: nowrap;
+}
 .meta-corner .turn-timer {
   width: var(--ddz-timer-size);
   height: var(--ddz-timer-size);
   box-shadow: none;
+  opacity: 1;
+}
+
+/* LRM-194：倍数构成（桌面 HUD / 结算） */
+.mult-breakdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.mult-breakdown-total {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.mult-breakdown-total strong {
+  font-weight: 800;
+  color: var(--ddz-cream);
+}
+.mult-breakdown-parts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 6px;
+}
+.mult-part {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 243, 196, 0.08);
+  opacity: 0.72;
+  white-space: nowrap;
+}
+.mult-part.is-active {
+  opacity: 1;
+  border-color: rgba(245, 197, 66, 0.35);
+  background: rgba(245, 197, 66, 0.12);
+  color: #ffe7a0;
+}
+.mult-part-label {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.mult-part-factor {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 11px;
+}
+.mult-breakdown--settle {
+  margin-top: 6px;
+  width: 100%;
+}
+.mult-breakdown--settle .mult-breakdown-total {
+  font-size: var(--ddz-text-sm);
+}
+.mult-breakdown--settle .mult-breakdown-parts {
+  margin-top: 4px;
+  gap: 6px;
+}
+.mult-breakdown--settle .mult-part {
+  padding: 3px 8px;
+  opacity: 0.88;
+}
+.mult-breakdown--settle .mult-part.is-active {
   opacity: 1;
 }
 .table-center-play {
@@ -1352,11 +1434,86 @@ body::before {
   letter-spacing: 0.04em;
   opacity: 0.9;
 }
+.bid-cta-sub {
+  margin: -4px 0 0;
+  font-size: var(--ddz-text-xs);
+  color: rgba(255, 250, 240, 0.62);
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.35;
+}
+.bid-cta-panel--quiet {
+  padding: 10px 18px;
+  opacity: 0.85;
+}
 .bid-cta-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--ddz-space-4);
+}
+
+/* LRM-194：加倍角标 / 明牌缩略 */
+.double-badge-corner {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  animation: ddz-double-pop 280ms ease-out both;
+}
+.seat-double-tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #3a2208;
+  background: linear-gradient(180deg, #ffe08a, #f0b429);
+}
+.badge.double-self {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.badge.double-self img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.seat-open-hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  margin-top: 4px;
+  max-width: 148px;
+}
+.seat-open-hand .card {
+  transform: scale(0.72);
+  transform-origin: top center;
+  margin: -4px -10px 0 0;
+}
+.seat-open-more {
+  align-self: center;
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+@keyframes ddz-double-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 /* 次操作：降饱和、降亮度，保证「叫地主」为唯一最亮主 CTA */
 .btn.bid-pass {

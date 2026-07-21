@@ -46,6 +46,23 @@ export const MOTION = {
   playFxCaptionMs: 2000,
 } as const;
 
-export type FxDemoScene = 'deal' | 'turn' | 'bomb' | 'rocket' | 'settle';
+export type FxDemoScene =
+  | 'deal'
+  | 'turn'
+  | 'bomb'
+  | 'rocket'
+  | 'settle'
+  | 'reveal'
+  | 'double'
+  | 'mult';
 
-export const FX_DEMO_SCENES: FxDemoScene[] = ['deal', 'turn', 'bomb', 'rocket', 'settle'];
+export const FX_DEMO_SCENES: FxDemoScene[] = [
+  'deal',
+  'turn',
+  'bomb',
+  'rocket',
+  'settle',
+  'reveal',
+  'double',
+  'mult',
+];
