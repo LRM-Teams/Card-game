@@ -21,6 +21,9 @@
 | `--ddz-gold-600` | `#d99a1e` | 金色按下态、描边 |
 | `--ddz-red-500` | `#d63031` | 红桃/方片、危险按钮、地主角标 |
 | `--ddz-red-600` | `#a82020` | 红色按下态 |
+| `--ddz-settle-win-1` / `--ddz-settle-win-2` | `#7a1c14` / `#3d140f` | 结算胜方暖金红底 |
+| `--ddz-settle-lose-1` / `--ddz-settle-lose-2` | `#2a3544` / `#1a222c` | 结算负方蓝灰底（降饱和） |
+| `--ddz-settle-win-title` / `--ddz-settle-lose-title` | `#ffe08a` / `#b8c4d4` | 结算胜负标题色 |
 | `--ddz-paper` | `#fbfbf6` | 卡牌牌面 |
 | `--ddz-ink` | `#1c1c1c` | 黑桃/梅花、正文深色 |
 | `--ddz-cream` | `#fff3c4` | 说明文字、浅金标签 |
@@ -37,7 +40,8 @@
 | `--ddz-text-sm` | `14px` | 按钮、辅助说明 |
 | `--ddz-text-md` | `16px` | 正文、表单 |
 | `--ddz-text-lg` | `20px` | 小标题、倍率 |
-| `--ddz-text-xl` | `28px` | 页面标题、结算标题 |
+| `--ddz-text-xl` | `28px` | 页面标题 |
+| `--ddz-text-2xl` | `40px` | 结算胜负标题（全屏最大字） |
 
 ## 4. 间距、圆角、阴影
 

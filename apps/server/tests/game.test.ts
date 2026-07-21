@@ -325,6 +325,18 @@ describe('GameRoom · 倍数与结算（规则在 game-rules.multiplier / settle
     expect(r.result).toBeNull();
     expect(r.players[0]!.hand).toHaveLength(17);
   });
+
+  it('结算下发 remainingHands：赢家空、未出完者亮牌（LRM-183）', async () => {
+    const r = await landlordAt0();
+    r.players[0]!.hand = [card(3, 'C3')];
+    r.players[1]!.hand = [card(4, 'C4'), card(5, 'H5')];
+    r.players[2]!.hand = [card(6, 'S6')];
+    expect((await r.handlePlay(0, ['C3'])).ok).toBe(true);
+    expect(r.phase).toBe('settled');
+    expect(r.result?.remainingHands).toEqual([[], ['C4', 'H5'], ['S6']]);
+    expect(r.snapshot().bottomRevealed).toBe(true);
+    expect(r.snapshot().bottom).toHaveLength(3);
+  });
 });
 
 describe('GameRoom · 全机器人局跑完整一局', () => {

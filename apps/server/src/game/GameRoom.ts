@@ -432,6 +432,11 @@ export class GameRoom {
     const landlordSeat = this.landlordSeat!;
     const unit = unitScore(this.mult);
     const s = settle({ landlord: landlordSeat, winnerSeat, unit });
+    const remainingHands: [string[], string[], string[]] = [
+      this.players[0]?.hand.map((c) => c.id) ?? [],
+      this.players[1]?.hand.map((c) => c.id) ?? [],
+      this.players[2]?.hand.map((c) => c.id) ?? [],
+    ];
     const result: GameResult = {
       winnerSide: s.winnerSide,
       winnerSeat,
@@ -439,6 +444,7 @@ export class GameRoom {
       unit,
       multiplier: this.mult.multiplier,
       scores: s.scores,
+      remainingHands,
     };
     this.result = result;
     this.phase = GamePhase.SETTLED;
