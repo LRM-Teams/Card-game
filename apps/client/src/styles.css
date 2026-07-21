@@ -1027,6 +1027,78 @@ body::before {
   display: none;
 }
 
+/* Bidding CTA popup (baseline 状态2)：居中主操作，不挡手牌 */
+.bid-cta-layer {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin: 0 auto 6px;
+  min-height: 96px;
+  pointer-events: none;
+}
+.bid-cta-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ddz-space-3);
+  padding: 12px 20px 14px;
+  border-radius: var(--ddz-radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.16)),
+    rgba(6, 40, 26, 0.78);
+  border: 1px solid rgba(255, 243, 196, 0.22);
+  box-shadow: var(--ddz-shadow-panel);
+  animation: ddz-bid-pop 220ms ease-out both;
+}
+.bid-cta-title {
+  margin: 0;
+  font-family: var(--ddz-font-display);
+  font-size: var(--ddz-text-sm);
+  font-weight: 800;
+  color: var(--ddz-cream);
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+.bid-cta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ddz-space-4);
+}
+/* 次操作：降饱和、降亮度，保证「叫地主」为唯一最亮主 CTA */
+.btn.bid-pass {
+  min-width: 120px;
+  min-height: 48px;
+  border-color: rgba(255, 243, 196, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.2));
+  color: rgba(255, 250, 240, 0.72);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
+  filter: saturate(0.65) brightness(0.9);
+}
+.btn.bid-pass:hover:not(:disabled) {
+  filter: saturate(0.75) brightness(0.98);
+}
+.btn.bid-claim {
+  min-width: 148px;
+}
+/* 叫分阶段：手牌完整露出，不预留底部 sticky 控件空间 */
+.table.is-bidding .hand {
+  padding-bottom: 14px;
+}
+@keyframes ddz-bid-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Controls */
 .controls {
   display: flex;
@@ -1290,6 +1362,25 @@ body::before {
   .hand {
     min-height: 120px;
     padding-bottom: 92px;
+  }
+  .table.is-bidding .hand {
+    padding-bottom: 14px;
+  }
+  .bid-cta-layer {
+    min-height: 88px;
+    margin-bottom: 4px;
+  }
+  .bid-cta-panel {
+    padding: 10px 14px 12px;
+    width: min(100%, 340px);
+  }
+  .bid-cta-row {
+    width: 100%;
+    gap: var(--ddz-space-3);
+  }
+  .bid-cta-row .btn {
+    flex: 1 1 0;
+    min-width: 0;
   }
   .hand .card {
     transform: translateY(0);
