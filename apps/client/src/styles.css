@@ -2507,3 +2507,298 @@ body::before {
   grid-column: 2;
   margin: 4px 0 0;
 }
+
+/* ─── LRM-177：局内表情 / 快捷语 ─── */
+.avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+}
+.emote-chat-dock {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.emote-chat-trigger {
+  position: relative;
+  min-width: 72px;
+}
+.emote-chat-trigger.is-open {
+  border-color: rgba(245, 197, 66, 0.55);
+  box-shadow: 0 0 0 1px rgba(245, 197, 66, 0.25);
+}
+.emote-cd-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d63031;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+.emote-chat-panel {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 40;
+  width: min(320px, 86vw);
+  padding: 12px;
+  border-radius: var(--ddz-radius-md);
+  border: 1px solid rgba(255, 243, 196, 0.22);
+  background:
+    linear-gradient(180deg, rgba(28, 42, 34, 0.98), rgba(12, 22, 18, 0.98));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  animation: ddz-emote-panel-in 160ms ease-out;
+}
+@keyframes ddz-emote-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.emote-chat-section + .emote-chat-section {
+  margin-top: 12px;
+}
+.emote-chat-label {
+  margin: 0 0 8px;
+  font-size: var(--ddz-text-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ddz-cream);
+  opacity: 0.78;
+}
+.emote-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.emote-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 243, 196, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ddz-cream);
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.emote-pick:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(245, 197, 66, 0.45);
+  background: rgba(245, 197, 66, 0.08);
+}
+.emote-pick:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.emote-pick-label {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.88;
+}
+.emote-glyph {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+.emote-glyph--bubble {
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+}
+.phrase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.phrase-pick {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 243, 196, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ddz-cream);
+  font-size: var(--ddz-text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.phrase-pick:hover:not(:disabled) {
+  border-color: rgba(245, 197, 66, 0.4);
+  background: rgba(245, 197, 66, 0.08);
+}
+.phrase-pick:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.emote-chat-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  opacity: 0.65;
+  text-align: center;
+}
+.seat-emote-bubble {
+  position: absolute;
+  z-index: 6;
+  top: -8px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  max-width: 160px;
+  pointer-events: none;
+  animation: ddz-emote-pop 280ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+.seat-emote-bubble.align-left {
+  left: 8px;
+  transform: translate(0, -100%);
+}
+.seat-emote-bubble.align-right {
+  left: auto;
+  right: 8px;
+  transform: translate(0, -100%);
+}
+.seat-emote-phrase {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 14px 14px 14px 4px;
+  background: rgba(255, 248, 231, 0.96);
+  color: #2a1c0c;
+  font-size: var(--ddz-text-sm);
+  font-weight: 800;
+  line-height: 1.3;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  white-space: nowrap;
+}
+.seat-emote-bubble.align-right .seat-emote-phrase {
+  border-radius: 14px 14px 4px 14px;
+}
+@keyframes ddz-emote-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -86%) scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+.seat-emote-bubble.align-left {
+  animation-name: ddz-emote-pop-left;
+}
+.seat-emote-bubble.align-right {
+  animation-name: ddz-emote-pop-right;
+}
+@keyframes ddz-emote-pop-left {
+  from {
+    opacity: 0;
+    transform: translate(0, -86%) scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -100%) scale(1);
+  }
+}
+@keyframes ddz-emote-pop-right {
+  from {
+    opacity: 0;
+    transform: translate(0, -86%) scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -100%) scale(1);
+  }
+}
+.self-emote-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 56px;
+  margin: -4px 0 4px;
+  pointer-events: none;
+}
+.self-emote-zone .seat-emote-bubble {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  animation: ddz-emote-pop-self 280ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+@keyframes ddz-emote-pop-self {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.emote-chat-bid-dock {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+.emote-demo .self-demo-avatar {
+  margin-top: 8px;
+}
+.emote-demo-controls {
+  margin-top: 8px;
+}
+.emote-demo-actions {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.emote-demo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 12px 8px 4px;
+}
+.emote-demo-strip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ddz-cream);
+  opacity: 0.9;
+}
+.emote-demo-phrases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  justify-content: center;
+  margin: 4px 12px 12px;
+  padding: 0;
+  list-style: none;
+  font-size: var(--ddz-text-xs);
+  color: var(--ddz-cream);
+  opacity: 0.75;
+}
+@media (max-width: 520px) {
+  .emote-chat-panel {
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(300px, 92vw);
+  }
+  .seat-emote-phrase {
+    white-space: normal;
+    max-width: 132px;
+  }
+}

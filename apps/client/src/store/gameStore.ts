@@ -1,12 +1,17 @@
 import { create } from 'zustand';
 import {
   GamePhase,
+  SOCIAL_BUBBLE_MS,
+  SOCIAL_COOLDOWN_MS,
   type BidChoice,
   type Card,
   type GameResult,
   type GameStateSnapshot,
   type HandType,
   type PlayRecord,
+  type SocialEmoteId,
+  type SocialKind,
+  type SocialPhraseId,
 } from '@card-game/rules';
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
@@ -19,8 +24,44 @@ import {
   type GuestIdentity,
 } from '../lib/session';
 import { onPassedFx, onPlayedFx, onSettledFx } from '../lib/audioFx';
+import type { SocialBubbleData } from '../lib/socialTypes';
 
 let autoRejoinAttempted = false;
+const socialBubbleTimers: [ReturnType<typeof setTimeout> | null, ReturnType<typeof setTimeout> | null, ReturnType<typeof setTimeout> | null] = [
+  null,
+  null,
+  null,
+];
+
+function clearSocialBubble(seat: number): void {
+  const t = socialBubbleTimers[seat as 0 | 1 | 2];
+  if (t) clearTimeout(t);
+  socialBubbleTimers[seat as 0 | 1 | 2] = null;
+  useGameStore.setState((st) => {
+    const next = [...st.socialBubbles] as [
+      SocialBubbleData | null,
+      SocialBubbleData | null,
+      SocialBubbleData | null,
+    ];
+    next[seat as 0 | 1 | 2] = null;
+    return { socialBubbles: next };
+  });
+}
+
+function pushSocialBubble(seat: number, kind: SocialKind, id: SocialEmoteId | SocialPhraseId): void {
+  clearSocialBubble(seat);
+  const bubble: SocialBubbleData = { kind, id, key: Date.now() };
+  useGameStore.setState((st) => {
+    const next = [...st.socialBubbles] as [
+      SocialBubbleData | null,
+      SocialBubbleData | null,
+      SocialBubbleData | null,
+    ];
+    next[seat as 0 | 1 | 2] = bubble;
+    return { socialBubbles: next };
+  });
+  socialBubbleTimers[seat as 0 | 1 | 2] = setTimeout(() => clearSocialBubble(seat), SOCIAL_BUBBLE_MS);
+}
 
 function tryAutoRejoin(): void {
   if (autoRejoinAttempted || !shouldAutoRejoinPath()) return;
@@ -74,6 +115,10 @@ interface UiState {
   playFx: PlayFxPulse | null;
   /** 发牌散开动效键；每次 dealt 递增。 */
   dealKey: number;
+  /** 各座位当前表情/快捷语气泡。 */
+  socialBubbles: [SocialBubbleData | null, SocialBubbleData | null, SocialBubbleData | null];
+  /** 本地冷却截止时间（与服务端 SOCIAL_COOLDOWN_MS 对齐）。 */
+  socialCooldownUntil: number;
 
   init: () => void;
   join: (identity: GuestIdentity, roomId?: string) => void;
@@ -87,6 +132,7 @@ interface UiState {
   clearSelect: () => void;
   requestHint: () => void;
   cycleHint: () => void;
+  sendSocial: (kind: SocialKind, id: SocialEmoteId | SocialPhraseId) => void;
   dismissError: () => void;
   clearPlayFx: () => void;
 }
@@ -109,6 +155,8 @@ export const useGameStore = create<UiState>((set, get) => ({
   seatLastPlays: [null, null, null],
   playFx: null,
   dealKey: 0,
+  socialBubbles: [null, null, null],
+  socialCooldownUntil: 0,
 
   init: () => {
     const id = readIdentity();
@@ -231,6 +279,13 @@ export const useGameStore = create<UiState>((set, get) => ({
           set({ beans: e.beans });
           break;
         }
+        case 'social': {
+          pushSocialBubble(e.seat, e.kind, e.id);
+          if (e.seat === get().mySeat) {
+            set({ socialCooldownUntil: Date.now() + SOCIAL_COOLDOWN_MS });
+          }
+          break;
+        }
         case 'error':
           set({ lastError: { code: e.code, message: e.message, at: Date.now() }, matching: false });
           break;
@@ -264,6 +319,8 @@ export const useGameStore = create<UiState>((set, get) => ({
       seatLastPlays: [null, null, null],
       playFx: null,
       dealKey: 0,
+      socialBubbles: [null, null, null],
+      socialCooldownUntil: 0,
     });
     send({
       type: 'join',
@@ -291,6 +348,8 @@ export const useGameStore = create<UiState>((set, get) => ({
       lastError: null,
       seatLastPlays: [null, null, null],
       playFx: null,
+      socialBubbles: [null, null, null],
+      socialCooldownUntil: 0,
     });
     send({
       type: 'match',
@@ -357,6 +416,11 @@ export const useGameStore = create<UiState>((set, get) => ({
         hintMessage: wrapped ? '已轮完，回到第 1 组' : null,
       };
     }),
+
+  sendSocial: (kind, id) => {
+    if (Date.now() < get().socialCooldownUntil) return;
+    send({ type: 'social', kind, id });
+  },
 
   dismissError: () => set({ lastError: null }),
 }));

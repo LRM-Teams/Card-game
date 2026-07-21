@@ -9,6 +9,7 @@
  */
 import type { BidChoice } from './bidding';
 import type { Side } from './settlement';
+import type { SocialEmoteId, SocialKind, SocialPhraseId } from './social';
 import type { Hand, Seat } from './types';
 
 /** 对局阶段（状态机）。 */
@@ -37,7 +38,9 @@ export type ErrorCode =
   | 'not_enough_players' // 不足 3 名真人且未选择补机器人，无法开局
   | 'not_your_turn' // 当前不是你的回合（如非自己出牌回合请求出牌提示）
   | 'already_in_room' // 已在房间内，不能再匹配/加入
-  | 'not_matching'; // 当前不在匹配队列
+  | 'not_matching' // 当前不在匹配队列
+  | 'rate_limited' // 动作发送过快（如局内表情/快捷语冷却）
+  | 'invalid_social'; // 表情/快捷语 id 不在白名单
 
 /** 内置头像 id（客户端图集；允许任意非空字符串，未知则 fallback 剪影）。 */
 export type AvatarId = string;
@@ -124,7 +127,14 @@ export type ClientAction =
   | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫
   | { type: 'play'; cards: string[] } // 要出的牌 id 列表
   | { type: 'pass' }
-  | { type: 'hint' }; // 请求 AI 出牌提示（DouZero top-N 合法出牌建议，按模型分从高到低）
+  | { type: 'hint' } // 请求 AI 出牌提示（DouZero top-N 合法出牌建议，按模型分从高到低）
+  /** 局内表情 / 固定快捷语（白名单 id；服务端校验 + 限频后广播）。 */
+  | {
+      type: 'social';
+      kind: SocialKind;
+      /** kind=emote → SocialEmoteId；kind=phrase → SocialPhraseId */
+      id: SocialEmoteId | SocialPhraseId;
+    };
 
 /** 服务端 → 客户端事件。 */
 export type ServerEvent =
@@ -158,5 +168,12 @@ export type ServerEvent =
   | { type: 'beans'; beans: number }
   // —— AI 出牌提示（私发给请求者；按模型分从高到低的合法出牌建议，每组为 card id 列表；空数组表示建议不出）——
   | { type: 'hint'; suggestions: string[][] }
+  /** 局内表情 / 快捷语广播（对应玩家座位旁展示）。 */
+  | {
+      type: 'social';
+      seat: Seat;
+      kind: SocialKind;
+      id: SocialEmoteId | SocialPhraseId;
+    }
   // —— 错误（只回送给发起动作的客户端）——
   | { type: 'error'; code: ErrorCode; message: string };

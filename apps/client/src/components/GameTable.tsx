@@ -9,6 +9,8 @@ import { PlayerAvatar } from './PlayerAvatar';
 import { SeatPlayZone } from './SeatPlayZone';
 import { SettleCoins } from './SettleCoins';
 import { GuideSpot } from './GuideSpot';
+import { SocialPanel } from './SocialPanel';
+import { SocialBubble } from './SocialBubble';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
 import { useNavigate } from '@tanstack/react-router';
@@ -40,6 +42,7 @@ export function GameTable() {
   const playFx = useGameStore((s) => s.playFx);
   const dealKey = useGameStore((s) => s.dealKey);
   const clearPlayFx = useGameStore((s) => s.clearPlayFx);
+  const socialBubbles = useGameStore((s) => s.socialBubbles);
   const navigate = useNavigate();
 
   const selectedCards = useMemo(
@@ -195,6 +198,9 @@ export function GameTable() {
               返回大厅
             </button>
           </div>
+          <div className="emote-chat-bid-dock">
+            <SocialPanel enabled />
+          </div>
         </div>
       </div>
     );
@@ -224,6 +230,7 @@ export function GameTable() {
             <SeatBadge
               p={leftPlayer}
               active={snapshot.turnSeat === leftPlayer?.seat}
+              bubble={<SocialBubble data={socialBubbles[seats.left]} align="left" />}
               play={
                 <SeatPlayZone
                   record={seatLastPlays[seats.left]}
@@ -237,6 +244,7 @@ export function GameTable() {
             <SeatBadge
               p={rightPlayer}
               active={snapshot.turnSeat === rightPlayer?.seat}
+              bubble={<SocialBubble data={socialBubbles[seats.right]} align="right" />}
               play={
                 <SeatPlayZone
                   record={seatLastPlays[seats.right]}
@@ -319,6 +327,9 @@ export function GameTable() {
       ) : (
         mySeat != null && (
           <div className="self-seat-play">
+            <div className="self-emote-zone">
+              <SocialBubble data={socialBubbles[mySeat]} align="center" />
+            </div>
             <SeatPlayZone
               record={seatLastPlays[mySeat]}
               fxActive={playFx?.seat === mySeat}
@@ -378,9 +389,16 @@ export function GameTable() {
               >
                 出牌
               </button>
+              <SocialPanel enabled={phase === GamePhase.PLAYING || phase === GamePhase.SETTLED} />
             </div>
           </div>
         </GuideSpot>
+      )}
+
+      {isBidding && (
+        <div className="emote-chat-bid-dock">
+          <SocialPanel enabled />
+        </div>
       )}
 
       {lastError && (
@@ -426,10 +444,12 @@ function SeatBadge({
   p,
   active,
   play,
+  bubble,
 }: {
   p: { name: string; isBot: boolean; handSize: number; role?: string; avatarId?: string } | undefined;
   active: boolean;
   play?: ReactNode;
+  bubble?: ReactNode;
 }) {
   if (!p) return <div className="seat-badge" />;
   const role = p.role === 'landlord' || p.role === 'farmer' ? p.role : null;
@@ -440,16 +460,19 @@ function SeatBadge({
       className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}`}
       aria-label={[p.name, roleLabel, active ? '行动中' : null].filter(Boolean).join('，')}
     >
-      <div className="avatar">
-        <PlayerAvatar kind="player" avatarId={p.avatarId} />
-        {role && (
-          <img
-            className="role-badge-corner"
-            src={`/badges/${role}.svg`}
-            alt=""
-            aria-hidden="true"
-          />
-        )}
+      <div className="avatar-wrap">
+        <div className="avatar">
+          <PlayerAvatar kind="player" avatarId={p.avatarId} />
+          {role && (
+            <img
+              className="role-badge-corner"
+              src={`/badges/${role}.svg`}
+              alt=""
+              aria-hidden="true"
+            />
+          )}
+        </div>
+        {bubble}
       </div>
       <div className="seat-name">{p.name}</div>
       <div className="seat-count">剩 {p.handSize}</div>

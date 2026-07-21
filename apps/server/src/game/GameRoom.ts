@@ -22,8 +22,11 @@ import {
   deal,
   GamePhase,
   identifyHand,
+  isSocialEmoteId,
+  isSocialPhraseId,
   resolveBidding,
   settle,
+  SOCIAL_COOLDOWN_MS,
   sortCards,
   unitScore,
   withBottom,
@@ -39,6 +42,9 @@ import type {
   MultiplierState,
   PlayerView,
   Seat,
+  SocialEmoteId,
+  SocialKind,
+  SocialPhraseId,
 } from '@card-game/rules';
 import { botBid, botName } from './bot';
 import { botThinkDelayMs, sleep } from './botTiming';
@@ -85,6 +91,8 @@ export class GameRoom {
   playHistory: BotPlayHistoryEntry[] = [];
   /** 机器人思考中（已广播 snapshot，动作尚未执行）。 */
   botThinkingSeat: Seat | null = null;
+  /** 各座位上次成功发送表情/快捷语的时间戳（限频）。 */
+  private socialLastSentAt: [number, number, number] = [0, 0, 0];
 
   private botCounter = 0;
 
@@ -552,9 +560,50 @@ export class GameRoom {
         return this.start(action.fillBots ?? false);
       case 'hint':
         return this.handleHint(seat);
+      case 'social':
+        return this.handleSocial(seat, action.kind, action.id);
       default:
-        return err('invalid_action_for_phase', `当前阶段不支持动作：${action.type}`);
+        return err('invalid_action_for_phase', `当前阶段不支持动作：${(action as { type: string }).type}`);
     }
+  }
+
+  /**
+   * 局内表情 / 固定快捷语：白名单校验 + 座位限频后房间广播。
+   * 不改变牌局状态；叫分/出牌/结算阶段可用。
+   */
+  private handleSocial(
+    seat: Seat,
+    kind: SocialKind,
+    id: SocialEmoteId | SocialPhraseId,
+  ): ActionResult {
+    if (
+      this.phase !== GamePhase.BIDDING &&
+      this.phase !== GamePhase.PLAYING &&
+      this.phase !== GamePhase.SETTLED
+    ) {
+      return err('invalid_action_for_phase', '当前阶段不能发送表情/快捷语');
+    }
+    const p = this.players[seat];
+    if (!p || p.isBot) return err('illegal_play', '座位无玩家');
+    if (kind === 'emote') {
+      if (!isSocialEmoteId(id)) return err('invalid_social', '未知表情');
+    } else if (kind === 'phrase') {
+      if (!isSocialPhraseId(id)) return err('invalid_social', '未知快捷语');
+    } else {
+      return err('invalid_social', '未知社交类型');
+    }
+    const now = Date.now();
+    const last = this.socialLastSentAt[seat] ?? 0;
+    if (now - last < SOCIAL_COOLDOWN_MS) {
+      return err('rate_limited', `发送过快，请稍候 ${Math.ceil((SOCIAL_COOLDOWN_MS - (now - last)) / 1000)} 秒`);
+    }
+    this.socialLastSentAt[seat] = now;
+    return ok([
+      {
+        scope: 'room',
+        event: { type: 'social', seat, kind, id },
+      },
+    ]);
   }
 
   /**

@@ -396,3 +396,42 @@ describe('bot AI 占位（最小合法）', () => {
     expect(['claim', 'pass']).toContain(botBid([card(RANK.THREE)]));
   });
 });
+
+describe('GameRoom · 局内表情/快捷语（LRM-177）', () => {
+  it('白名单表情广播；冷却内第二次 rate_limited', async () => {
+    const r = await landlordAt0();
+    const ok1 = await r.handleAction(0, { type: 'social', kind: 'emote', id: 'like' });
+    expect(ok1.ok).toBe(true);
+    if (ok1.ok) {
+      const ev = ok1.events.find((e) => e.event.type === 'social');
+      expect(ev?.event).toMatchObject({ type: 'social', seat: 0, kind: 'emote', id: 'like' });
+      expect(ev?.scope).toBe('room');
+    }
+    const denied = await r.handleAction(0, { type: 'social', kind: 'phrase', id: 'hurry' });
+    expect(denied.ok).toBe(false);
+    if (!denied.ok) expect(denied.code).toBe('rate_limited');
+  });
+
+  it('非法 id → invalid_social；等待阶段不可发', async () => {
+    const waiting = threeHumans();
+    const early = await waiting.handleAction(0, { type: 'social', kind: 'emote', id: 'like' });
+    expect(early.ok).toBe(false);
+    if (!early.ok) expect(early.code).toBe('invalid_action_for_phase');
+
+    const r = await landlordAt0();
+    const bad = await r.handleAction(1, {
+      type: 'social',
+      kind: 'emote',
+      id: 'like',
+    });
+    expect(bad.ok).toBe(true);
+    const unknown = await r.handleAction(2, {
+      type: 'social',
+      kind: 'emote',
+      // @ts-expect-error intentional invalid
+      id: 'not-real',
+    });
+    expect(unknown.ok).toBe(false);
+    if (!unknown.ok) expect(unknown.code).toBe('invalid_social');
+  });
+});
