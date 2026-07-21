@@ -1,4 +1,4 @@
-import { type CSSProperties, useLayoutEffect, useState } from 'react';
+import { type CSSProperties, useLayoutEffect, useRef, useState } from 'react';
 import { sortCards, type Card } from '@card-game/rules';
 import { CardView } from './CardView';
 import { MOTION } from '../lib/motionSpec';
@@ -16,18 +16,23 @@ export function HandView({ cards, selected, onToggle, dealKey = 0 }: Props) {
   const sorted = sortCards(cards);
   const count = sorted.length || 1;
   const [dealing, setDealing] = useState(false);
+  /** 仅在 dealKey 递增时用当时手牌张数算 stagger，避免出牌减牌重触发整手散开（LRM-199）。 */
+  const dealCountRef = useRef(sorted.length);
 
   useLayoutEffect(() => {
     if (dealKey <= 0) {
       setDealing(false);
       return;
     }
+    dealCountRef.current = sorted.length;
     setDealing(true);
     // 等 stagger 最长牌播完后去掉 is-dealing，避免 fill-mode 锁死 transform 盖住选中抬起
-    const maxDelay = Math.max(0, sorted.length - 1) * MOTION.dealStaggerMs;
+    const maxDelay = Math.max(0, dealCountRef.current - 1) * MOTION.dealStaggerMs;
     const t = window.setTimeout(() => setDealing(false), MOTION.dealMs + maxDelay + 40);
     return () => window.clearTimeout(t);
-  }, [dealKey, sorted.length]);
+    // 故意不依赖 sorted.length：出牌后张数变化不得重播发牌动画
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dealKey 是唯一触发源
+  }, [dealKey]);
 
   return (
     <div
@@ -41,7 +46,7 @@ export function HandView({ cards, selected, onToggle, dealKey = 0 }: Props) {
         const delay = dealing ? `${index * MOTION.dealStaggerMs}ms` : undefined;
         return (
           <CardView
-            key={`${dealKey}-${c.id}`}
+            key={c.id}
             card={c}
             selected={selected.includes(c.id)}
             onClick={onToggle ? () => onToggle(c.id) : undefined}
