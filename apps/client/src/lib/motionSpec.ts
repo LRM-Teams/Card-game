@@ -49,10 +49,6 @@ export const MOTION = {
   coinCount: 7,
   coinTravelMaxPx: 56,
 
-  /** 出牌飞入 / 飞向中央 */
-  playFlyInMs: 160,
-  playFlyToCenterMs: 220,
-
   /** 牌型字幕 */
   playFxCaptionMs: 2000,
 

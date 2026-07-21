@@ -9,7 +9,7 @@
 - [x] CSS `.hand.is-dealing` 480ms；`.turn-pulse` 1000ms
 - [x] 选中抬起规格写入正式表（34px / 120ms）
 - [x] 炸弹 420 / 王炸 560 / 结算 180 / 金币 700 **保持**
-- [x] **保留 LRM-209**：`timerDanger*` + `playFly*`（260ms）
+- [x] **保留 LRM-209**：`timerDanger*` + `playFly*`（260ms / 600ms），rebase main 后不覆盖
 
 ## 可选复核
 
