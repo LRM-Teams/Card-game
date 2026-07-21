@@ -178,6 +178,33 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     expect(res.result.ok).toBe(false);
     if (!res.result.ok) expect(res.result.code).toBe('room_full');
   });
+
+  it('createMatchedRoom：1 真人 + fillBots 自动开局并补机器人', async () => {
+    const registry = new RoomRegistry();
+    const outcome = await registry.createMatchedRoom([{ socketId: 's1', name: 'Solo' }], true);
+    expect(outcome.room.playerCount).toBe(3);
+    expect(outcome.room.humanCount).toBe(1);
+    expect(outcome.room.phase).toBe('bidding');
+    expect(outcome.seats).toEqual([{ socketId: 's1', seat: 0 }]);
+    expect(outcome.events.some((e) => e.event.type === 'you_joined')).toBe(true);
+    expect(outcome.events.some((e) => e.event.type === 'dealt')).toBe(true);
+  });
+
+  it('createMatchedRoom：3 真人立刻开局不补机器人', async () => {
+    const registry = new RoomRegistry();
+    const outcome = await registry.createMatchedRoom(
+      [
+        { socketId: 'a', name: 'A' },
+        { socketId: 'b', name: 'B' },
+        { socketId: 'c', name: 'C' },
+      ],
+      false,
+    );
+    expect(outcome.room.humanCount).toBe(3);
+    expect(outcome.room.players.every((p) => p && !p.isBot)).toBe(true);
+    expect(outcome.room.phase).toBe('bidding');
+    expect(outcome.seats.map((s) => s.seat)).toEqual([0, 1, 2]);
+  });
 });
 
 describe('GameRoom · 出牌权威校验（规则不另写，全走 @card-game/rules）', () => {

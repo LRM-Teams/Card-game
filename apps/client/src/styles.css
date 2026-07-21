@@ -234,6 +234,43 @@ body::before {
 .lobby-error {
   cursor: pointer;
 }
+.match-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 8px;
+  padding: 28px 16px;
+  border: 1px solid rgba(255, 243, 196, 0.18);
+  border-radius: var(--ddz-radius-lg, 12px);
+  background: rgba(255, 255, 255, 0.06);
+}
+.match-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 243, 196, 0.25);
+  border-top-color: #ffd56a;
+  border-radius: 50%;
+  animation: match-spin 0.85s linear infinite;
+}
+@keyframes match-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.match-status-text {
+  margin: 0;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.match-queue-hint {
+  margin: 0;
+  color: rgba(255, 243, 196, 0.82);
+  font-size: 0.875rem;
+  text-align: center;
+}
 .room-code-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

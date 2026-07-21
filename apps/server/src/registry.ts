@@ -4,16 +4,24 @@
  * - 管理 roomId → GameRoom。
  * - 维护 (roomId, seat) → socketId，用于把私发事件（如 dealt 手牌）送达对应真人。
  * - join：无 roomId 时新建房间；有 roomId 时只加入已存在房间。
+ * - createMatchedRoom：快速匹配凑桌后落座并自动开局（不足 3 真人时补机器人）。
  */
 import type { Seat } from '@card-game/rules';
 import { GameRoom } from './game/GameRoom';
 import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
-import type { ActionResult } from './game/types';
+import type { ActionResult, RoomEvent } from './game/types';
+import type { MatchPlayer } from './matchQueue';
 
 export interface JoinOutcome {
   room: GameRoom;
   seat: Seat;
   result: ActionResult;
+}
+
+export interface MatchedRoomOutcome {
+  room: GameRoom;
+  seats: { socketId: string; seat: Seat }[];
+  events: RoomEvent[];
 }
 
 export class RoomRegistry {
@@ -57,6 +65,37 @@ export class RoomRegistry {
 
   get(roomId: string): GameRoom | undefined {
     return this.rooms.get(roomId);
+  }
+
+  /**
+   * 快速匹配开桌：按入队顺序落座，再自动 start。
+   * fillBots=true 时不足 3 真人补机器人；=false 时要求恰好 3 真人。
+   */
+  async createMatchedRoom(players: MatchPlayer[], fillBots: boolean): Promise<MatchedRoomOutcome> {
+    if (players.length === 0 || players.length > 3) {
+      throw new Error(`createMatchedRoom: invalid player count ${players.length}`);
+    }
+    const id = `room-${(++this.seq).toString(36)}`;
+    const room = new GameRoom(id, this.aiAdapter);
+    this.rooms.set(id, room);
+
+    const events: RoomEvent[] = [];
+    const seats: { socketId: string; seat: Seat }[] = [];
+
+    for (const p of players) {
+      const seat = room.firstEmptySeat();
+      if (seat === null) throw new Error('createMatchedRoom: room unexpectedly full');
+      const result = room.addHuman(p.name);
+      if (!result.ok) throw new Error(result.message);
+      events.push(...result.events);
+      this.bindSeat(room.roomId, seat, p.socketId);
+      seats.push({ socketId: p.socketId, seat });
+    }
+
+    const started = await room.start(fillBots);
+    if (!started.ok) throw new Error(started.message);
+    events.push(...started.events);
+    return { room, seats, events };
   }
 
   bindSeat(roomId: string, seat: Seat, socketId: string): void {

@@ -30,7 +30,7 @@ function tryAutoRejoin(): void {
  *
  * - 公开状态：来自 ServerEvent 'snapshot'（整张牌桌），原样存。
  * - 私有状态：'dealt'（只发给我本人的手牌 card id）→ 还原成 Card[]。
- * - 本地状态：选中牌 id、连接状态、最近一条 error。
+ * - 本地状态：选中牌 id、连接状态、最近一条 error、匹配中状态。
  *
  * 权威一律在服务端；客户端只展示 + 发动作。出牌按钮的「能否成牌/压过」
  * 仅用 @card-game/rules 做提示，最终由服务端裁决。
@@ -60,6 +60,10 @@ interface UiState {
   selected: string[];
   snapshot: GameStateSnapshot | null;
   lastError: UiError | null;
+  /** 快速匹配：idle=大厅；queued=匹配中。 */
+  matchStatus: 'idle' | 'queued';
+  /** 服务端回传的当前排队人数（仅匹配中有意义）。 */
+  matchQueueSize: number;
   /** AI 出牌提示：按模型分从高到低的合法出牌建议（每组 card id）；为空表示无建议。 */
   hints: string[][];
   /** 当前选用的提示组下标；点「提示」时循环切换。 */
@@ -72,6 +76,10 @@ interface UiState {
   /** 订阅 socket（应用挂载时调用一次）。 */
   init: () => void;
   join: (name: string, roomId?: string) => void;
+  /** 快速开始：进入服务端匹配队列。 */
+  quickMatch: (name: string) => void;
+  /** 取消匹配，回大厅。 */
+  cancelMatch: () => void;
   start: (fillBots?: boolean) => void;
   bid: (choice: BidChoice) => void;
   play: () => void;
@@ -95,6 +103,8 @@ export const useGameStore = create<UiState>((set, get) => ({
   selected: [],
   snapshot: null,
   lastError: null,
+  matchStatus: 'idle',
+  matchQueueSize: 0,
   hints: [],
   hintIndex: 0,
   hintMessage: null,
@@ -109,8 +119,20 @@ export const useGameStore = create<UiState>((set, get) => ({
     });
     onEvent((e) => {
       switch (e.type) {
+        case 'match_queued':
+          set({ matchStatus: 'queued', matchQueueSize: e.queueSize, lastError: null });
+          break;
+        case 'match_cancelled':
+          set({ matchStatus: 'idle', matchQueueSize: 0 });
+          break;
         case 'you_joined':
-          set({ mySeat: e.seat, roomId: e.roomId });
+          set({
+            mySeat: e.seat,
+            roomId: e.roomId,
+            matchStatus: 'idle',
+            matchQueueSize: 0,
+          });
+          savePlayerSession(get().myName, e.roomId);
           break;
         case 'snapshot': {
           const prev = get().snapshot;
@@ -169,7 +191,13 @@ export const useGameStore = create<UiState>((set, get) => ({
           break;
         }
         case 'error':
-          set({ lastError: { code: e.code, message: e.message, at: Date.now() } });
+          set({
+            lastError: { code: e.code, message: e.message, at: Date.now() },
+            // 入队被拒时退出「匹配中」UI，避免卡死
+            ...(e.code === 'already_in_room' || e.code === 'already_in_match'
+              ? { matchStatus: 'idle' as const, matchQueueSize: 0 }
+              : {}),
+          });
           break;
         // phase / turn / passed / landlord / settled 均已被 snapshot 覆盖
         default:
@@ -189,6 +217,8 @@ export const useGameStore = create<UiState>((set, get) => ({
       selected: [],
       snapshot: null,
       lastError: null,
+      matchStatus: 'idle',
+      matchQueueSize: 0,
       hints: [],
       hintIndex: 0,
       hintMessage: null,
@@ -196,6 +226,35 @@ export const useGameStore = create<UiState>((set, get) => ({
       playFx: null,
     });
     send({ type: 'join', name, roomId: roomId?.trim() || undefined });
+  },
+
+  quickMatch: (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    autoRejoinAttempted = true;
+    set({
+      myName: trimmed,
+      mySeat: null,
+      roomId: null,
+      myHand: [],
+      selected: [],
+      snapshot: null,
+      lastError: null,
+      matchStatus: 'queued',
+      matchQueueSize: 1,
+      hints: [],
+      hintIndex: 0,
+      hintMessage: null,
+      seatLastPlays: [null, null, null],
+      playFx: null,
+    });
+    // 匹配成功前尚无 roomId；成功后 you_joined 会写入 session。
+    savePlayerSession(trimmed, null);
+    send({ type: 'quick_match', name: trimmed });
+  },
+
+  cancelMatch: () => {
+    send({ type: 'cancel_match' });
   },
 
   clearPlayFx: () => set({ playFx: null }),
