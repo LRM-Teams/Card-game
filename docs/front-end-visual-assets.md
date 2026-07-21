@@ -12,8 +12,10 @@
 | 扑克牌 | 牌背 | `docs/assets/cards/card-back.svg` / `apps/client/public/cards/card-back.svg` | 104x148 SVG；对手缩略 40x56 | 对手手牌、牌堆、未翻底牌 | 内部自绘，可商用 |
 | 扑克牌 | 小王 | `docs/assets/cards/joker-small.svg` / `apps/client/public/cards/joker-small.svg` | 104x148 SVG；逻辑 52x74 | 小王专用牌面 | 内部自绘，可商用 |
 | 扑克牌 | 大王 | `docs/assets/cards/joker-big.svg` / `apps/client/public/cards/joker-big.svg` | 104x148 SVG；逻辑 52x74 | 大王专用牌面 | 内部自绘，可商用 |
-| 身份 | 地主角色图 | `docs/assets/identity/landlord-character.svg` / `apps/client/public/identity/landlord-character.svg` | 160x160 SVG；座位 48x48，结算 96x96 | 地主揭示、座位身份、结算胜方 | 内部自绘，可商用 |
-| 身份 | 农民角色图 | `docs/assets/identity/farmer-character.svg` / `apps/client/public/identity/farmer-character.svg` | 160x160 SVG；座位 48x48，结算 96x96 | 农民身份、队友关系、结算 | 内部自绘，可商用 |
+| 身份 | 地主角标 | `docs/assets/badges/landlord.svg` / `apps/client/public/badges/landlord.svg` | 96x96 SVG；座位角标 28x28 | 座位身份常驻（弱权重，无文字） | 内部自绘，可商用 |
+| 身份 | 农民角标 | `docs/assets/badges/farmer.svg` / `apps/client/public/badges/farmer.svg` | 96x96 SVG；座位角标 24x24 | 座位身份常驻（弱于地主，无文字） | 内部自绘，可商用 |
+| 身份 | 地主角色图 | `docs/assets/identity/landlord-character.svg` / `apps/client/public/identity/landlord-character.svg` | 160x160 SVG；揭示/结算 72–96 | 地主揭示弹入、结算胜方（去文字） | 内部自绘，可商用 |
+| 身份 | 农民角色图 | `docs/assets/identity/farmer-character.svg` / `apps/client/public/identity/farmer-character.svg` | 160x160 SVG；揭示/结算 72–96 | 农民揭示/结算（去文字） | 内部自绘，可商用 |
 | 状态 | 炸弹 | `docs/assets/states/bomb.svg` / `apps/client/public/states/bomb.svg` | 160x120 SVG | 炸弹牌型爆点反馈 | 内部自绘，可商用 |
 | 状态 | 春天 | `docs/assets/states/spring.svg` / `apps/client/public/states/spring.svg` | 160x120 SVG | 春天/反春结算提示 | 内部自绘，可商用 |
 | 状态 | 加倍徽章 | `docs/assets/states/double-badge.svg` / `apps/client/public/states/double-badge.svg` | 120x120 SVG | 加倍/超级加倍反馈，可由组件替换数字 | 内部自绘，可商用 |
@@ -31,8 +33,10 @@
 
 ## 3. 身份与角色设计规范
 
-- 地主：红金皇冠/地主服方向，使用 `landlord-character.svg`；座位上只放图标或徽章，不再叠加大段文字。
-- 农民：草帽/麦穗/绿色布衣方向，使用 `farmer-character.svg`；农民身份弱于地主但需可识别。
+- 地主：红金皇冠角标 `badges/landlord.svg`（座位常驻）；角色图 `landlord-character.svg` 仅揭示/结算。**禁止**角标/角色图内嵌「地主」文字，也禁止名字旁叠 `（地主）`。
+- 农民：青绿麦穗角标 `badges/farmer.svg`（略小于地主）；角色图同理去文字。
+- 身份高亮：头像静态色环（`--ddz-identity-*-ring`），无动画。
+- 行动高亮：座位外框金色脉冲（`--ddz-action-glow` + `ddz-turn-pulse`），与身份通道分离。详见 `docs/identity-badge-spec.md`。
 - 身份揭示：地主图 96x96 居中弹入，农民图 72x72 分发到两侧座位。
 - 结算：胜方身份图加金色外光，负方身份图降饱和；不要同时显示「图标 + 大文字 + 角标」三重重复信息。
 
@@ -47,7 +51,7 @@
 ## 5. 交给小林的接入清单
 
 1. `CardView.tsx`：普通牌继续组件化，但替换为本规格的纸张、花色、点数层级；大小王直接引用 `/cards/joker-small.svg`、`/cards/joker-big.svg`；背面引用 `/cards/card-back.svg`。
-2. `GameTable.tsx`：地主/农民座位身份引用 `/identity/landlord-character.svg`、`/identity/farmer-character.svg`，并按 48x48/96x96 场景缩放。
+2. `GameTable.tsx`：座位身份用 `/badges/landlord.svg`、`/badges/farmer.svg` 角标；揭示/结算再用 `/identity/*-character.svg`。行动用 `is-turn`，勿与身份 glow 混用。
 3. 叫抢/加倍状态：加倍反馈引用 `/states/double-badge.svg`，超级加倍复用基底替换数字或叠加文案。
 4. 炸弹/春天/结算：炸弹引用 `/states/bomb.svg`；春天引用 `/states/spring.svg`；结算胜负引用 `/states/victory-badge.svg`、`/states/defeat-badge.svg`。
 5. 所有颜色/阴影/圆角接 `--ddz-*` token；SVG 本身作为 v1 可落地资产，后续如果 token 化 SVG 颜色再升级。
@@ -55,3 +59,4 @@
 ## 6. 预览覆盖
 
 本批交付覆盖：扑克牌普通/大小王/背面、地主/农民、加倍、炸弹、春天、胜利/失败结算。四状态合成预览见 `docs/assets/previews/lrm-140-visual-preview.svg`；大厅和整桌场景仍可参考 `docs/assets/doudizhu-p0-table.svg`。
+身份 vs 行动高亮对照（LRM-167）：`docs/assets/previews/lrm-167-play-identity-vs-turn.svg`。

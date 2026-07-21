@@ -381,29 +381,42 @@ function SeatBadge({
   play?: ReactNode;
 }) {
   if (!p) return <div className="seat-badge" />;
-  const roleAsset = p.role === 'landlord' ? '/identity/landlord-character.svg' : p.role === 'farmer' ? '/identity/farmer-character.svg' : null;
-  const roleLabel = p.role === 'landlord' ? '地主' : p.role === 'farmer' ? '农民' : null;
+  const role = p.role === 'landlord' || p.role === 'farmer' ? p.role : null;
+  const roleLabel = role === 'landlord' ? '地主' : role === 'farmer' ? '农民' : null;
+  const roleClass = role ? `role-${role}` : '';
   return (
-    <div className={`seat-badge ${active ? 'active turn-pulse' : ''} ${p.role ?? ''}`}>
+    <div
+      className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}`}
+      aria-label={[p.name, roleLabel, active ? '行动中' : null].filter(Boolean).join('，')}
+    >
       <div className="avatar">
-        {roleAsset ? (
-          <img className="role-character" src={roleAsset} alt={roleLabel ?? ''} />
-        ) : (
-          <PlayerAvatar kind="player" avatarId={p.avatarId} />
+        <PlayerAvatar kind="player" avatarId={p.avatarId} />
+        {role && (
+          <img
+            className="role-badge-corner"
+            src={`/badges/${role}.svg`}
+            alt=""
+            aria-hidden="true"
+          />
         )}
       </div>
-      <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
+      <div className="seat-name">{p.name}</div>
       <div className="seat-count">剩 {p.handSize}</div>
       {play}
     </div>
   );
 }
 
+/** 身份角标：只留图标，文案走 aria-label，避免徽章+文字双叠。 */
 function RoleBadge({ role }: { role: 'landlord' | 'farmer' }) {
   const label = role === 'landlord' ? '地主' : '农民';
   return (
-    <span className={`badge ${role === 'farmer' ? 'farmer' : ''}`}>
-      <img src={`/badges/${role}.svg`} alt="" aria-hidden="true" />{label}
+    <span
+      className={`badge identity-only ${role === 'farmer' ? 'farmer' : ''}`}
+      aria-label={label}
+      title={label}
+    >
+      <img src={`/badges/${role}.svg`} alt="" aria-hidden="true" />
     </span>
   );
 }
