@@ -103,22 +103,47 @@ export function GameTable() {
       (r.winnerSide === 'landlord' && mySeat === r.landlordSeat) ||
       (r.winnerSide === 'farmer' && mySeat !== r.landlordSeat);
     const resultAsset = myWin ? '/states/victory-badge.svg' : '/states/defeat-badge.svg';
+    const winnerRole = r.winnerSide === 'landlord' ? 'landlord' : 'farmer';
+    const winnerRoleLabel = winnerRole === 'landlord' ? '地主' : '农民';
+    const winnerIdentity =
+      winnerRole === 'landlord'
+        ? '/identity/landlord-character.svg'
+        : '/identity/farmer-character.svg';
     return (
       <div className="table settled">
-        <div className="result-card">
+        <div className={`result-card ${myWin ? 'win' : 'lose'}`}>
           <img className="result-badge" src={resultAsset} alt="" aria-hidden="true" />
-          <h2>{myWin ? '🎉 你赢了' : '😞 你输了'}</h2>
-          <p>
-            {r.winnerSide === 'landlord' ? '地主' : '农民'}胜 · 倍数 ×{r.multiplier} · 单注 {r.unit}
-          </p>
-          <p className="scores">
-            得分：{r.scores.map((sc, i) => `${nameOf(i)} ${sc >= 0 ? '+' : ''}${sc}`).join('　')}
-          </p>
-          <div className="btn-row">
-            <button className="btn primary" onClick={() => start(false)}>
-              <img src="/badges/restart.svg" alt="" className="btn-icon" />再来一局
+          <h2 className="result-title">{myWin ? '你赢了' : '你输了'}</h2>
+          <div className="result-identity">
+            <img
+              className="result-identity-img"
+              src={winnerIdentity}
+              alt=""
+              aria-hidden="true"
+            />
+            <p className="result-meta">
+              {winnerRoleLabel}胜 · 倍数 ×{r.multiplier} · 单注 {r.unit}
+            </p>
+          </div>
+          <ul className="score-list" aria-label="本局得分">
+            {r.scores.map((sc, i) => (
+              <li key={i}>
+                <span>{nameOf(i)}</span>
+                <span className={`score-val ${sc >= 0 ? 'plus' : 'minus'}`}>
+                  {sc >= 0 ? '+' : ''}
+                  {sc}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="result-actions">
+            <button className="btn primary cta" onClick={() => start(false)}>
+              <img src="/badges/restart.svg" alt="" className="btn-icon" />
+              再来一局
             </button>
-            <button className="btn" onClick={() => navigate({ to: '/' })}>返回大厅</button>
+            <button className="btn secondary" onClick={() => navigate({ to: '/' })}>
+              返回大厅
+            </button>
           </div>
         </div>
       </div>
