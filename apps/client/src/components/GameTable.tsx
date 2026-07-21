@@ -288,6 +288,13 @@ export function GameTable() {
       </div>
 
       {/* 叫分主 CTA 弹层：居中于手牌上方，不遮挡手牌点数（baseline 状态2） */}
+      {/* 自己座位社交气泡：叫分主 CTA 时也要挂，避免发送后看不到 */}
+      {mySeat != null && (
+        <div className="self-emote-zone">
+          <SocialBubble data={socialBubbles[mySeat]} align="center" />
+        </div>
+      )}
+
       {isBidding && isMyTurn ? (
         <GuideSpot
           show={guideActive && !seenBidTip}
@@ -327,9 +334,6 @@ export function GameTable() {
       ) : (
         mySeat != null && (
           <div className="self-seat-play">
-            <div className="self-emote-zone">
-              <SocialBubble data={socialBubbles[mySeat]} align="center" />
-            </div>
             <SeatPlayZone
               record={seatLastPlays[mySeat]}
               fxActive={playFx?.seat === mySeat}
