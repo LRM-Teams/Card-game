@@ -183,8 +183,10 @@ export function GameTable() {
     );
   }
 
+  const isBidding = phase === GamePhase.BIDDING;
+
   return (
-    <div className="table">
+    <div className={`table${isBidding ? ' is-bidding' : ''}`}>
       <div className="meta-corner" aria-hidden="true">
         <span>倍数 ×{snapshot.multiplier}</span>
         <span>阶段：{phaseLabel(phase)}</span>
@@ -260,27 +262,39 @@ export function GameTable() {
         {me?.role === 'farmer' && <RoleBadge role="farmer" />}
       </div>
 
-      {mySeat != null && (
-        <div className="self-seat-play">
-          <SeatPlayZone
-            record={seatLastPlays[mySeat]}
-            fxActive={playFx?.seat === mySeat}
-            align="center"
-          />
+      {/* 叫分主 CTA 弹层：居中于手牌上方，不遮挡手牌点数（baseline 状态2） */}
+      {isBidding && isMyTurn ? (
+        <div className="bid-cta-layer" role="group" aria-label="叫地主操作">
+          <div className="bid-cta-panel">
+            <p className="bid-cta-title">请选择</p>
+            <div className="bid-cta-row">
+              <button type="button" className="btn bid-pass" onClick={() => bid('pass')}>
+                不叫
+              </button>
+              <button type="button" className="btn primary cta bid-claim" onClick={() => bid('claim')}>
+                叫地主
+              </button>
+            </div>
+          </div>
         </div>
+      ) : (
+        mySeat != null && (
+          <div className="self-seat-play">
+            <SeatPlayZone
+              record={seatLastPlays[mySeat]}
+              fxActive={playFx?.seat === mySeat}
+              align="center"
+            />
+          </div>
+        )
       )}
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} />
 
-      <div className="controls">
-        <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>
-
-        {phase === GamePhase.BIDDING && isMyTurn ? (
-          <div className="btn-row">
-            <button className="btn primary" onClick={() => bid('claim')}>叫地主</button>
-            <button className="btn" onClick={() => bid('pass')}>不叫</button>
-          </div>
-        ) : (
+      {/* 出牌控件：叫分阶段隐藏，避免底部 sticky 层挡手牌 */}
+      {!isBidding && (
+        <div className="controls">
+          <div className={`hint ${canPlayNow ? 'ok' : 'warn'}`}>{hintMessage ?? liveHint}</div>
           <div className="btn-row">
             <button className="btn" onClick={clearSelect} disabled={selected.length === 0}>
               清空
@@ -304,8 +318,8 @@ export function GameTable() {
               出牌
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {lastError && (
         <div className="err-toast" onClick={dismissError}>
