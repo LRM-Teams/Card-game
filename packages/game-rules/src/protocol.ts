@@ -67,6 +67,11 @@ export interface GameResult {
   multiplier: number;
   /** 三家本局得分（+赢 / -输，来自 settlement.settle），按座位 [0,1,2]。 */
   scores: [number, number, number];
+  /**
+   * 结算亮牌（LRM-183）：各座位剩余手牌 card id。
+   * 出完的座位为空数组；客户端缩略展示，不抢胜负/再来一局主层级。
+   */
+  remainingHands: [string[], string[], string[]];
 }
 
 /** 全量公开快照（客户端可据此渲染整张牌桌；不含任何玩家手牌）。 */

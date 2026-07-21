@@ -136,6 +136,36 @@ export function GameTable() {
               </li>
             ))}
           </ul>
+
+          {/* LRM-183：底牌 + 未出完手牌（缩略，不抢主层级） */}
+          <div className="result-reveal" aria-label="结算亮牌">
+            {snapshot.bottomRevealed && snapshot.bottom.length > 0 && (
+              <div className="result-reveal-row">
+                <span className="result-reveal-label">底牌</span>
+                <div className="result-reveal-cards">
+                  {snapshot.bottom.map((id) => {
+                    const c = cardOf(id);
+                    return c ? <CardView key={id} card={c} small /> : null;
+                  })}
+                </div>
+              </div>
+            )}
+            {(r.remainingHands ?? [[], [], []]).map((ids, seat) => {
+              if (!ids.length) return null;
+              return (
+                <div className="result-reveal-row" key={seat}>
+                  <span className="result-reveal-label">{nameOf(seat)} 余牌</span>
+                  <div className="result-reveal-cards">
+                    {ids.map((id) => {
+                      const c = cardOf(id);
+                      return c ? <CardView key={id} card={c} small /> : null;
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
           <div className="result-actions">
             <button className="btn primary cta" onClick={() => start(false)}>
               <img src="/badges/restart.svg" alt="" className="btn-icon" />

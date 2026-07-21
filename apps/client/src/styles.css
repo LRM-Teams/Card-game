@@ -1254,6 +1254,56 @@ body::before {
 .result-card.lose .score-list .score-val.minus {
   color: var(--ddz-settle-lose-title);
 }
+.result-reveal {
+  margin: var(--ddz-space-3) 0 var(--ddz-space-2);
+  padding: 8px 10px;
+  border-radius: var(--ddz-radius-md);
+  border: 1px solid rgba(255, 243, 196, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+  text-align: left;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.result-reveal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.result-reveal-label {
+  flex: 0 0 auto;
+  min-width: 4.5em;
+  font-size: 11px;
+  color: rgba(255, 243, 196, 0.72);
+  opacity: 0.9;
+}
+.result-reveal-cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+.result-reveal-cards .card {
+  width: 28px;
+  height: 40px;
+  margin-left: -10px;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+}
+.result-reveal-cards .card:first-child {
+  margin-left: 0;
+}
+.result-reveal-cards .card-rank {
+  font-size: 11px;
+}
+.result-reveal-cards .card-suit {
+  font-size: 10px;
+}
+.result-card.lose .result-reveal {
+  border-color: rgba(160, 180, 210, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+}
 .result-actions {
   display: flex;
   flex-wrap: wrap;
