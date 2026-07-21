@@ -9,7 +9,7 @@ import {
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
 
-/** 大厅：游客身份（昵称/头像持久化）+ 快速匹配 / 房间码进房。 */
+/** 大厅：游客身份 + 唯一主 CTA「开始游戏」(匹配) + 次级房间码入口。 */
 export function Lobby() {
   const navigate = useNavigate();
   const join = useGameStore((s) => s.join);
@@ -57,14 +57,18 @@ export function Lobby() {
 
   return (
     <div className="panel lobby">
-      <h1 className="title">♠ 斗地主 · 大厅</h1>
-      <p className="subtitle">游客开玩 · 真人 / 机器人混战</p>
-
-      <div className="lobby-identity">
-        <PlayerAvatar kind="player" avatarId={identity.avatarId} />
-        <div>
-          <div className="lobby-beans">豆子 {beans ?? identity.beans}</div>
-          <div className="hint">游客 ID 已本地保存，刷新不清</div>
+      <div className="lobby-hero" aria-hidden={false}>
+        <img
+          className="lobby-hero__art"
+          src="/lobby/hero-illustration.svg"
+          alt="斗地主大厅主视觉插画"
+          width={720}
+          height={320}
+          decoding="async"
+        />
+        <div className="lobby-hero__copy">
+          <h1 className="title lobby-title">斗地主</h1>
+          <p className="subtitle lobby-subtitle">游客开玩 · 真人 / 机器人混战</p>
         </div>
       </div>
 
@@ -91,68 +95,93 @@ export function Lobby() {
         </div>
       ) : (
         <>
-          <label className="field">
-            <span>昵称</span>
-            <input
-              type="text"
-              placeholder="给自己起个名字"
-              value={identity.name}
-              onChange={(e) => persist({ ...identity, name: e.target.value })}
-              maxLength={12}
-              autoFocus
-            />
-          </label>
-
-          <div className="field">
-            <span>头像</span>
-            <div className="avatar-picker">
-              {BUILTIN_AVATARS.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={`avatar-pick ${identity.avatarId === id ? 'selected' : ''}`}
-                  onClick={() => persist({ ...identity, avatarId: id })}
-                  aria-label={id}
-                >
-                  <PlayerAvatar kind="player" avatarId={id} />
-                </button>
-              ))}
+          <section className="lobby-player" aria-label="玩家信息">
+            <div className="lobby-identity">
+              <PlayerAvatar kind="player" avatarId={identity.avatarId} />
+              <div>
+                <div className="lobby-beans">豆子 {beans ?? identity.beans}</div>
+                <div className="hint">游客 ID 已本地保存，刷新不清</div>
+              </div>
             </div>
-          </div>
 
-          <label className="field">
-            <span>房间码（私房）</span>
-            <input
-              type="text"
-              placeholder="输入房间号加入好友同桌"
-              value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value.trim())}
-              onKeyDown={(e) => e.key === 'Enter' && canJoinRoom && enterPrivateRoom(trimmedRoomCode)}
-              autoCapitalize="none"
-              autoCorrect="off"
-            />
-          </label>
+            <label className="field lobby-field">
+              <span>昵称</span>
+              <input
+                type="text"
+                placeholder="给自己起个名字"
+                value={identity.name}
+                onChange={(e) => persist({ ...identity, name: e.target.value })}
+                maxLength={12}
+                autoFocus
+              />
+            </label>
 
-          <div className="actions lobby-actions">
-            <button className="btn primary big" onClick={startMatch} disabled={!canAct}>
-              快速开始
-            </button>
-            <button className="btn big" onClick={() => enterPrivateRoom()} disabled={!canAct}>
-              创建房间
-            </button>
+            <div className="field lobby-field">
+              <span>头像</span>
+              <div className="avatar-picker">
+                {BUILTIN_AVATARS.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={`avatar-pick ${identity.avatarId === id ? 'selected' : ''}`}
+                    onClick={() => persist({ ...identity, avatarId: id })}
+                    aria-label={id}
+                  >
+                    <PlayerAvatar kind="player" avatarId={id} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <div className="lobby-cta">
             <button
-              className="btn big"
-              onClick={() => enterPrivateRoom(trimmedRoomCode)}
-              disabled={!canJoinRoom}
+              className="btn primary cta lobby-start"
+              onClick={startMatch}
+              disabled={!canAct}
             >
-              加入房间
+              开始游戏
             </button>
+            <p className="lobby-cta-hint">快速匹配，自动配桌开局</p>
           </div>
+
+          <section className="lobby-secondary" aria-label="房间入口">
+            <div className="lobby-secondary__head">
+              <span className="lobby-secondary__label">私房</span>
+              <span className="lobby-secondary__mute">次入口</span>
+            </div>
+            <label className="field lobby-field lobby-field--compact">
+              <span>房间码</span>
+              <input
+                type="text"
+                placeholder="输入房间号加入好友同桌"
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value.trim())}
+                onKeyDown={(e) =>
+                  e.key === 'Enter' && canJoinRoom && enterPrivateRoom(trimmedRoomCode)
+                }
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </label>
+            <div className="actions lobby-actions">
+              <button className="btn lobby-join" onClick={() => enterPrivateRoom()} disabled={!canAct}>
+                创建房间
+              </button>
+              <button
+                className="btn lobby-join"
+                onClick={() => enterPrivateRoom(trimmedRoomCode)}
+                disabled={!canJoinRoom}
+              >
+                加入房间
+              </button>
+            </div>
+          </section>
         </>
       )}
 
-      <ul className="tips">
-        <li>快速开始：自动匹配；人数不足时 AI 补位开局。</li>
+      <ul className="tips lobby-tips">
+        <li>开始游戏：自动匹配；人数不足时 AI 补位开局。</li>
         <li>私房：创建房间后分享房间号，好友可加入；房主开局。</li>
         <li>无微信/QQ 登录；游客身份本地持久化（允许重名）。</li>
       </ul>

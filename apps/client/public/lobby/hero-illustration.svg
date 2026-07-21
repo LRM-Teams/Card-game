@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="320" viewBox="0 0 720 320" role="img" aria-label="Dou Dizhu lobby hero illustration">
+  <title>Dou Dizhu lobby hero</title>
+  <desc>Internal original SVG. Source: LRM-Teams/Card-game. License: internal commercial-use OK (same as LRM-140). Not from Tencent assets.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a2218"/>
+      <stop offset="0.55" stop-color="#3a1612"/>
+      <stop offset="1" stop-color="#24100e"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#ffd56a" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffd56a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe38c"/>
+      <stop offset="1" stop-color="#c67b1f"/>
+    </linearGradient>
+    <linearGradient id="robe" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#db3f2e"/>
+      <stop offset="1" stop-color="#7d1416"/>
+    </linearGradient>
+    <linearGradient id="felt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a6b45"/>
+      <stop offset="1" stop-color="#0c3d28"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffdf4"/>
+      <stop offset="1" stop-color="#f3e7c2"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="720" height="320" rx="24" fill="url(#sky)"/>
+  <ellipse cx="360" cy="40" rx="220" ry="70" fill="url(#glow)"/>
+  <circle cx="96" cy="54" r="18" fill="#f5c542" opacity="0.18"/>
+  <circle cx="620" cy="70" r="28" fill="#f5c542" opacity="0.12"/>
+
+  <ellipse cx="360" cy="248" rx="250" ry="48" fill="#1a120c" opacity="0.45"/>
+  <ellipse cx="360" cy="238" rx="230" ry="40" fill="url(#felt)" stroke="#c67b1f" stroke-width="4" opacity="0.92"/>
+  <ellipse cx="360" cy="238" rx="200" ry="28" fill="none" stroke="#ffe38c" stroke-opacity="0.18" stroke-width="2"/>
+
+  <g transform="translate(118 96) rotate(-18)" filter="url(#soft)">
+    <rect width="64" height="90" rx="8" fill="url(#paper)" stroke="#c9b37a" stroke-width="2"/>
+    <text x="12" y="28" font-family="Georgia, serif" font-size="22" font-weight="700" fill="#c72d2d">A</text>
+    <path d="M32 48c0-8 8-14 8-14s8 6 8 14-8 18-8 18-8-10-8-18z" fill="#c72d2d"/>
+  </g>
+  <g transform="translate(168 118) rotate(-6)" filter="url(#soft)">
+    <rect width="64" height="90" rx="8" fill="url(#paper)" stroke="#c9b37a" stroke-width="2"/>
+    <text x="12" y="28" font-family="Georgia, serif" font-size="22" font-weight="700" fill="#263247">K</text>
+    <path d="M28 44h16l-4 10 8 6-10 1-4 9-4-9-10-1 8-6z" fill="#263247"/>
+  </g>
+
+  <g transform="translate(520 108) rotate(14)" filter="url(#soft)">
+    <rect width="64" height="90" rx="8" fill="url(#paper)" stroke="#c9b37a" stroke-width="2"/>
+    <text x="10" y="28" font-family="Georgia, serif" font-size="20" font-weight="700" fill="#c72d2d">2</text>
+    <rect x="28" y="42" width="16" height="16" rx="2" transform="rotate(45 36 50)" fill="#c72d2d"/>
+  </g>
+  <g transform="translate(474 132) rotate(4)" filter="url(#soft)">
+    <rect width="64" height="90" rx="8" fill="#2a3f6e" stroke="#f5c542" stroke-width="3"/>
+    <text x="12" y="52" font-family="sans-serif" font-size="18" font-weight="900" fill="#f5c542">JOKER</text>
+  </g>
+
+  <g transform="translate(292 58)" filter="url(#soft)">
+    <ellipse cx="68" cy="188" rx="54" ry="14" fill="#000" opacity="0.28"/>
+    <path d="M28 58l14-26 22 22 22-22 14 26v18H28z" fill="url(#gold)" stroke="#6b390c" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="42" cy="34" r="5" fill="#ef3329"/>
+    <circle cx="68" cy="52" r="5" fill="#ef3329"/>
+    <circle cx="94" cy="34" r="5" fill="#ef3329"/>
+    <circle cx="68" cy="92" r="28" fill="#f0c29a" stroke="#8a5530" stroke-width="2"/>
+    <path d="M22 128c10-22 82-22 92 0v62c0 14-16 24-46 24s-46-10-46-24z" fill="url(#robe)" stroke="#f3bd54" stroke-width="3"/>
+    <path d="M48 148h40M54 168h28" stroke="#ffe38c" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <rect width="720" height="320" rx="24" fill="none" stroke="#f5c542" stroke-opacity="0.22" stroke-width="2"/>
+</svg>
