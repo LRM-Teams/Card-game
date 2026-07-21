@@ -2631,7 +2631,7 @@ body::before {
 .seat-badge.active {
   border-color: var(--ddz-gold-500);
   box-shadow: var(--ddz-action-glow), 0 12px 24px rgba(0, 0, 0, 0.24);
-  animation: ddz-turn-pulse 1.2s ease-in-out infinite;
+  animation: ddz-turn-pulse 1000ms ease-in-out infinite;
 }
 
 .seat-badge.role-landlord .role-icon {
