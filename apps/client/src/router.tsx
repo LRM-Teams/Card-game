@@ -9,6 +9,7 @@ import {
 import { Lobby } from './components/Lobby';
 import { Room } from './components/Room';
 import { GameTable } from './components/GameTable';
+import { AudioSettings } from './components/AudioSettings';
 import { useGameStore } from './store/gameStore';
 
 const SERVER_URL = (import.meta.env.VITE_SERVER_URL as string | undefined) ?? 'http://localhost:3000';
@@ -27,6 +28,7 @@ function RootLayout() {
         <Link to="/" className="brand">♠ 斗地主</Link>
         <ConnBadge />
         <span className="tag">{SERVER_URL.replace(/^https?:\/\//, '')}</span>
+        <AudioSettings />
       </nav>
       <main className="content">
         <Outlet />
