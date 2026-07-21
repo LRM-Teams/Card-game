@@ -1,4 +1,5 @@
 import type { PlayRecord } from '@card-game/rules';
+import { HandType } from '@card-game/rules';
 import { HAND_TYPE_LABEL } from '../lib/cards';
 import { handTypeFxClass } from '../lib/playFx';
 import { CardView } from './CardView';
@@ -18,6 +19,9 @@ export function SeatPlayZone({ record, fxActive, align = 'center' }: Props) {
 
   const label = HAND_TYPE_LABEL[record.hand.type];
   const fxClass = handTypeFxClass(record.hand.type);
+  const isBombLike =
+    record.hand.type === HandType.BOMB || record.hand.type === HandType.ROCKET;
+  const isRocket = record.hand.type === HandType.ROCKET;
 
   return (
     <div
@@ -25,8 +29,21 @@ export function SeatPlayZone({ record, fxActive, align = 'center' }: Props) {
       aria-label={`最近出牌：${label}`}
     >
       {fxActive && (
-        <div className={`play-type-fx ${fxClass}`} aria-hidden="true">
+        <div
+          className={`play-type-fx ${fxClass}${isBombLike ? ' is-bomb-like' : ''}${isRocket ? ' is-rocket' : ''}`}
+          aria-hidden="true"
+        >
+          {isBombLike && (
+            <img
+              className="play-type-fx-badge"
+              src="/states/bomb.svg"
+              alt=""
+              width={36}
+              height={28}
+            />
+          )}
           <span className="play-type-fx-text">{label}</span>
+          {isBombLike && <span className="play-type-fx-burst" />}
         </div>
       )}
       {!fxActive && <div className="play-type-caption muted">{label}</div>}
