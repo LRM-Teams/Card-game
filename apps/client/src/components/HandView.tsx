@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState } from 'react';
+import { type CSSProperties, useLayoutEffect, useState } from 'react';
 import { sortCards, type Card } from '@card-game/rules';
 import { CardView } from './CardView';
 import { MOTION } from '../lib/motionSpec';
@@ -17,8 +17,11 @@ export function HandView({ cards, selected, onToggle, dealKey = 0 }: Props) {
   const count = sorted.length || 1;
   const [dealing, setDealing] = useState(false);
 
-  useEffect(() => {
-    if (!dealKey) return;
+  useLayoutEffect(() => {
+    if (dealKey <= 0) {
+      setDealing(false);
+      return;
+    }
     setDealing(true);
     // 等 stagger 最长牌播完后去掉 is-dealing，避免 fill-mode 锁死 transform 盖住选中抬起
     const maxDelay = Math.max(0, sorted.length - 1) * MOTION.dealStaggerMs;

@@ -98,12 +98,14 @@ function readScene(): FxDemoScene {
 
 /**
  * 动效 / UI 演示页：不依赖服务端，供 Playwright 录屏举证。
- * 路由：/fx-demo?scene=deal|turn|bomb|rocket|settle|reveal|double|mult
+ * 路由：/fx-demo?scene=deal|select|turn|bomb|rocket|settle|reveal|double|mult
  */
 export function FxDemo() {
   const [scene, setScene] = useState<FxDemoScene>(readScene);
   const [dealKey, setDealKey] = useState(1);
   const [fxTick, setFxTick] = useState(1);
+  /** LRM-196：选中抬起演示（模拟提示命中） */
+  const [selectedIds, setSelectedIds] = useState<string[]>(['d12', 'd8', 'd4']);
 
   useEffect(() => {
     const onPop = () => setScene(readScene());
@@ -161,6 +163,50 @@ export function FxDemo() {
           <div className="btn-row">
             <button type="button" className="btn primary cta" onClick={() => setDealKey((k) => k + 1)}>
               重播发牌
+            </button>
+          </div>
+        </div>
+      )}
+
+      {scene === 'select' && (
+        <div className="table fx-demo-table" data-fx="select" data-scene="select">
+          <p className="fx-demo-caption">
+            LRM-196 选中/提示抬起 · 点选手牌上移，清空回落（发牌结束后仍可抬起）
+          </p>
+          <HandView
+            cards={DEMO_HAND}
+            selected={selectedIds}
+            onToggle={(id) =>
+              setSelectedIds((prev) =>
+                prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+              )
+            }
+            dealKey={dealKey}
+          />
+          <p className="hint" role="status">
+            {selectedIds.length > 0 ? `已选 ${selectedIds.length} 张 · 可出` : '未选牌'}
+          </p>
+          <div className="btn-row">
+            <button
+              type="button"
+              className="btn"
+              disabled={selectedIds.length === 0}
+              onClick={() => setSelectedIds([])}
+            >
+              清空
+            </button>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => setSelectedIds(['d15', 'd5', 'd9'])}
+            >
+              提示 1/3
+            </button>
+            <button type="button" className="btn" onClick={() => setDealKey((k) => k + 1)}>
+              重播发牌
+            </button>
+            <button type="button" className="btn primary cta" disabled={selectedIds.length === 0}>
+              出牌
             </button>
           </div>
         </div>
