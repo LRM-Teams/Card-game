@@ -106,6 +106,8 @@ export function FxDemo() {
   const [fxTick, setFxTick] = useState(1);
   /** LRM-196：选中抬起演示（模拟提示命中） */
   const [selectedIds, setSelectedIds] = useState<string[]>(['d12', 'd8', 'd4']);
+  /** LRM-199：可出牌减张，验证未打出牌不整手 remount */
+  const [handCards, setHandCards] = useState<Card[]>(DEMO_HAND);
 
   useEffect(() => {
     const onPop = () => setScene(readScene());
@@ -171,10 +173,10 @@ export function FxDemo() {
       {scene === 'select' && (
         <div className="table fx-demo-table" data-fx="select" data-scene="select">
           <p className="fx-demo-caption">
-            LRM-196 选中/提示抬起 · 点选手牌上移，清空回落（发牌结束后仍可抬起）
+            LRM-196/199 选中抬起 · 出牌减张后未打出牌不整手刷新（发牌结束后仍可抬起）
           </p>
           <HandView
-            cards={DEMO_HAND}
+            cards={handCards}
             selected={selectedIds}
             onToggle={(id) =>
               setSelectedIds((prev) =>
@@ -198,14 +200,32 @@ export function FxDemo() {
             <button
               type="button"
               className="btn primary"
-              onClick={() => setSelectedIds(['d15', 'd5', 'd9'])}
+              onClick={() => setSelectedIds(['d15', 'd5', 'd9'].filter((id) => handCards.some((c) => c.id === id)))}
             >
               提示 1/3
             </button>
-            <button type="button" className="btn" onClick={() => setDealKey((k) => k + 1)}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setHandCards(DEMO_HAND);
+                setSelectedIds(['d12', 'd8', 'd4']);
+                setDealKey((k) => k + 1);
+              }}
+            >
               重播发牌
             </button>
-            <button type="button" className="btn primary cta" disabled={selectedIds.length === 0}>
+            <button
+              type="button"
+              className="btn primary cta"
+              data-play-hand
+              disabled={selectedIds.length === 0}
+              onClick={() => {
+                const played = new Set(selectedIds);
+                setHandCards((prev) => prev.filter((c) => !played.has(c.id)));
+                setSelectedIds([]);
+              }}
+            >
               出牌
             </button>
           </div>

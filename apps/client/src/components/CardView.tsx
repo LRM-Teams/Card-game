@@ -26,6 +26,7 @@ export function CardView({ card, selected, onClick, small, tablePlay, style }: P
       disabled={!onClick}
       title={card.display}
       aria-label={card.display}
+      data-card-id={card.id}
       style={style}
     >
       {jokerAsset ? (

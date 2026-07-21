@@ -17,6 +17,7 @@ export function HandView({ cards, selected, onToggle, dealKey = 0 }: Props) {
   const count = sorted.length || 1;
   const [dealing, setDealing] = useState(false);
 
+  // 只在 dealKey 变化时播发牌散开；出牌导致张数变化不得重触 is-dealing（否则整手闪烁）。
   useLayoutEffect(() => {
     if (dealKey <= 0) {
       setDealing(false);
@@ -27,7 +28,9 @@ export function HandView({ cards, selected, onToggle, dealKey = 0 }: Props) {
     const maxDelay = Math.max(0, sorted.length - 1) * MOTION.dealStaggerMs;
     const t = window.setTimeout(() => setDealing(false), MOTION.dealMs + maxDelay + 40);
     return () => window.clearTimeout(t);
-  }, [dealKey, sorted.length]);
+    // sorted.length 仅用于本次发牌 stagger 时长，刻意不入 deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 出牌减张不得重挂发牌动效
+  }, [dealKey]);
 
   return (
     <div
