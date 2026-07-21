@@ -13,7 +13,11 @@ export function HandView({ cards, selected, onToggle }: Props) {
   const sorted = sortCards(cards);
   const count = sorted.length || 1;
   return (
-    <div className="hand">
+    <div
+      className="hand"
+      style={{ '--hand-count': sorted.length || 1 } as CSSProperties}
+      data-count={sorted.length}
+    >
       {sorted.map((c, index) => {
         const offset = index - (count - 1) / 2;
         return (
@@ -22,7 +26,7 @@ export function HandView({ cards, selected, onToggle }: Props) {
             card={c}
             selected={selected.includes(c.id)}
             onClick={onToggle ? () => onToggle(c.id) : undefined}
-            style={{ '--card-offset': offset } as CSSProperties}
+            style={{ '--card-offset': offset, zIndex: index + 1 } as CSSProperties}
           />
         );
       })}
