@@ -190,6 +190,7 @@ box-shadow:
 | **结算弹入** | 卡片 **200ms** 上浮淡入（`translateY 10→0`，`scale 0.94→1`） | **替换** |
 | **结算金币** | 胜方 **6** 枚短距粒子、**640ms**、行程 **≤48px**、delay **40ms×i**；无 bloom / 无全屏金光 | **替换** |
 | 演示入口 | `/fx-demo?scene=deal|turn|timer|playFly|bomb|rocket|settle` | — |
+
 ## 9. 接入优先级
 
 1. **先接 token**：`apps/client/src/styles.css` 的 `:root` 已对齐本文；旧硬编码逐步替换。
