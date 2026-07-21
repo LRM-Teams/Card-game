@@ -14,8 +14,8 @@ export function SettleCoins({ win }: { win: boolean }) {
           style={
             {
               '--coin-i': i,
-              '--coin-x': `${((i % 4) - 1.5) * 18}px`,
-              '--coin-delay': `${i * 45}ms`,
+              '--coin-x': `${((i % 4) - 1.5) * 16}px`,
+              '--coin-delay': `${i * MOTION.coinDelayMs}ms`,
             } as CSSProperties
           }
         />

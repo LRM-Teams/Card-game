@@ -1070,7 +1070,7 @@ body::before {
 }
 .play-type-fx.fx-bomb .play-type-fx-text {
   background: linear-gradient(135deg, rgba(255, 90, 70, 0.96), rgba(180, 20, 20, 0.92));
-  animation: ddz-play-fx-shake 0.42s ease-in-out 2;
+  animation: ddz-play-fx-shake 0.4s ease-in-out 2;
 }
 .play-type-fx.is-bomb-like {
   display: flex;
@@ -1083,7 +1083,7 @@ body::before {
   height: 28px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
-  animation: ddz-bomb-badge-pop 420ms ease-out both;
+  animation: ddz-bomb-badge-pop 400ms ease-out both;
 }
 .play-type-fx-burst {
   position: absolute;
@@ -1095,20 +1095,22 @@ body::before {
   border-radius: 50%;
   pointer-events: none;
   background: radial-gradient(circle, rgba(255, 180, 90, 0.55) 0%, rgba(255, 80, 40, 0.2) 45%, transparent 70%);
-  animation: ddz-bomb-burst 420ms ease-out both;
-  /* 硬边界：局部爆点半径 ≤72px，禁止全屏闪光 */
-  max-width: 72px;
-  max-height: 72px;
+  animation: ddz-bomb-burst 400ms ease-out both;
+  /* 硬边界：局部爆点半径 ≤64px（LRM-208），禁止全屏闪光 */
+  max-width: 64px;
+  max-height: 64px;
 }
 .play-type-fx.is-rocket .play-type-fx-burst {
-  animation-duration: 560ms;
+  animation-duration: 520ms;
   background: radial-gradient(circle, rgba(255, 210, 120, 0.5) 0%, rgba(220, 60, 40, 0.18) 48%, transparent 72%);
+  max-width: 76px;
+  max-height: 76px;
 }
 .play-type-fx.is-rocket .play-type-fx-badge {
-  animation-duration: 560ms;
+  animation-duration: 520ms;
 }
 .play-type-fx.is-rocket .play-type-fx-text {
-  animation: ddz-play-fx-shake 0.56s ease-in-out 2;
+  animation: ddz-play-fx-shake 0.52s ease-in-out 2;
 }
 .play-type-fx.fx-plane .play-type-fx-text {
   background: linear-gradient(135deg, rgba(160, 255, 200, 0.95), rgba(24, 160, 100, 0.9));
@@ -1665,7 +1667,7 @@ body::before {
   border-radius: var(--ddz-radius-lg);
   padding: 28px 32px 26px;
   box-shadow: var(--ddz-shadow-panel);
-  animation: ddz-settle-pop 180ms ease-out both;
+  animation: ddz-settle-pop 200ms ease-out both;
 }
 .result-card[data-fx="settle-pop"] {
   animation-name: ddz-settle-pop;
@@ -1861,7 +1863,7 @@ body::before {
 @keyframes ddz-settle-pop {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.97);
+    transform: translateY(10px) scale(0.94);
   }
   to {
     opacity: 1;
@@ -2407,16 +2409,16 @@ body::before {
 
 
 
-/* —— LRM-168 关键动效包（克制边界） —— */
+/* —— LRM-208 关键动效包（正式表 · 克制边界 · 单段 ≤700ms） —— */
 .hand.is-dealing .card {
   /* backwards：仅开局前应用 from；结束后交还 transform 给 .is-selected 抬起 */
-  animation: ddz-deal-fan 520ms cubic-bezier(0.22, 0.9, 0.28, 1) backwards;
+  animation: ddz-deal-fan 500ms cubic-bezier(0.22, 0.9, 0.28, 1) backwards;
 }
 .seat-badge.turn-pulse {
-  animation: ddz-turn-pulse 1200ms ease-in-out infinite;
+  animation: ddz-turn-pulse 1000ms ease-in-out infinite;
 }
 .seat-badge.turn-pulse .avatar {
-  animation: ddz-turn-avatar-pulse 1200ms ease-in-out infinite;
+  animation: ddz-turn-avatar-pulse 1000ms ease-in-out infinite;
 }
 .settle-coins {
   position: absolute;
@@ -2437,7 +2439,7 @@ body::before {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
   opacity: 0;
   transform: translate(var(--coin-x, 0), 0) scale(0.6);
-  animation: ddz-settle-coin 700ms ease-out both;
+  animation: ddz-settle-coin 640ms ease-out both;
   animation-delay: var(--coin-delay, 0ms);
 }
 .settled-lose .result-card {
@@ -2494,7 +2496,7 @@ body::before {
 @keyframes ddz-deal-fan {
   from {
     opacity: 0;
-    transform: translateY(48px) scale(0.86);
+    transform: translateY(40px) scale(0.88);
   }
   to {
     opacity: 1;
@@ -2505,14 +2507,14 @@ body::before {
   0%,
   100% {
     box-shadow:
-      0 0 0 2px rgba(245, 197, 66, 0.14),
-      0 0 10px rgba(245, 197, 66, 0.12),
+      0 0 0 2px rgba(245, 197, 66, 0.12),
+      0 0 10px rgba(245, 197, 66, 0.1),
       0 12px 24px rgba(0, 0, 0, 0.24);
   }
   50% {
     box-shadow:
-      0 0 0 2px rgba(245, 197, 66, 0.26),
-      0 0 14px rgba(245, 197, 66, 0.18),
+      0 0 0 2px rgba(245, 197, 66, 0.22),
+      0 0 14px rgba(245, 197, 66, 0.16),
       0 12px 24px rgba(0, 0, 0, 0.24);
   }
 }
@@ -2522,7 +2524,7 @@ body::before {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.015);
+    transform: scale(1.012);
   }
 }
 @keyframes ddz-bomb-burst {
@@ -2556,7 +2558,7 @@ body::before {
 @keyframes ddz-settle-pop {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.92);
+    transform: translateY(10px) scale(0.94);
   }
   to {
     opacity: 1;
@@ -2573,7 +2575,7 @@ body::before {
   }
   100% {
     opacity: 0;
-    transform: translate(var(--coin-x, 0), -56px) scale(0.85);
+    transform: translate(var(--coin-x, 0), -48px) scale(0.85);
   }
 }
 
@@ -2631,7 +2633,7 @@ body::before {
 .seat-badge.active {
   border-color: var(--ddz-gold-500);
   box-shadow: var(--ddz-action-glow), 0 12px 24px rgba(0, 0, 0, 0.24);
-  animation: ddz-turn-pulse 1.2s ease-in-out infinite;
+  animation: ddz-turn-pulse 1000ms ease-in-out infinite;
 }
 
 .seat-badge.role-landlord .role-icon {
