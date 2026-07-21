@@ -18,6 +18,7 @@ import {
   shouldAutoRejoinPath,
   type GuestIdentity,
 } from '../lib/session';
+import { onPassedFx, onPlayedFx, onSettledFx } from '../lib/audioFx';
 
 let autoRejoinAttempted = false;
 
@@ -174,6 +175,7 @@ export const useGameStore = create<UiState>((set, get) => ({
         case 'played': {
           const mySeat = get().mySeat;
           const playedIds = new Set(e.hand.cards.map((card) => card.id));
+          onPlayedFx(e.hand);
           set((st) => {
             const seatLastPlays = [...st.seatLastPlays] as SeatLastPlays;
             seatLastPlays[e.seat] = { seat: e.seat, hand: e.hand };
@@ -188,6 +190,22 @@ export const useGameStore = create<UiState>((set, get) => ({
                 : {}),
             };
           });
+          break;
+        }
+        case 'passed': {
+          onPassedFx();
+          break;
+        }
+        case 'settled': {
+          const st = get();
+          const handSizes = (st.snapshot?.players ?? []).reduce(
+            (acc, p) => {
+              acc[p.seat] = p.handSize;
+              return acc;
+            },
+            [0, 0, 0] as [number, number, number],
+          );
+          onSettledFx(e.result, st.mySeat, handSizes);
           break;
         }
         case 'hint': {
