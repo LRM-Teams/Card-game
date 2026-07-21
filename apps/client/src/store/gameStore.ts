@@ -10,7 +10,6 @@ import {
 } from '@card-game/rules';
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
-<<<<<<< Updated upstream
 import {
   readIdentity,
   readPlayerSession,
@@ -19,10 +18,7 @@ import {
   shouldAutoRejoinPath,
   type GuestIdentity,
 } from '../lib/session';
-=======
-import { readPlayerSession, savePlayerSession, shouldAutoRejoinPath } from '../lib/session';
 import { onPassedFx, onPlayedFx, onSettledFx } from '../lib/audioFx';
->>>>>>> Stashed changes
 
 let autoRejoinAttempted = false;
 
