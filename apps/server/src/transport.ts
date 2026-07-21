@@ -51,6 +51,7 @@ export function createGame(io: IoServer): RoomRegistry {
     await room.drainBots((events) => {
       apply(roomId, events);
     });
+    scheduleDecisionTimeout(room, roomId);
     if (room.result) {
       const updated = registry.applySettlementBeans(room);
       for (const seat of [0, 1, 2] as Seat[]) {
@@ -64,6 +65,38 @@ export function createGame(io: IoServer): RoomRegistry {
         io.to(sid).emit('event', ev);
       }
     }
+  };
+
+  /** roomId → 明牌/加倍决策超时定时器 */
+  const decisionTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  const scheduleDecisionTimeout = (room: GameRoom, roomId: string): void => {
+    const prev = decisionTimers.get(roomId);
+    if (prev) clearTimeout(prev);
+    decisionTimers.delete(roomId);
+    const remaining = room.decisionRemainingMs();
+    if (remaining == null) return;
+    if (remaining <= 0) {
+      runRoomAction(roomId, async () => {
+        const events = room.expireDecisionWindow();
+        if (events.length === 0) return;
+        apply(roomId, events);
+        await pumpBots(room, roomId);
+      });
+      return;
+    }
+    const timer = setTimeout(() => {
+      decisionTimers.delete(roomId);
+      runRoomAction(roomId, async () => {
+        const live = registry.get(roomId);
+        if (!live) return;
+        const events = live.expireDecisionWindow();
+        if (events.length === 0) return;
+        apply(roomId, events);
+        await pumpBots(live, roomId);
+      });
+    }, remaining);
+    decisionTimers.set(roomId, timer);
   };
 
   const deliverMatch = (formed: MatchFormed): void => {

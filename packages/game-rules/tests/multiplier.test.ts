@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { HandType, type Hand } from '../src/types';
-import { createMultiplier, applyPlay, computeMultiplier, isDoublingPlay, unitScore, applySpring, applyAntiSpring, applyReveal } from '../src/multiplier';
+import { createMultiplier, applyPlay, computeMultiplier, isDoublingPlay, unitScore, applySpring, applyAntiSpring, applyReveal, applyDouble } from '../src/multiplier';
 
 const hand = (type: HandType): Hand => ({ type, cards: [], mainRank: 3, length: 1 });
 
@@ -46,6 +46,18 @@ describe('multiplier', () => {
 
   it('明牌 ×2', () => {
     expect(applyReveal(createMultiplier()).multiplier).toBe(2);
+  });
+
+  it('加倍 ×2', () => {
+    expect(applyDouble(createMultiplier()).multiplier).toBe(2);
+  });
+
+  it('明牌 × 加倍 × 炸弹 叠加', () => {
+    let s = applyReveal(createMultiplier()); // 2
+    s = applyDouble(s); // 4
+    s = applyPlay(s, hand(HandType.BOMB)); // 8
+    expect(s.multiplier).toBe(8);
+    expect(unitScore(s)).toBe(8);
   });
 
   it('applyPlay 不修改原状态', () => {

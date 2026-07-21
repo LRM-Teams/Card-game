@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { identifyHand, RANK } from '@card-game/rules';
 import type { Card, Seat } from '@card-game/rules';
-import { botBid, botChoosePlay } from '../src/game/bot';
+import { botBid, botChoosePlay, botDouble, botReveal } from '../src/game/bot';
 import { GameRoom } from '../src/game/GameRoom';
 import { RoomRegistry } from '../src/registry';
 import { IdentityStore } from '../src/identity';
@@ -29,13 +29,20 @@ function threeHumans(): GameRoom {
   return r;
 }
 
-/** 座位 0 叫(claim)、其余 pass → 地主为 0，进入出牌阶段、轮到 0。 */
+/** 座位 0 叫(claim)、其余 pass → 地主为 0；跳过明牌/加倍 → 进入出牌、轮到 0。 */
 async function landlordAt0(): Promise<GameRoom> {
   const r = threeHumans();
   await r.start();
   await r.handleBid(0, 'claim');
   await r.handleBid(1, 'pass');
   await r.handleBid(2, 'pass');
+  expect(r.phase).toBe('revealing');
+  expect((await r.handleReveal(0, false)).ok).toBe(true);
+  expect(r.phase).toBe('doubling');
+  expect((await r.handleDouble(0, false)).ok).toBe(true);
+  expect((await r.handleDouble(1, false)).ok).toBe(true);
+  expect((await r.handleDouble(2, false)).ok).toBe(true);
+  expect(r.phase).toBe('playing');
   return r;
 }
 
@@ -121,6 +128,13 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
     expect(r.players[1]!.role).toBe('farmer');
     expect(r.players[2]!.hand).toHaveLength(20);
     expect(r.bottomRevealed).toBe(true);
+    expect(r.phase).toBe('revealing');
+    expect(r.turnSeat).toBe(2);
+    // 跳过明牌/加倍进入出牌
+    await r.handleReveal(2, false);
+    await r.handleDouble(0, false);
+    await r.handleDouble(1, false);
+    await r.handleDouble(2, false);
     expect(r.phase).toBe('playing');
     expect(r.turnSeat).toBe(2);
   });
@@ -365,6 +379,16 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
         await r.drainBots();
         continue;
       }
+      if (r.phase === 'revealing' && r.landlordSeat === human) {
+        await r.handleReveal(human, botReveal(r.players[human]!.hand));
+        await r.drainBots();
+        continue;
+      }
+      if (r.phase === 'doubling' && r.pendingDoubleSeats.includes(human)) {
+        await r.handleDouble(human, botDouble(r.players[human]!.hand, human === r.landlordSeat));
+        await r.drainBots();
+        continue;
+      }
       if (r.phase === 'playing' && r.turnSeat === human) {
         const prev = r.lastPlay ? r.lastPlay.hand : null;
         const cards = botChoosePlay(r.players[human]!.hand, prev);
@@ -379,6 +403,78 @@ describe('GameRoom · 全机器人局跑完整一局', () => {
     }
     expect(r.phase).toBe('settled');
     expect(r.result).not.toBeNull();
+  });
+});
+
+describe('GameRoom · 明牌 / 加倍（LRM-182）', () => {
+  it('地主明牌 → 倍数×2 且公开手牌；再加倍可叠加', async () => {
+    const r = threeHumans();
+    await r.start();
+    await r.handleBid(0, 'claim');
+    await r.handleBid(1, 'pass');
+    await r.handleBid(2, 'pass');
+    expect(r.phase).toBe('revealing');
+    expect(r.mult.multiplier).toBe(1);
+
+    const rev = await r.handleReveal(0, true);
+    expect(rev.ok).toBe(true);
+    expect(r.mult.multiplier).toBe(2);
+    expect(r.landlordRevealed).toBe(true);
+    expect(r.phase).toBe('doubling');
+    expect(r.snapshot().players[0]?.openHand).toHaveLength(20);
+    if (rev.ok) {
+      expect(rev.events.some((e) => e.event.type === 'revealed' && e.event.revealed === true)).toBe(true);
+    }
+
+    expect((await r.handleDouble(0, true)).ok).toBe(true);
+    expect(r.mult.multiplier).toBe(4);
+    expect((await r.handleDouble(1, false)).ok).toBe(true);
+    expect((await r.handleDouble(2, true)).ok).toBe(true);
+    expect(r.mult.multiplier).toBe(8);
+    expect(r.phase).toBe('playing');
+    expect(r.snapshot().multiplierBreakdown).toMatchObject({
+      reveal: true,
+      doubleCount: 2,
+      current: 8,
+    });
+  });
+
+  it('都不选明牌/加倍 → 倍数不变进入出牌', async () => {
+    const r = await landlordAt0();
+    expect(r.mult.multiplier).toBe(1);
+    expect(r.phase).toBe('playing');
+    expect(r.snapshot().multiplierBreakdown.reveal).toBe(false);
+    expect(r.snapshot().multiplierBreakdown.doubleCount).toBe(0);
+  });
+
+  it('窗口超时自动跳过明牌与加倍', async () => {
+    const r = threeHumans();
+    await r.start();
+    await r.handleBid(0, 'claim');
+    await r.handleBid(1, 'pass');
+    await r.handleBid(2, 'pass');
+    expect(r.phase).toBe('revealing');
+    // 伪造已过期
+    r.decisionDeadlineAt = Date.now() - 1;
+    const skipped = r.expireDecisionWindow();
+    expect(skipped.length).toBeGreaterThan(0);
+    expect(r.phase).toBe('doubling');
+    r.decisionDeadlineAt = Date.now() - 1;
+    r.expireDecisionWindow();
+    expect(r.phase).toBe('playing');
+    expect(r.mult.multiplier).toBe(1);
+  });
+
+  it('非地主不能明牌；加倍阶段重复选择被拒', async () => {
+    const r = threeHumans();
+    await r.start();
+    await r.handleBid(0, 'claim');
+    await r.handleBid(1, 'pass');
+    await r.handleBid(2, 'pass');
+    expect((await r.handleReveal(1, true)).ok).toBe(false);
+    await r.handleReveal(0, false);
+    expect((await r.handleDouble(0, false)).ok).toBe(true);
+    expect((await r.handleDouble(0, true)).ok).toBe(false);
   });
 });
 

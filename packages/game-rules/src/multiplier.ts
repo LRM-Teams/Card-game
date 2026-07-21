@@ -7,7 +7,8 @@ import { HandType, type Hand } from './types';
  * - 底分固定 1；
  * - 每出一个**炸弹 ×2**、**王炸 ×2**；
  * - **春天 / 反春 ×2**；
- * - **明牌 ×2**（地主开局亮明手牌）。
+ * - **明牌 ×2**（地主开局亮明手牌）；
+ * - **加倍 ×2**（每位选择加倍的玩家各触发一次，可叠加）。
  *
  * 服务端在每次出牌后调用 `applyPlay` 累积倍数；结算时用 `unitScore` 折算进 `settle`。
  */
@@ -58,5 +59,10 @@ export function applyAntiSpring(state: MultiplierState): MultiplierState {
 
 /** 明牌（地主开局亮明手牌）→ 倍数 ×2。是否明牌由地主选择（客户端 UI + 服务端流程触发）。 */
 export function applyReveal(state: MultiplierState): MultiplierState {
+  return { ...state, multiplier: state.multiplier * 2 };
+}
+
+/** 加倍（任一玩家选择加倍）→ 倍数 ×2。可多人叠加，每人最多一次。 */
+export function applyDouble(state: MultiplierState): MultiplierState {
   return { ...state, multiplier: state.multiplier * 2 };
 }

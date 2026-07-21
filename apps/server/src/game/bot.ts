@@ -49,6 +49,18 @@ export function botBid(hand: readonly Card[]): BidChoice {
   return power >= 5 ? 'claim' : 'pass';
 }
 
+/** 地主是否明牌：大牌够强则亮（×2 代价换信息战）。 */
+export function botReveal(hand: readonly Card[]): boolean {
+  return botBid(hand) === 'claim';
+}
+
+/** 是否加倍：手力够则加倍；地主略激进一点。 */
+export function botDouble(hand: readonly Card[], isLandlord: boolean): boolean {
+  const claim = botBid(hand) === 'claim';
+  if (isLandlord) return claim;
+  return claim && hand.length <= 17;
+}
+
 /** 取一组同点数牌里 id 最小的 n 张。 */
 function takeN(group: Card[], n: number): Card[] {
   return [...group].sort((a, b) => (a.id < b.id ? -1 : 1)).slice(0, n);
