@@ -24,9 +24,22 @@ export function Lobby() {
   };
 
   return (
-    <div className="panel lobby">
-      <h1 className="title">♠ 斗地主 · 大厅</h1>
-      <p className="subtitle">网页端 · 真人 / 机器人混战</p>
+    <div className="panel lobby lobby--warm">
+      <div className="lobby-hero" aria-hidden="true">
+        <img
+          className="lobby-hero-art"
+          src="/identity/lobby-hero.svg"
+          alt=""
+          width={640}
+          height={360}
+        />
+      </div>
+
+      <header className="lobby-head">
+        <p className="lobby-kicker">网页端 · 真人 / 机器人混战</p>
+        <h1 className="title lobby-title">♠ 斗地主</h1>
+        <p className="subtitle lobby-sub">选好昵称，一键开局</p>
+      </header>
 
       {status !== 'connected' && (
         <div className="hint warn">
@@ -42,7 +55,7 @@ export function Lobby() {
         </div>
       )}
 
-      <label className="field">
+      <label className="field lobby-nick">
         <span>昵称</span>
         <input
           type="text"
@@ -55,32 +68,44 @@ export function Lobby() {
         />
       </label>
 
-      <label className="field">
-        <span>房间码</span>
-        <input
-          type="text"
-          placeholder="输入房间号加入好友同桌"
-          value={roomCode}
-          onChange={(e) => setRoomCode(e.target.value.trim())}
-          onKeyDown={(e) => e.key === 'Enter' && canJoinRoom && enterRoom(trimmedRoomCode)}
-          autoCapitalize="none"
-          autoCorrect="off"
-        />
-      </label>
-
-      <div className="actions lobby-actions">
-        <button className="btn primary big" onClick={() => enterRoom()} disabled={!canJoin}>
-          快速匹配
+      <div className="lobby-cta-wrap">
+        <button
+          className="btn primary cta lobby-cta"
+          onClick={() => enterRoom()}
+          disabled={!canJoin}
+        >
+          开始游戏
         </button>
-        <button className="btn big" onClick={() => enterRoom(trimmedRoomCode)} disabled={!canJoinRoom}>
-          加入房间
-        </button>
+        <p className="lobby-cta-hint">快速匹配，人数不足自动补机器人</p>
       </div>
 
-      <ul className="tips">
+      <section className="lobby-secondary" aria-label="加入房间">
+        <h2 className="lobby-secondary-title">加入好友房间</h2>
+        <label className="field">
+          <span>房间码</span>
+          <input
+            type="text"
+            placeholder="输入房间号"
+            value={roomCode}
+            onChange={(e) => setRoomCode(e.target.value.trim())}
+            onKeyDown={(e) => e.key === 'Enter' && canJoinRoom && enterRoom(trimmedRoomCode)}
+            autoCapitalize="none"
+            autoCorrect="off"
+          />
+        </label>
+        <button
+          className="btn lobby-join"
+          onClick={() => enterRoom(trimmedRoomCode)}
+          disabled={!canJoinRoom}
+        >
+          加入房间
+        </button>
+      </section>
+
+      <ul className="tips lobby-tips">
         <li>点选手牌 → 出牌 / 不出；规则只做「能否成牌 / 压过」提示。</li>
         <li>合法性以服务端为准，客户端不裁决。</li>
-        <li>好友可复制房间号，在大厅输入后进入同一桌；3 真人齐了直接开局，人数不足时房主可选「补机器人开始」或等人。</li>
+        <li>好友可复制房间号，在大厅输入后进入同一桌；3 真人齐了直接开局。</li>
       </ul>
     </div>
   );
