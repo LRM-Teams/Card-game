@@ -1,32 +1,72 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useGameStore } from '../store/gameStore';
+import {
+  BUILTIN_AVATARS,
+  readIdentity,
+  saveIdentity,
+  type GuestIdentity,
+} from '../lib/session';
+import { PlayerAvatar } from './PlayerAvatar';
 
-/** 大厅：输入昵称，可快速匹配或用房间码加入同桌。 */
+/** 大厅：游客身份（昵称/头像持久化）+ 快速匹配 / 房间码进房。 */
 export function Lobby() {
   const navigate = useNavigate();
   const join = useGameStore((s) => s.join);
+  const match = useGameStore((s) => s.match);
+  const cancelMatch = useGameStore((s) => s.cancelMatch);
+  const matching = useGameStore((s) => s.matching);
   const status = useGameStore((s) => s.status);
   const lastError = useGameStore((s) => s.lastError);
   const dismissError = useGameStore((s) => s.dismissError);
-  const [nick, setNick] = useState('');
+  const beans = useGameStore((s) => s.beans);
+  const roomId = useGameStore((s) => s.roomId);
+  const snapshot = useGameStore((s) => s.snapshot);
+
+  const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
   const [roomCode, setRoomCode] = useState('');
 
-  const trimmedNick = nick.trim();
+  const trimmedNick = identity.name.trim();
   const trimmedRoomCode = roomCode.trim();
-  const canJoin = trimmedNick.length > 0 && status === 'connected';
-  const canJoinRoom = canJoin && trimmedRoomCode.length > 0;
+  const canAct = trimmedNick.length > 0 && status === 'connected' && !matching;
+  const canJoinRoom = canAct && trimmedRoomCode.length > 0;
 
-  const enterRoom = (targetRoomId?: string) => {
-    if (!canJoin) return;
-    join(trimmedNick, targetRoomId);
+  // 匹配成功入房后跳转
+  useEffect(() => {
+    if (roomId && snapshot) navigate({ to: '/room' });
+  }, [roomId, snapshot, navigate]);
+
+  const persist = (next: GuestIdentity) => {
+    setIdentity(next);
+    saveIdentity(next);
+  };
+
+  const startMatch = () => {
+    if (!canAct) return;
+    saveIdentity(identity);
+    match(identity);
+  };
+
+  const enterPrivateRoom = (targetRoomId?: string) => {
+    if (!canAct) return;
+    if (targetRoomId && !trimmedRoomCode) return;
+    saveIdentity(identity);
+    join(identity, targetRoomId);
     navigate({ to: '/room' });
   };
 
   return (
     <div className="panel lobby">
       <h1 className="title">♠ 斗地主 · 大厅</h1>
-      <p className="subtitle">网页端 · 真人 / 机器人混战</p>
+      <p className="subtitle">游客开玩 · 真人 / 机器人混战</p>
+
+      <div className="lobby-identity">
+        <PlayerAvatar kind="player" avatarId={identity.avatarId} />
+        <div>
+          <div className="lobby-beans">豆子 {beans ?? identity.beans}</div>
+          <div className="hint">游客 ID 已本地保存，刷新不清</div>
+        </div>
+      </div>
 
       {status !== 'connected' && (
         <div className="hint warn">
@@ -38,49 +78,83 @@ export function Lobby() {
 
       {lastError && (
         <div className="hint warn lobby-error" onClick={dismissError}>
-          加入失败：{lastError.message}（{lastError.code}）
+          失败：{lastError.message}（{lastError.code}）
         </div>
       )}
 
-      <label className="field">
-        <span>昵称</span>
-        <input
-          type="text"
-          placeholder="给自己起个名字"
-          value={nick}
-          onChange={(e) => setNick(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && enterRoom()}
-          maxLength={12}
-          autoFocus
-        />
-      </label>
+      {matching ? (
+        <div className="matching-panel">
+          <p className="subtitle">匹配中…凑齐三人即开；暂无人则 AI 补位</p>
+          <button className="btn big" type="button" onClick={() => cancelMatch()}>
+            取消匹配
+          </button>
+        </div>
+      ) : (
+        <>
+          <label className="field">
+            <span>昵称</span>
+            <input
+              type="text"
+              placeholder="给自己起个名字"
+              value={identity.name}
+              onChange={(e) => persist({ ...identity, name: e.target.value })}
+              maxLength={12}
+              autoFocus
+            />
+          </label>
 
-      <label className="field">
-        <span>房间码</span>
-        <input
-          type="text"
-          placeholder="输入房间号加入好友同桌"
-          value={roomCode}
-          onChange={(e) => setRoomCode(e.target.value.trim())}
-          onKeyDown={(e) => e.key === 'Enter' && canJoinRoom && enterRoom(trimmedRoomCode)}
-          autoCapitalize="none"
-          autoCorrect="off"
-        />
-      </label>
+          <div className="field">
+            <span>头像</span>
+            <div className="avatar-picker">
+              {BUILTIN_AVATARS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`avatar-pick ${identity.avatarId === id ? 'selected' : ''}`}
+                  onClick={() => persist({ ...identity, avatarId: id })}
+                  aria-label={id}
+                >
+                  <PlayerAvatar kind="player" avatarId={id} />
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <div className="actions lobby-actions">
-        <button className="btn primary big" onClick={() => enterRoom()} disabled={!canJoin}>
-          快速匹配
-        </button>
-        <button className="btn big" onClick={() => enterRoom(trimmedRoomCode)} disabled={!canJoinRoom}>
-          加入房间
-        </button>
-      </div>
+          <label className="field">
+            <span>房间码（私房）</span>
+            <input
+              type="text"
+              placeholder="输入房间号加入好友同桌"
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.trim())}
+              onKeyDown={(e) => e.key === 'Enter' && canJoinRoom && enterPrivateRoom(trimmedRoomCode)}
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+          </label>
+
+          <div className="actions lobby-actions">
+            <button className="btn primary big" onClick={startMatch} disabled={!canAct}>
+              快速开始
+            </button>
+            <button className="btn big" onClick={() => enterPrivateRoom()} disabled={!canAct}>
+              创建房间
+            </button>
+            <button
+              className="btn big"
+              onClick={() => enterPrivateRoom(trimmedRoomCode)}
+              disabled={!canJoinRoom}
+            >
+              加入房间
+            </button>
+          </div>
+        </>
+      )}
 
       <ul className="tips">
-        <li>点选手牌 → 出牌 / 不出；规则只做「能否成牌 / 压过」提示。</li>
-        <li>合法性以服务端为准，客户端不裁决。</li>
-        <li>好友可复制房间号，在大厅输入后进入同一桌；3 真人齐了直接开局，人数不足时房主可选「补机器人开始」或等人。</li>
+        <li>快速开始：自动匹配；人数不足时 AI 补位开局。</li>
+        <li>私房：创建房间后分享房间号，好友可加入；房主开局。</li>
+        <li>无微信/QQ 登录；游客身份本地持久化（允许重名）。</li>
       </ul>
     </div>
   );

@@ -4,11 +4,14 @@
  * - 管理 roomId → GameRoom。
  * - 维护 (roomId, seat) → socketId，用于把私发事件（如 dealt 手牌）送达对应真人。
  * - join：无 roomId 时新建房间；有 roomId 时只加入已存在房间。
+ * - match：走 MatchQueue，满员或超时后成桌并自动开局。
  */
 import type { Seat } from '@card-game/rules';
 import { GameRoom } from './game/GameRoom';
 import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
+import { IdentityStore, type GuestProfile } from './identity';
+import { MatchQueue, type MatchFormed, type MatchWaiter } from './matchQueue';
 
 export interface JoinOutcome {
   room: GameRoom;
@@ -22,9 +25,29 @@ export class RoomRegistry {
   private seatSockets = new Map<string, Map<Seat, string>>();
   private seq = 0;
   private readonly aiAdapter = createConfiguredDouZeroAdapter();
+  readonly identities = new IdentityStore();
+  private matchQueue: MatchQueue;
+  private onMatchFormed: ((formed: MatchFormed) => void) | null = null;
+
+  constructor() {
+    this.matchQueue = new MatchQueue({
+      formRoom: (humans) => this.formMatchRoom(humans),
+      onFormed: (formed) => this.onMatchFormed?.(formed),
+      fillAfterMs: 2000,
+    });
+  }
+
+  /** transport 注入：匹配成桌后广播事件 / 绑定 socket。 */
+  setMatchFormedHandler(handler: (formed: MatchFormed) => void): void {
+    this.onMatchFormed = handler;
+  }
 
   /** 真人加入；返回落座的房间/座位/事件流。失败时 seat=-1、result 为错误。 */
-  join(name: string, socketId: string, roomId?: string): JoinOutcome {
+  join(
+    profile: GuestProfile,
+    socketId: string,
+    roomId?: string,
+  ): JoinOutcome {
     let room = roomId ? this.rooms.get(roomId) : undefined;
     if (roomId && !room) {
       return {
@@ -39,7 +62,12 @@ export class RoomRegistry {
       this.rooms.set(id, room);
     }
 
-    const reconnect = room.reconnectHuman(name);
+    const reconnect = room.reconnectHuman(
+      profile.name,
+      profile.guestId,
+      profile.avatarId,
+      profile.beans,
+    );
     if (reconnect) {
       this.bindSeat(room.roomId, reconnect.seat, socketId);
       return { room, seat: reconnect.seat, result: reconnect.result };
@@ -49,10 +77,56 @@ export class RoomRegistry {
     if (seat === null) {
       return { room, seat: -1 as Seat, result: { ok: false, code: 'room_full', message: '房间已满（3/3）' } };
     }
-    const result = room.addHuman(name);
+    const result = room.addHuman({
+      name: profile.name,
+      guestId: profile.guestId,
+      avatarId: profile.avatarId,
+      beans: profile.beans,
+    });
     if (!result.ok) return { room, seat: -1 as Seat, result };
     this.bindSeat(room.roomId, seat, socketId);
     return { room, seat, result };
+  }
+
+  /** 进入快速匹配；由 MatchQueue 异步成桌。 */
+  enqueueMatch(profile: GuestProfile, socketId: string): void {
+    this.matchQueue.enqueue({
+      socketId,
+      profile,
+      enqueuedAt: Date.now(),
+    });
+  }
+
+  cancelMatch(socketId: string): boolean {
+    return this.matchQueue.cancel(socketId);
+  }
+
+  isMatching(socketId: string): boolean {
+    return this.matchQueue.hasSocket(socketId);
+  }
+
+  private formMatchRoom(humans: MatchWaiter[]): {
+    room: GameRoom;
+    seats: Array<{ socketId: string; seat: Seat; result: ActionResult }>;
+  } {
+    const id = `match-${(++this.seq).toString(36)}`;
+    const room = new GameRoom(id, this.aiAdapter);
+    this.rooms.set(id, room);
+    const seats: Array<{ socketId: string; seat: Seat; result: ActionResult }> = [];
+    for (const h of humans) {
+      const seat = room.firstEmptySeat();
+      if (seat === null) break;
+      const result = room.addHuman({
+        name: h.profile.name,
+        guestId: h.profile.guestId,
+        avatarId: h.profile.avatarId,
+        beans: h.profile.beans,
+      });
+      if (!result.ok) continue;
+      this.bindSeat(room.roomId, seat, h.socketId);
+      seats.push({ socketId: h.socketId, seat, result });
+    }
+    return { room, seats };
   }
 
   get(roomId: string): GameRoom | undefined {
@@ -79,5 +153,16 @@ export class RoomRegistry {
     const room = this.rooms.get(roomId);
     if (!room) return { ok: false, code: 'not_in_room', message: '房间不存在' };
     return { ok: true, events: room.markDisconnected(seat) };
+  }
+
+  /** 结算后把得分写入游客豆子。 */
+  applySettlementBeans(room: GameRoom): void {
+    const scores = room.result?.scores;
+    if (!scores) return;
+    for (const seat of [0, 1, 2] as Seat[]) {
+      const p = room.players[seat];
+      if (!p || p.isBot || !p.guestId) continue;
+      this.identities.applyScore(p.guestId, scores[seat] ?? 0);
+    }
   }
 }

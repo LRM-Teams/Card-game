@@ -105,17 +105,44 @@ export class GameRoom {
     return idx === -1 ? null : (idx as Seat);
   }
 
-  /** 断线真人用同房间 + 同昵称恢复原座位与私有手牌。 */
-  reconnectHuman(name: string): { seat: Seat; result: ActionResult } | null {
+  /**
+   * 断线真人恢复原座位与私有手牌。
+   * 优先 guestId；否则回退同昵称（兼容旧客户端）。
+   */
+  reconnectHuman(
+    name: string,
+    guestId?: string,
+    avatarId?: string,
+    beans = 1000,
+  ): { seat: Seat; result: ActionResult } | null {
     const trimmed = name.trim();
-    const idx = this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.name === trimmed);
+    const byGuest =
+      guestId != null && guestId.trim()
+        ? this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.guestId === guestId.trim())
+        : -1;
+    const idx =
+      byGuest !== -1
+        ? byGuest
+        : this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.name === trimmed);
     if (idx === -1) return null;
 
     const seat = idx as Seat;
     const p = this.players[seat]!;
     p.connected = true;
+    if (trimmed) p.name = trimmed;
+    if (avatarId) p.avatarId = avatarId;
+    if (guestId?.trim()) p.guestId = guestId.trim();
     const events: RoomEvent[] = [
-      { scope: { seat }, event: { type: 'you_joined', seat, roomId: this.roomId } },
+      {
+        scope: { seat },
+        event: {
+          type: 'you_joined',
+          seat,
+          roomId: this.roomId,
+          guestId: p.guestId ?? guestId ?? `legacy-${seat}`,
+          beans,
+        },
+      },
       { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
     ];
     if (p.hand.length > 0) {
@@ -134,14 +161,21 @@ export class GameRoom {
   // ---------------- 房间 / 开局 ----------------
 
   /** 真人加入，占第一个空座位。 */
-  addHuman(name: string): ActionResult {
+  addHuman(opts: {
+    name: string;
+    guestId: string;
+    avatarId: string;
+    beans: number;
+  }): ActionResult {
     if (this.phase !== GamePhase.WAITING) return err('invalid_action_for_phase', '对局已开始，不能加入');
     const idx = this.players.findIndex((p) => p === null);
     if (idx === -1) return err('room_full', '房间已满（3/3）');
     const seat = idx as Seat;
     this.players[seat] = {
       seat,
-      name: name.trim() || `玩家${seat + 1}`,
+      name: opts.name.trim() || `玩家${seat + 1}`,
+      avatarId: opts.avatarId || 'av-1',
+      guestId: opts.guestId,
       isBot: false,
       connected: true,
       role: undefined,
@@ -150,7 +184,16 @@ export class GameRoom {
     // 首位真人即为房主（创建房间者）
     if (this.hostSeat === null) this.hostSeat = seat;
     return ok([
-      { scope: { seat }, event: { type: 'you_joined', seat, roomId: this.roomId } },
+      {
+        scope: { seat },
+        event: {
+          type: 'you_joined',
+          seat,
+          roomId: this.roomId,
+          guestId: opts.guestId,
+          beans: opts.beans,
+        },
+      },
       { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
     ]);
   }
@@ -181,6 +224,7 @@ export class GameRoom {
         this.players[seat] = {
           seat,
           name: botName(this.botCounter),
+          avatarId: 'bot',
           isBot: true,
           connected: true,
           role: undefined,
@@ -548,6 +592,7 @@ export class GameRoom {
         players.push({
           seat,
           name: p.name,
+          avatarId: p.avatarId,
           isBot: p.isBot,
           connected: p.connected,
           role: p.role,

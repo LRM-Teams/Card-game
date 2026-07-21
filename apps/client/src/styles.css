@@ -1325,3 +1325,42 @@ body::before {
     animation-iteration-count: 1 !important;
   }
 }
+
+.lobby-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--ddz-space-3);
+  margin-bottom: var(--ddz-space-4);
+}
+.lobby-identity .avatar-silhouette {
+  width: 56px;
+  height: 56px;
+}
+.lobby-beans {
+  font-weight: 700;
+  color: var(--ddz-gold-500);
+}
+.avatar-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.avatar-pick {
+  border: 2px solid transparent;
+  background: transparent;
+  padding: 2px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.avatar-pick.selected {
+  border-color: var(--ddz-gold-500);
+}
+.avatar-pick .avatar-silhouette {
+  width: 40px;
+  height: 40px;
+}
+.matching-panel {
+  text-align: center;
+  padding: var(--ddz-space-5) 0;
+}

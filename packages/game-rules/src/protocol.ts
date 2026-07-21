@@ -35,12 +35,19 @@ export type ErrorCode =
   | 'invalid_bid' // 叫地主动作非法（choice 非 claim/pass）
   | 'must_play_when_leading' // 领出（自由出牌）时不能 pass
   | 'not_enough_players' // 不足 3 名真人且未选择补机器人，无法开局
-  | 'not_your_turn'; // 当前不是你的回合（如非自己出牌回合请求出牌提示）
+  | 'not_your_turn' // 当前不是你的回合（如非自己出牌回合请求出牌提示）
+  | 'already_in_room' // 已在房间内，不能再匹配/加入
+  | 'not_matching'; // 当前不在匹配队列
+
+/** 内置头像 id（客户端图集；允许任意非空字符串，未知则 fallback 剪影）。 */
+export type AvatarId = string;
 
 /** 牌桌上某玩家的公开视图（绝不含他人手牌）。 */
 export interface PlayerView {
   seat: Seat;
   name: string;
+  /** 头像图集 id；机器人用 `bot`。 */
+  avatarId: AvatarId;
   isBot: boolean;
   connected: boolean;
   role: Role;
@@ -92,9 +99,20 @@ export interface GameStateSnapshot {
   botThinkingSeat: Seat | null;
 }
 
+/** 加入 / 匹配时携带的游客身份（可缺省；服务端会补齐 guestId）。 */
+export interface PlayerIdentity {
+  name: string;
+  /** 客户端持久化的游客 ID；缺省时服务端生成并在 you_joined 回传。 */
+  guestId?: string;
+  /** 内置头像 id，缺省 `av-1`。 */
+  avatarId?: AvatarId;
+}
+
 /** 客户端 → 服务端动作。 */
 export type ClientAction =
-  | { type: 'join'; name: string; roomId?: string }
+  | ({ type: 'join'; roomId?: string } & PlayerIdentity) // 私房：无 roomId=创建；有 roomId=加入
+  | ({ type: 'match' } & PlayerIdentity) // 快速匹配入队
+  | { type: 'cancel_match' } // 取消匹配，回大厅
   | { type: 'start'; fillBots?: boolean } // fillBots=true：不足 3 真人时补机器人开局；默认 false：等人齐（3 真人）才开局
   | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫
   | { type: 'play'; cards: string[] } // 要出的牌 id 列表
@@ -104,7 +122,16 @@ export type ClientAction =
 /** 服务端 → 客户端事件。 */
 export type ServerEvent =
   // —— 加入 / 房间 ——
-  | { type: 'you_joined'; seat: Seat; roomId: string }
+  | {
+      type: 'you_joined';
+      seat: Seat;
+      roomId: string;
+      guestId: string;
+      /** 豆子余额（游客本地连续；服务端内存权威）。 */
+      beans: number;
+    }
+  | { type: 'matching' } // 已进入快速匹配队列
+  | { type: 'match_cancelled' } // 已取消匹配
   // —— 全量公开快照（任何状态变更后都会推，客户端可直接渲染）——
   | { type: 'snapshot'; state: GameStateSnapshot }
   // —— 阶段 ——

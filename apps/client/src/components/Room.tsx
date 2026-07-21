@@ -71,7 +71,7 @@ export function Room() {
       <div className="seats-preview">
         {seats.map((p, i) => (
           <div className={`seat-card ${p ? (p.isBot ? 'bot' : 'me') : 'empty'}`} key={i}>
-            <div className="avatar"><PlayerAvatar kind={!p ? 'empty' : 'player'} /></div>
+            <div className="avatar"><PlayerAvatar kind={!p ? 'empty' : 'player'} avatarId={p?.avatarId} /></div>
             <div className="seat-name">{p ? p.name : '空位'}</div>
             <div className="seat-role">
               {!p

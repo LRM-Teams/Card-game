@@ -293,7 +293,7 @@ function SeatBadge({
   active,
   play,
 }: {
-  p: { name: string; isBot: boolean; handSize: number; role?: string } | undefined;
+  p: { name: string; isBot: boolean; handSize: number; role?: string; avatarId?: string } | undefined;
   active: boolean;
   play?: ReactNode;
 }) {
@@ -303,7 +303,11 @@ function SeatBadge({
   return (
     <div className={`seat-badge ${active ? 'active' : ''} ${p.role ?? ''}`}>
       <div className="avatar">
-        {roleAsset ? <img className="role-character" src={roleAsset} alt={roleLabel ?? ''} /> : <PlayerAvatar kind="player" />}
+        {roleAsset ? (
+          <img className="role-character" src={roleAsset} alt={roleLabel ?? ''} />
+        ) : (
+          <PlayerAvatar kind="player" avatarId={p.avatarId} />
+        )}
       </div>
       <div className="seat-name">{p.name}{roleLabel ? `（${roleLabel}）` : ''}</div>
       <div className="seat-count">剩 {p.handSize}</div>
