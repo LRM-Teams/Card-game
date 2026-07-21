@@ -28,7 +28,7 @@ export class IdentityStore {
   private profiles = new Map<string, GuestProfile>();
 
   /** 用客户端提交的身份 upsert；返回权威档案（含可能新生成的 guestId）。 */
-  resolve(input: { name: string; guestId?: string; avatarId?: string }): GuestProfile {
+  resolve(input: { name: string; guestId?: string; avatarId?: string; beans?: number }): GuestProfile {
     const name = input.name.trim() || '游客';
     const avatarId = normalizeAvatar(input.avatarId);
     const existingId = input.guestId?.trim();
@@ -39,11 +39,15 @@ export class IdentityStore {
       return p;
     }
     const guestId = existingId || newGuestId();
+    const beans =
+      typeof input.beans === 'number' && Number.isFinite(input.beans)
+        ? Math.max(0, Math.floor(input.beans))
+        : DEFAULT_BEANS;
     const profile: GuestProfile = {
       guestId,
       name,
       avatarId,
-      beans: DEFAULT_BEANS,
+      beans,
     };
     this.profiles.set(guestId, profile);
     return profile;

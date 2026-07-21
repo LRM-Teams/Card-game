@@ -106,6 +106,8 @@ export interface PlayerIdentity {
   guestId?: string;
   /** 内置头像 id，缺省 `av-1`。 */
   avatarId?: AvatarId;
+  /** 本地缓存豆子；服务端无档（冷启动）时用于续写余额。 */
+  beans?: number;
 }
 
 /** 客户端 → 服务端动作。 */
@@ -147,6 +149,8 @@ export type ServerEvent =
   | { type: 'passed'; seat: Seat }
   // —— 结算 ——
   | { type: 'settled'; result: GameResult }
+  /** 豆子余额更新（私发；结算后或身份续档时）。 */
+  | { type: 'beans'; beans: number }
   // —— AI 出牌提示（私发给请求者；按模型分从高到低的合法出牌建议，每组为 card id 列表；空数组表示建议不出）——
   | { type: 'hint'; suggestions: string[][] }
   // —— 错误（只回送给发起动作的客户端）——

@@ -35,6 +35,7 @@ function tryAutoRejoin(): void {
     roomId: session.roomId ?? undefined,
     guestId: session.guestId ?? id.guestId,
     avatarId: session.avatarId ?? id.avatarId,
+    beans: id.beans,
   });
   useGameStore.setState({ myName: session.name });
 }
@@ -198,6 +199,13 @@ export const useGameStore = create<UiState>((set, get) => ({
           }
           break;
         }
+        case 'beans': {
+          const prev = readIdentity();
+          const next: GuestIdentity = { ...prev, beans: e.beans };
+          saveIdentity(next);
+          set({ beans: e.beans });
+          break;
+        }
         case 'error':
           set({ lastError: { code: e.code, message: e.message, at: Date.now() }, matching: false });
           break;
@@ -237,6 +245,7 @@ export const useGameStore = create<UiState>((set, get) => ({
       roomId: roomId?.trim() || undefined,
       guestId: identity.guestId,
       avatarId: identity.avatarId,
+      beans: identity.beans,
     });
   },
 
@@ -262,6 +271,7 @@ export const useGameStore = create<UiState>((set, get) => ({
       name: identity.name,
       guestId: identity.guestId,
       avatarId: identity.avatarId,
+      beans: identity.beans,
     });
   },
 
