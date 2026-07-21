@@ -48,6 +48,7 @@ export const MOTION = {
 
 export type FxDemoScene =
   | 'deal'
+  | 'select'
   | 'turn'
   | 'bomb'
   | 'rocket'
@@ -58,6 +59,7 @@ export type FxDemoScene =
 
 export const FX_DEMO_SCENES: FxDemoScene[] = [
   'deal',
+  'select',
   'turn',
   'bomb',
   'rocket',
