@@ -32,6 +32,8 @@ export function GameTable() {
   const play = useGameStore((s) => s.play);
   const pass = useGameStore((s) => s.pass);
   const bid = useGameStore((s) => s.bid);
+  const reveal = useGameStore((s) => s.reveal);
+  const doubleChoice = useGameStore((s) => s.double);
   const guideActive = useOnboardingStore((s) => s.active);
   const seenBidTip = useOnboardingStore((s) => s.seenBidTip);
   const seenPlayTip = useOnboardingStore((s) => s.seenPlayTip);
@@ -144,6 +146,19 @@ export function GameTable() {
             <p className="result-meta">
               {winnerRoleLabel}胜 · 倍数 ×{r.multiplier} · 单注 {r.unit}
             </p>
+            {r.multiplierBreakdown && (
+              <p className="result-meta result-breakdown" aria-label="倍数构成">
+                构成：底{r.multiplierBreakdown.base}
+                {r.multiplierBreakdown.reveal ? ' × 明牌2' : ''}
+                {r.multiplierBreakdown.doubleCount > 0
+                  ? ` × 加倍2×${r.multiplierBreakdown.doubleCount}`
+                  : ''}
+                {r.multiplierBreakdown.bombCount > 0
+                  ? ` × 炸弹2×${r.multiplierBreakdown.bombCount}`
+                  : ''}
+                {r.multiplierBreakdown.spring ? ' × 春天2' : ''}
+              </p>
+            )}
           </div>
           <ul className="score-list" aria-label="本局得分">
             {r.scores.map((sc, i) => (
@@ -207,9 +222,16 @@ export function GameTable() {
   }
 
   const isBidding = phase === GamePhase.BIDDING;
+  const isRevealing = phase === GamePhase.REVEALING;
+  const isDoubling = phase === GamePhase.DOUBLING;
+  const canReveal = isRevealing && mySeat != null && mySeat === snapshot.landlordSeat;
+  const canDouble =
+    isDoubling &&
+    mySeat != null &&
+    (snapshot.pendingDoubleSeats ?? []).some((s) => s === mySeat);
 
   return (
-    <div className={`table${isBidding ? ' is-bidding' : ''}`}>
+    <div className={`table${isBidding || isRevealing || isDoubling ? ' is-bidding' : ''}`}>
       <div className="meta-corner">
         {snapshot.turnSeat != null && (phase === GamePhase.BIDDING || phase === GamePhase.PLAYING) && (
           <span
@@ -277,11 +299,19 @@ export function GameTable() {
             ? isMyTurn
               ? '👉 轮到你叫地主'
               : `等待 ${nameOf(snapshot.turnSeat ?? null)} 叫地主`
-            : phase === GamePhase.PLAYING
-              ? isMyTurn
-                ? '👉 轮到你出牌'
-                : `等待 ${nameOf(snapshot.turnSeat ?? null)} 出牌`
-              : phaseLabel(phase)}
+            : phase === GamePhase.REVEALING
+              ? canReveal
+                ? '👉 地主可选择明牌（×2）'
+                : `等待地主决定是否明牌`
+              : phase === GamePhase.DOUBLING
+                ? canDouble
+                  ? '👉 可选择加倍（×2）'
+                  : '等待其他玩家加倍'
+                : phase === GamePhase.PLAYING
+                  ? isMyTurn
+                    ? '👉 轮到你出牌'
+                    : `等待 ${nameOf(snapshot.turnSeat ?? null)} 出牌`
+                  : phaseLabel(phase)}
         </span>
         {me?.role === 'landlord' && <RoleBadge role="landlord" />}
         {me?.role === 'farmer' && <RoleBadge role="farmer" />}
@@ -331,6 +361,38 @@ export function GameTable() {
             </div>
           </div>
         </GuideSpot>
+      ) : canReveal ? (
+        <div className="bid-cta-layer" role="group" aria-label="明牌操作">
+          <div className="bid-cta-panel">
+            <p className="bid-cta-title">是否明牌（×2）</p>
+            <div className="bid-cta-row">
+              <button type="button" className="btn bid-pass" onClick={() => reveal(false)}>
+                不明牌
+              </button>
+              <button type="button" className="btn primary cta bid-claim" onClick={() => reveal(true)}>
+                明牌
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : canDouble ? (
+        <div className="bid-cta-layer" role="group" aria-label="加倍操作">
+          <div className="bid-cta-panel">
+            <p className="bid-cta-title">是否加倍（×2）</p>
+            <div className="bid-cta-row">
+              <button type="button" className="btn bid-pass" onClick={() => doubleChoice(false)}>
+                不加倍
+              </button>
+              <button
+                type="button"
+                className="btn primary cta bid-claim"
+                onClick={() => doubleChoice(true)}
+              >
+                加倍
+              </button>
+            </div>
+          </div>
+        </div>
       ) : (
         mySeat != null && (
           <div className="self-seat-play">
@@ -345,8 +407,8 @@ export function GameTable() {
 
       <HandView cards={myHand} selected={selected} onToggle={toggleSelect} dealKey={dealKey} />
 
-      {/* 出牌控件：叫分阶段隐藏，避免底部 sticky 层挡手牌 */}
-      {!isBidding && (
+      {/* 出牌控件：叫分/明牌/加倍阶段隐藏 */}
+      {!isBidding && !isRevealing && !isDoubling && (
         <GuideSpot
           show={guideActive && !seenPlayTip && isMyTurn && phase === GamePhase.PLAYING}
           title="出牌操作"
@@ -507,6 +569,10 @@ function phaseLabel(phase: GamePhase): string {
       return '发牌中';
     case GamePhase.BIDDING:
       return '叫地主';
+    case GamePhase.REVEALING:
+      return '明牌';
+    case GamePhase.DOUBLING:
+      return '加倍';
     case GamePhase.PLAYING:
       return '出牌中';
     case GamePhase.SETTLED:

@@ -17,6 +17,8 @@ export enum GamePhase {
   WAITING = 'waiting', // 房间等待开局
   DEALING = 'dealing', // 发牌中
   BIDDING = 'bidding', // 叫地主
+  REVEALING = 'revealing', // 地主明牌决策（可选）
+  DOUBLING = 'doubling', // 加倍决策（可选，可叠加）
   PLAYING = 'playing', // 出牌中
   SETTLED = 'settled', // 已结算
 }
@@ -56,6 +58,13 @@ export interface PlayerView {
   role: Role;
   /** 手牌剩余张数（公开）。 */
   handSize: number;
+  /**
+   * 明牌公开手牌（仅地主选择明牌后对该座位下发 card id 列表）。
+   * 其他座位省略。
+   */
+  openHand?: string[];
+  /** 本局是否已选择加倍（DOUBLING 结束后仍保留，便于结算构成展示）。 */
+  doubled?: boolean;
 }
 
 /** 一次出牌记录（"上家出了什么"）。 */
@@ -75,6 +84,11 @@ export interface GameResult {
   unit: number;
   /** 当前倍数（由 multiplier 规则累积；服务端按已触发的炸弹/王炸/春天等规则写入）。 */
   multiplier: number;
+  /**
+   * 倍数构成（结算页 / HUD）。
+   * 最终倍数 ≈ base × (reveal?2:1) × 2^doubleCount × 2^bombCount × (spring?2:1)
+   */
+  multiplierBreakdown?: MultiplierBreakdown;
   /** 三家本局得分（+赢 / -输，来自 settlement.settle），按座位 [0,1,2]。 */
   scores: [number, number, number];
   /**
@@ -82,6 +96,24 @@ export interface GameResult {
    * 出完的座位为空数组；客户端缩略展示，不抢胜负/再来一局主层级。
    */
   remainingHands: [string[], string[], string[]];
+}
+
+/** 倍数构成（明牌 / 加倍 / 炸弹 / 春天）。 */
+export interface MultiplierBreakdown {
+  /** 叫分基础（MVP 固定 1）。 */
+  base: number;
+  /** 是否已明牌（×2）。 */
+  reveal: boolean;
+  /** 已加倍的座位数（每位 ×2，可叠加）。 */
+  doubleCount: number;
+  /** 已加倍的座位列表。 */
+  doubleSeats: Seat[];
+  /** 出牌阶段炸弹/王炸翻倍次数。 */
+  bombCount: number;
+  /** 春天或反春是否已触发。 */
+  spring: boolean;
+  /** 当前总倍数。 */
+  current: number;
 }
 
 /** 全量公开快照（客户端可据此渲染整张牌桌；不含任何玩家手牌）。 */
@@ -100,8 +132,15 @@ export interface GameStateSnapshot {
   lastPlay: PlayRecord | null;
   /** 当前轮连续 pass 次数（达到 2 则本轮结束、领出者继续）。 */
   passCount: number;
-  /** 当前倍数（炸弹/王炸累积），便于客户端展示。 */
+  /** 当前倍数（炸弹/王炸/明牌/加倍累积），便于客户端展示。 */
   multiplier: number;
+  /** 倍数构成（明牌/加倍/炸弹等）。 */
+  multiplierBreakdown: MultiplierBreakdown;
+  /**
+   * DOUBLING 阶段尚未表态的座位；其他阶段为空数组。
+   * 客户端据此决定谁还能点「加倍」。
+   */
+  pendingDoubleSeats: Seat[];
   result: GameResult | null;
   /** 机器人正在「思考」的座位；出牌/叫牌动作尚未落盘，供客户端展示思考态。 */
   botThinkingSeat: Seat | null;
@@ -125,6 +164,10 @@ export type ClientAction =
   | { type: 'cancel_match' } // 取消匹配，回大厅
   | { type: 'start'; fillBots?: boolean } // fillBots=true：不足 3 真人时补机器人开局；默认 false：等人齐（3 真人）才开局
   | { type: 'bid'; choice: BidChoice } // claim=叫/抢（要当地主），pass=不叫
+  /** 明牌决策（仅 REVEALING 阶段、地主座位）。true=明牌×2，false=不明牌。 */
+  | { type: 'reveal'; reveal: boolean }
+  /** 加倍决策（仅 DOUBLING 阶段、尚未表态的座位）。true=加倍×2，false=不加倍。 */
+  | { type: 'double'; double: boolean }
   | { type: 'play'; cards: string[] } // 要出的牌 id 列表
   | { type: 'pass' }
   | { type: 'hint' } // 请求 AI 出牌提示（DouZero top-N 合法出牌建议，按模型分从高到低）
@@ -158,6 +201,16 @@ export type ServerEvent =
   // —— 叫地主 ——
   | { type: 'bid'; seat: Seat; choice: BidChoice }
   | { type: 'landlord'; seat: Seat; bottom: string[] } // 地主敲定 + 底牌公开
+  /** 地主明牌决策结果；revealed=true 时 hand 为公开手牌 id。 */
+  | {
+      type: 'revealed';
+      seat: Seat;
+      revealed: boolean;
+      hand?: string[];
+      multiplier: number;
+    }
+  /** 某座位加倍决策结果。 */
+  | { type: 'doubled'; seat: Seat; doubled: boolean; multiplier: number }
   // —— 出牌回合 ——
   | { type: 'turn'; seat: Seat }
   | { type: 'played'; seat: Seat; hand: Hand }

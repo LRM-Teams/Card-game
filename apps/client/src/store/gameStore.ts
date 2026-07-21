@@ -126,6 +126,8 @@ interface UiState {
   cancelMatch: () => void;
   start: (fillBots?: boolean) => void;
   bid: (choice: BidChoice) => void;
+  reveal: (reveal: boolean) => void;
+  double: (doubled: boolean) => void;
   play: () => void;
   pass: () => void;
   toggleSelect: (id: string) => void;
@@ -367,6 +369,10 @@ export const useGameStore = create<UiState>((set, get) => ({
   start: (fillBots) => send({ type: 'start', fillBots }),
 
   bid: (choice) => send({ type: 'bid', choice }),
+
+  reveal: (reveal) => send({ type: 'reveal', reveal }),
+
+  double: (doubled) => send({ type: 'double', double: doubled }),
 
   play: () => {
     const ids = get().selected;

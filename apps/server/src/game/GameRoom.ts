@@ -8,7 +8,7 @@
  * - 地主拿底牌：`withBottom`。
  * - 出牌合法性：`canPlay` / `identifyHand`。
  *
- * 状态机：WAITING → DEALING → BIDDING → PLAYING → SETTLED。
+ * 状态机：WAITING → DEALING → BIDDING → REVEALING → DOUBLING → PLAYING → SETTLED。
  * 真人不足时补机器人到 3 人；机器人用 bot.ts 的最小合法 AI 自动行棋。
  * 纯逻辑：不依赖 socket.io，可被 transport 和单测直接驱动。
  *
@@ -16,12 +16,15 @@
  * 事件流里的 scope 决定下发范围：'room' 广播，{seat} 仅私发该座位。
  */
 import {
+  applyDouble,
   applyPlay,
+  applyReveal,
   canPlay,
   createMultiplier,
   deal,
   GamePhase,
   identifyHand,
+  isDoublingPlay,
   isSocialEmoteId,
   isSocialPhraseId,
   resolveBidding,
@@ -39,6 +42,7 @@ import type {
   GameResult,
   GameStateSnapshot,
   Hand,
+  MultiplierBreakdown,
   MultiplierState,
   PlayerView,
   Seat,
@@ -46,7 +50,7 @@ import type {
   SocialKind,
   SocialPhraseId,
 } from '@card-game/rules';
-import { botBid, botName } from './bot';
+import { botBid, botDouble, botName, botReveal } from './bot';
 import { botThinkDelayMs, sleep } from './botTiming';
 import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
@@ -57,6 +61,8 @@ const MAX_REDEALS = 5;
 const BOT_LOOP_GUARD = 2000;
 /** AI 出牌提示一次返回的建议条数（按模型分从高到低，不足时用合法出牌补足，前端循环切换）。 */
 const HINT_TOP_N = 5;
+/** 明牌 / 加倍决策窗口（毫秒）；超时自动跳过。可用环境变量覆盖。 */
+const DECISION_WINDOW_MS = Number(process.env.DECISION_WINDOW_MS ?? 15_000);
 
 function ok(events: RoomEvent[]): ActionResult {
   return { ok: true, events };
@@ -84,7 +90,7 @@ export class GameRoom {
   /** 当前轮的领出者（赢得上一轮 / 本轮起始）。 */
   leaderSeat: Seat | null = null;
   bid: BidState | null = null;
-  /** 倍数状态（底分 1，每出一个炸弹/王炸 ×2）。 */
+  /** 倍数状态（底分 1，每出一个炸弹/王炸 ×2；明牌/加倍另计）。 */
   mult: MultiplierState = createMultiplier();
   result: GameResult | null = null;
   /** 出牌/过牌历史，供 DouZero 适配层构造观测状态。 */
@@ -93,6 +99,16 @@ export class GameRoom {
   botThinkingSeat: Seat | null = null;
   /** 各座位上次成功发送表情/快捷语的时间戳（限频）。 */
   private socialLastSentAt: [number, number, number] = [0, 0, 0];
+  /** 地主是否已明牌。 */
+  landlordRevealed = false;
+  /** 已选择加倍的座位。 */
+  doubledSeats: Seat[] = [];
+  /** DOUBLING 阶段尚未表态的座位。 */
+  pendingDoubleSeats: Seat[] = [];
+  /** 出牌阶段炸弹/王炸翻倍次数。 */
+  bombCount = 0;
+  /** 明牌/加倍决策截止时间戳；null 表示无窗口。 */
+  decisionDeadlineAt: number | null = null;
 
   private botCounter = 0;
 
@@ -258,6 +274,11 @@ export class GameRoom {
     this.result = null;
     this.mult = createMultiplier();
     this.playHistory = [];
+    this.landlordRevealed = false;
+    this.doubledSeats = [];
+    this.pendingDoubleSeats = [];
+    this.bombCount = 0;
+    this.decisionDeadlineAt = null;
 
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'phase', phase: GamePhase.DEALING } }];
     for (const seat of SEATS) {
@@ -344,15 +365,132 @@ export class GameRoom {
     // 地主拿底牌（共 20 张）
     this.players[seat]!.hand = withBottom(this.players[seat]!.hand, this.bottom);
     this.bottomRevealed = true;
+    this.landlordRevealed = false;
+    this.doubledSeats = [];
+    this.pendingDoubleSeats = [];
+    this.bombCount = 0;
+    // 进入明牌窗口（可选）；结束后再加倍，再出牌
+    this.phase = GamePhase.REVEALING;
+    this.turnSeat = seat;
+    this.leaderSeat = seat;
+    this.lastPlay = null;
+    this.passCount = 0;
+    this.armDecisionDeadline();
+    return [
+      // 地主的新手牌（20 张）私发
+      { scope: { seat }, event: { type: 'dealt', hand: this.players[seat]!.hand.map((c) => c.id) } },
+      { scope: 'room', event: { type: 'landlord', seat, bottom: this.bottom.map((c) => c.id) } },
+      { scope: 'room', event: { type: 'phase', phase: GamePhase.REVEALING } },
+      { scope: 'room', event: { type: 'turn', seat } },
+      { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
+    ];
+  }
+
+  private armDecisionDeadline(now = Date.now()): void {
+    this.decisionDeadlineAt = now + Math.max(0, DECISION_WINDOW_MS);
+  }
+
+  /** 剩余决策毫秒；无窗口时返回 null。 */
+  decisionRemainingMs(now = Date.now()): number | null {
+    if (this.decisionDeadlineAt == null) return null;
+    return Math.max(0, this.decisionDeadlineAt - now);
+  }
+
+  /**
+   * 明牌/加倍窗口超时：自动跳过未决策项并推进。
+   * transport 在截止时调用；单测可直接调用。
+   */
+  expireDecisionWindow(now = Date.now()): RoomEvent[] {
+    if (this.decisionDeadlineAt == null || now < this.decisionDeadlineAt) return [];
+    if (this.phase === GamePhase.REVEALING && this.landlordSeat !== null) {
+      return this.iReveal(this.landlordSeat, false);
+    }
+    if (this.phase === GamePhase.DOUBLING) {
+      const events: RoomEvent[] = [];
+      for (const seat of [...this.pendingDoubleSeats]) {
+        events.push(...this.iDouble(seat, false));
+      }
+      return events;
+    }
+    return [];
+  }
+
+  async handleReveal(seat: Seat, reveal: boolean): Promise<ActionResult> {
+    if (this.phase !== GamePhase.REVEALING) return err('invalid_action_for_phase', '当前不是明牌阶段');
+    if (seat !== this.landlordSeat) return err('not_your_turn', '只有地主可以明牌');
+    return ok(this.iReveal(seat, reveal));
+  }
+
+  private iReveal(seat: Seat, reveal: boolean): RoomEvent[] {
+    if (reveal) {
+      this.landlordRevealed = true;
+      this.mult = applyReveal(this.mult);
+    }
+    const hand = reveal ? this.players[seat]!.hand.map((c) => c.id) : undefined;
+    const events: RoomEvent[] = [
+      {
+        scope: 'room',
+        event: {
+          type: 'revealed',
+          seat,
+          revealed: reveal,
+          hand,
+          multiplier: this.mult.multiplier,
+        },
+      },
+    ];
+    events.push(...this.enterDoubling());
+    return events;
+  }
+
+  private enterDoubling(): RoomEvent[] {
+    this.phase = GamePhase.DOUBLING;
+    this.pendingDoubleSeats = [...SEATS];
+    this.turnSeat = null;
+    this.armDecisionDeadline();
+    return [
+      { scope: 'room', event: { type: 'phase', phase: GamePhase.DOUBLING } },
+      { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
+    ];
+  }
+
+  async handleDouble(seat: Seat, doubled: boolean): Promise<ActionResult> {
+    if (this.phase !== GamePhase.DOUBLING) return err('invalid_action_for_phase', '当前不是加倍阶段');
+    if (!this.pendingDoubleSeats.includes(seat)) {
+      return err('invalid_action_for_phase', '你已完成加倍选择或无权加倍');
+    }
+    return ok(this.iDouble(seat, doubled));
+  }
+
+  private iDouble(seat: Seat, doubled: boolean): RoomEvent[] {
+    this.pendingDoubleSeats = this.pendingDoubleSeats.filter((s) => s !== seat);
+    if (doubled) {
+      this.doubledSeats.push(seat);
+      this.mult = applyDouble(this.mult);
+    }
+    const events: RoomEvent[] = [
+      {
+        scope: 'room',
+        event: { type: 'doubled', seat, doubled, multiplier: this.mult.multiplier },
+      },
+    ];
+    if (this.pendingDoubleSeats.length === 0) {
+      events.push(...this.beginPlaying());
+    } else {
+      events.push({ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } });
+    }
+    return events;
+  }
+
+  private beginPlaying(): RoomEvent[] {
+    const seat = this.landlordSeat!;
     this.phase = GamePhase.PLAYING;
     this.turnSeat = seat;
     this.leaderSeat = seat;
     this.lastPlay = null;
     this.passCount = 0;
+    this.decisionDeadlineAt = null;
     return [
-      // 地主的新手牌（20 张）私发
-      { scope: { seat }, event: { type: 'dealt', hand: this.players[seat]!.hand.map((c) => c.id) } },
-      { scope: 'room', event: { type: 'landlord', seat, bottom: this.bottom.map((c) => c.id) } },
       { scope: 'room', event: { type: 'phase', phase: GamePhase.PLAYING } },
       { scope: 'room', event: { type: 'turn', seat } },
       { scope: 'room', event: { type: 'snapshot', state: this.snapshot() } },
@@ -395,6 +533,7 @@ export class GameRoom {
     this.leaderSeat = seat;
     this.passCount = 0;
     this.playHistory.push({ seat, cards: [...cards], isPass: false });
+    if (isDoublingPlay(hand)) this.bombCount += 1;
     this.mult = applyPlay(this.mult, hand); // 炸弹 / 王炸 ×2
 
     const events: RoomEvent[] = [{ scope: 'room', event: { type: 'played', seat, hand } }];
@@ -451,6 +590,7 @@ export class GameRoom {
       landlordSeat,
       unit,
       multiplier: this.mult.multiplier,
+      multiplierBreakdown: this.breakdown(),
       scores: s.scores,
       remainingHands,
     };
@@ -466,13 +606,24 @@ export class GameRoom {
 
   // ---------------- 机器人自动行棋 ----------------
 
-  /** 当前是否轮到机器人且需要推进（叫牌或出牌）。 */
+  /** 当前是否轮到机器人且需要推进（叫牌 / 明牌 / 加倍 / 出牌）。 */
   private pendingBotSeat(): Seat | null {
     if (this.phase === GamePhase.SETTLED) return null;
     if (this.phase === GamePhase.BIDDING && this.bid) {
       const seat = this.bid.order[this.bid.index]!;
       const p = this.players[seat];
       return p?.isBot ? seat : null;
+    }
+    if (this.phase === GamePhase.REVEALING && this.landlordSeat !== null) {
+      const p = this.players[this.landlordSeat];
+      return p?.isBot ? this.landlordSeat : null;
+    }
+    if (this.phase === GamePhase.DOUBLING) {
+      for (const seat of this.pendingDoubleSeats) {
+        const p = this.players[seat];
+        if (p?.isBot) return seat;
+      }
+      return null;
     }
     if (this.phase === GamePhase.PLAYING && this.turnSeat !== null) {
       const p = this.players[this.turnSeat];
@@ -487,6 +638,18 @@ export class GameRoom {
       const p = this.players[seat];
       if (!p || !p.isBot) return [];
       return this.iBid(seat, botBid(p.hand));
+    }
+    if (this.phase === GamePhase.REVEALING && this.landlordSeat !== null) {
+      const seat = this.landlordSeat;
+      const p = this.players[seat];
+      if (!p || !p.isBot) return [];
+      return this.iReveal(seat, botReveal(p.hand));
+    }
+    if (this.phase === GamePhase.DOUBLING) {
+      const seat = this.pendingDoubleSeats.find((s) => this.players[s]?.isBot);
+      if (seat === undefined) return [];
+      const p = this.players[seat]!;
+      return this.iDouble(seat, botDouble(p.hand, seat === this.landlordSeat));
     }
     if (this.phase === GamePhase.PLAYING) {
       const seat = this.turnSeat;
@@ -552,6 +715,10 @@ export class GameRoom {
     switch (action.type) {
       case 'bid':
         return this.handleBid(seat, action.choice);
+      case 'reveal':
+        return this.handleReveal(seat, action.reveal);
+      case 'double':
+        return this.handleDouble(seat, action.double);
       case 'play':
         return this.handlePlay(seat, action.cards);
       case 'pass':
@@ -578,6 +745,8 @@ export class GameRoom {
   ): ActionResult {
     if (
       this.phase !== GamePhase.BIDDING &&
+      this.phase !== GamePhase.REVEALING &&
+      this.phase !== GamePhase.DOUBLING &&
       this.phase !== GamePhase.PLAYING &&
       this.phase !== GamePhase.SETTLED
     ) {
@@ -638,13 +807,25 @@ export class GameRoom {
     return ok([{ scope: { seat }, event: { type: 'hint', suggestions } }]);
   }
 
-  /** 生成全量公开快照（不含任何玩家手牌；底牌未公开前不下发）。 */
+  private breakdown(): MultiplierBreakdown {
+    return {
+      base: this.mult.base,
+      reveal: this.landlordRevealed,
+      doubleCount: this.doubledSeats.length,
+      doubleSeats: [...this.doubledSeats],
+      bombCount: this.bombCount,
+      spring: false,
+      current: this.mult.multiplier,
+    };
+  }
+
+  /** 生成全量公开快照（不含任何玩家手牌；底牌未公开前不下发；明牌座位例外）。 */
   snapshot(): GameStateSnapshot {
     const players: PlayerView[] = [];
     for (const seat of SEATS) {
       const p = this.players[seat];
       if (p) {
-        players.push({
+        const view: PlayerView = {
           seat,
           name: p.name,
           avatarId: p.avatarId,
@@ -652,7 +833,12 @@ export class GameRoom {
           connected: p.connected,
           role: p.role,
           handSize: p.hand.length,
-        });
+          doubled: this.doubledSeats.includes(seat),
+        };
+        if (this.landlordRevealed && seat === this.landlordSeat) {
+          view.openHand = p.hand.map((c) => c.id);
+        }
+        players.push(view);
       }
     }
     return {
@@ -666,6 +852,8 @@ export class GameRoom {
       lastPlay: this.lastPlay ? { seat: this.lastPlay.seat, hand: this.lastPlay.hand } : null,
       passCount: this.passCount,
       multiplier: this.mult.multiplier,
+      multiplierBreakdown: this.breakdown(),
+      pendingDoubleSeats: this.phase === GamePhase.DOUBLING ? [...this.pendingDoubleSeats] : [],
       result: this.result,
       botThinkingSeat: this.botThinkingSeat,
     };
