@@ -1,10 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Small Joker card">
-  <defs><linearGradient id="paper" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fffdf4"/><stop offset="1" stop-color="#ead8ae"/></linearGradient><linearGradient id="jester" x1="0" x2="1"><stop offset="0" stop-color="#263247"/><stop offset="1" stop-color="#50607c"/></linearGradient></defs>
-  <rect x="4" y="4" width="96" height="140" rx="12" fill="url(#paper)" stroke="#c89b4f" stroke-width="2"/>
-  <text x="15" y="31" font-family="Georgia,serif" font-size="15" font-weight="900" fill="#263247">JOKER</text>
-  <text x="17" y="50" font-family="sans-serif" font-size="13" font-weight="900" fill="#263247">小王</text>
-  <path d="M30 78c7-28 37-28 44 0l-8 32H38z" fill="url(#jester)"/>
-  <path d="M29 78c6-16 5-28 0-38 12 3 19 13 23 31 4-18 11-28 23-31-5 10-6 22 0 38" fill="#f4c85b" stroke="#263247" stroke-width="3" stroke-linejoin="round"/>
-  <circle cx="29" cy="40" r="5" fill="#263247"/><circle cx="75" cy="40" r="5" fill="#263247"/><circle cx="52" cy="66" r="6" fill="#263247"/>
-  <text x="88" y="121" font-family="sans-serif" font-size="13" font-weight="900" fill="#263247" transform="rotate(180 88 121)">小王</text>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffef9"/>
+      <stop offset="0.55" stop-color="#f4ead4"/>
+      <stop offset="1" stop-color="#e4d2a6"/>
+    </linearGradient>
+    <linearGradient id="hat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d5a80"/>
+      <stop offset="1" stop-color="#1a2f4a"/>
+    </linearGradient>
+    <linearGradient id="collar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d4e4f7"/>
+      <stop offset="0.5" stop-color="#8eb4d8"/>
+      <stop offset="1" stop-color="#d4e4f7"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#2a1608" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect x="3" y="3" width="98" height="142" rx="10" fill="url(#paper)" stroke="#c9a056" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="8" y="8" width="88" height="132" rx="7" fill="none" stroke="#fff8e8" stroke-width="1.5"/>
+  <!-- labels -->
+  <text x="13" y="26" font-family="Georgia, 'Times New Roman', serif" font-size="11" font-weight="800" fill="#1a2f4a" letter-spacing="0.5">JOKER</text>
+  <text x="14" y="44" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="14" font-weight="900" fill="#1a2f4a">小王</text>
+  <!-- jester hat (navy + ice blue — cool, not red) -->
+  <path d="M30 86 C28 58 40 42 52 48 C64 42 76 58 74 86 Z" fill="url(#hat)"/>
+  <path d="M30 86 L26 48 L36 78 Z" fill="#2a4570"/>
+  <path d="M74 86 L78 48 L68 78 Z" fill="#2a4570"/>
+  <path d="M52 48 L52 36 L58 72 Z" fill="#3d5a80"/>
+  <circle cx="26" cy="46" r="5" fill="#c9e0f8" stroke="#1a2f4a" stroke-width="1.5"/>
+  <circle cx="78" cy="46" r="5" fill="#c9e0f8" stroke="#1a2f4a" stroke-width="1.5"/>
+  <circle cx="52" cy="34" r="5.5" fill="#e8c868" stroke="#1a2f4a" stroke-width="1.5"/>
+  <!-- face disc -->
+  <ellipse cx="52" cy="92" rx="18" ry="16" fill="#f7efe0" stroke="#1a2f4a" stroke-width="1.5"/>
+  <circle cx="46" cy="90" r="2.2" fill="#1a2f4a"/>
+  <circle cx="58" cy="90" r="2.2" fill="#1a2f4a"/>
+  <path d="M46 98 Q52 103 58 98" fill="none" stroke="#1a2f4a" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- collar -->
+  <path d="M34 106 L42 118 L52 110 L62 118 L70 106 Z" fill="url(#collar)" stroke="#1a2f4a" stroke-width="1.2"/>
+  <!-- bottom label -->
+  <text x="90" y="128" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="14" font-weight="900" fill="#1a2f4a" transform="rotate(180 90 128)">小王</text>
 </svg>

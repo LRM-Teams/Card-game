@@ -29,8 +29,12 @@
 | `--ddz-settle-win-1` / `--ddz-settle-win-2` | `#7a1c14` / `#3d140f` | 结算胜方暖金红底 |
 | `--ddz-settle-lose-1` / `--ddz-settle-lose-2` | `#2a3544` / `#1a222c` | 结算负方蓝灰底（降饱和） |
 | `--ddz-settle-win-title` / `--ddz-settle-lose-title` | `#ffe08a` / `#b8c4d4` | 结算胜负标题色 |
-| `--ddz-paper` | `#fbfbf6` | 卡牌牌面 |
-| `--ddz-ink` | `#1c1c1c` | 黑桃/梅花、正文深色 |
+| `--ddz-paper` | `#fbf6ea` | 卡牌牌面主色（LRM-206，偏米金纸） |
+| `--ddz-ink` / `--ddz-suit-ink` | `#1a1f2e` | 黑桃/梅花、正文深色 |
+| `--ddz-suit-red` | `#c62828` | 红桃/方片（LRM-206） |
+| `--ddz-card-stroke` | `#c9a056` | 卡牌外描边 |
+| `--ddz-card-paper-0/1/2` | `#fffef9` / `#fbf6ea` / `#e6d3a8` | 纸面渐变三档 |
+| `--ddz-joker-small` / `--ddz-joker-big` | `#1a2f4a` / `#b71c1c` | 大小王标签色 |
 | `--ddz-cream` | `#fff3c4` | 说明文字、浅金标签 |
 | `--ddz-line` | `rgba(255, 255, 255, 0.14)` | 深色背景上的分割线 |
 | `--ddz-shadow` | `rgba(0, 0, 0, 0.32)` | 面板/卡牌投影 |
@@ -125,6 +129,17 @@ box-shadow:
 | `--ddz-landlord-badge` | `48px` | 地主角标/帽子 |
 | `--ddz-meta-opacity` | `0.58` | 角落倍数/倒计时/阶段 HUD 透明度上限 |
 
+## 6.1 卡牌状态（LRM-206）
+
+| 状态 | Token / 规则 |
+|---|---|
+| 常态 | 纸面 `linear-gradient(145deg, var(--ddz-card-paper-0), var(--ddz-card-paper-1) 55%, var(--ddz-card-paper-2))`；描边 `var(--ddz-card-stroke)`；阴影 `var(--ddz-shadow-card)` |
+| 选中 | 上移 `--card-lift: -10px~-34px`；`border-color: var(--ddz-gold-500)`；`box-shadow: var(--ddz-glow-gold), 0 12px 18px rgba(0,0,0,.35)` |
+| 不可出 | `.is-unplayable`：`filter: saturate(0.55); opacity: 0.55` |
+| 红/黑字色 | `.card.red` → `var(--ddz-suit-red)`；默认 `var(--ddz-suit-ink)` |
+
+完整可测规格见 `docs/front-end-visual-assets.md` §2；预览 `docs/assets/previews/lrm-206/card-face-preview.png`。
+
 ## 7. 按钮状态与信息层级（可测）
 
 ### 7.1 按钮 Token
@@ -201,3 +216,4 @@ box-shadow:
 
 - P0（2026-07-17，小雅）：首版 token。
 - LRM-166（2026-07-21，小雅）：锁死桌沿木色 rail 厚度/颜色、台呢降饱和去泛光、按钮/HUD 信息层级可测规则、卡牌 52×74 / 40×56；同步客户端 `:root`。
+- LRM-206（2026-07-21，小雅）：牌面纸质感色值/花色/大小王/选中·不可出可测规格；新增 suit/joker/paper token。

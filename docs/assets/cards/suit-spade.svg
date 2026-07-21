@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="Spade suit">
+  <g fill="#1a1f2e">
+    <path d="M24 4 C12 16 6 24 6 32 C6 38 11 43 18 43 C21.5 43 23.5 41 24 38 C24.5 41 26.5 43 30 43 C37 43 42 38 42 32 C42 24 36 16 24 4 Z"/>
+    <path d="M20 40 L28 40 L28 46 L32 50 L16 50 L20 46 Z"/>
+  </g>
+</svg>

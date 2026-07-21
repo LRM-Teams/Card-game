@@ -21,8 +21,17 @@
   --ddz-settle-lose-glow: rgba(148, 168, 196, 0.18);
   --ddz-settle-lose-title: #b8c4d4;
   --ddz-settle-lose-muted: #8a97a8;
-  --ddz-paper: #fbfbf6;
-  --ddz-ink: #1c1c1c;
+  /* LRM-206：纸质感牌面 */
+  --ddz-paper: #fbf6ea;
+  --ddz-ink: #1a1f2e;
+  --ddz-suit-ink: #1a1f2e;
+  --ddz-suit-red: #c62828;
+  --ddz-card-stroke: #c9a056;
+  --ddz-card-paper-0: #fffef9;
+  --ddz-card-paper-1: #fbf6ea;
+  --ddz-card-paper-2: #e6d3a8;
+  --ddz-joker-small: #1a2f4a;
+  --ddz-joker-big: #b71c1c;
   --ddz-cream: #fff3c4;
   --ddz-line: rgba(255, 255, 255, 0.14);
   --ddz-shadow: rgba(0, 0, 0, 0.32);
@@ -1340,22 +1349,32 @@ body::before {
   width: var(--ddz-card-w);
   height: var(--ddz-card-h);
   margin-left: -18px;
-  border: 1px solid rgba(200, 155, 79, 0.55);
+  border: 1.5px solid var(--ddz-card-stroke);
   border-radius: var(--ddz-radius-card);
   background:
-    linear-gradient(145deg, #fffdf4 0%, #f8f0da 55%, #ecd7a8 100%),
+    linear-gradient(
+      145deg,
+      var(--ddz-card-paper-0) 0%,
+      var(--ddz-card-paper-1) 55%,
+      var(--ddz-card-paper-2) 100%
+    ),
     var(--ddz-paper);
-  color: var(--ddz-ink);
+  color: var(--ddz-suit-ink);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
   cursor: pointer;
-  transition: transform 100ms ease, box-shadow 100ms ease, border-color 100ms ease;
+  transition:
+    transform 100ms ease,
+    box-shadow 100ms ease,
+    border-color 100ms ease,
+    filter 100ms ease,
+    opacity 100ms ease;
   box-shadow: var(--ddz-shadow-card);
   padding: 0;
-  font-family: var(--ddz-font-display);
+  font-family: Georgia, 'Times New Roman', var(--ddz-font-display);
   overflow: hidden;
 }
 .card:first-child {
@@ -1366,7 +1385,8 @@ body::before {
   position: absolute;
   inset: 4px;
   border-radius: 5px;
-  border: 1px solid rgba(214, 48, 49, 0.08);
+  border: 1px solid rgba(255, 248, 232, 0.9);
+  box-shadow: inset 0 0 0 0.5px rgba(212, 176, 106, 0.35);
   pointer-events: none;
 }
 .card:hover:not(:disabled) {
@@ -1376,17 +1396,28 @@ body::before {
 .card.is-selected {
   /* 手牌区抬起幅度由 .hand .card.is-selected 的 --card-lift 决定（LRM-196） */
   border-color: var(--ddz-gold-500);
+  border-width: 2px;
   box-shadow: var(--ddz-glow-gold), 0 12px 18px rgba(0, 0, 0, 0.35);
   z-index: 3;
+}
+.card.is-unplayable {
+  filter: saturate(0.55);
+  opacity: 0.55;
 }
 .card:disabled {
   cursor: default;
 }
 .card.red {
-  color: var(--ddz-red-500);
+  color: var(--ddz-suit-red);
 }
 .card.is-joker {
-  background: #fffdf4;
+  background:
+    linear-gradient(
+      145deg,
+      var(--ddz-card-paper-0) 0%,
+      var(--ddz-card-paper-1) 55%,
+      var(--ddz-card-paper-2) 100%
+    );
 }
 .card-joker-art {
   width: 100%;

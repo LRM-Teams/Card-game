@@ -5,6 +5,8 @@ import { SUIT_SYMBOL, cardColor } from '../lib/cards';
 interface Props {
   card: Card;
   selected?: boolean;
+  /** 不可出：降饱和 + 降透明度（LRM-206）。 */
+  unplayable?: boolean;
   onClick?: () => void;
   /** 小尺寸（用于对手 / 牌桌展示）。 */
   small?: boolean;
@@ -13,7 +15,7 @@ interface Props {
   style?: CSSProperties;
 }
 
-export function CardView({ card, selected, onClick, small, tablePlay, style }: Props) {
+export function CardView({ card, selected, unplayable, onClick, small, tablePlay, style }: Props) {
   const color = cardColor(card);
   const symbol = card.suit ? SUIT_SYMBOL[card.suit] : '';
   const isJoker = !card.suit;
@@ -21,7 +23,7 @@ export function CardView({ card, selected, onClick, small, tablePlay, style }: P
   return (
     <button
       type="button"
-      className={`card ${color} ${isJoker ? 'is-joker' : ''} ${selected ? 'is-selected' : ''} ${small ? 'is-small' : ''} ${tablePlay ? 'is-table-play' : ''}`}
+      className={`card ${color} ${isJoker ? 'is-joker' : ''} ${selected ? 'is-selected' : ''} ${unplayable ? 'is-unplayable' : ''} ${small ? 'is-small' : ''} ${tablePlay ? 'is-table-play' : ''}`}
       onClick={onClick}
       disabled={!onClick}
       title={card.display}

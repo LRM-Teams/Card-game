@@ -51,6 +51,7 @@
 
 P0 资产已冻结为内部自绘 SVG：
 - 扑克牌：`docs/assets/cards/card-front-template.svg`、`card-back.svg`、`joker-small.svg`、`joker-big.svg`。
+- LRM-206 牌面精修：可测规格见 `docs/front-end-visual-assets.md` §2；预览 `docs/assets/previews/lrm-206/card-face-preview.png`；版权 `docs/assets/cards/LICENSE.md`。
 - 身份：`docs/assets/identity/landlord-character.svg`、`farmer-character.svg`。
 - 状态：`docs/assets/states/double-badge.svg`、`bomb.svg`、`spring.svg`、`victory-badge.svg`、`defeat-badge.svg`。
 

@@ -1,17 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Dou Dizhu card front template">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Dou Dizhu card front template — Ace of Hearts">
   <defs>
-    <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#fffdf4"/>
-      <stop offset="0.55" stop-color="#f8f0da"/>
-      <stop offset="1" stop-color="#ecd7a8"/>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffef9"/>
+      <stop offset="0.42" stop-color="#fbf6ea"/>
+      <stop offset="0.78" stop-color="#f0e2c4"/>
+      <stop offset="1" stop-color="#e6d3a8"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#2b1604" flood-opacity=".28"/></filter>
+    <linearGradient id="paperSheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".45"/>
+      <stop offset="0.4" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#c9a056" stop-opacity=".06"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#2a1608" flood-opacity=".30"/>
+    </filter>
   </defs>
-  <rect x="4" y="4" width="96" height="140" rx="12" fill="url(#paper)" stroke="#c89b4f" stroke-width="2" filter="url(#shadow)"/>
-  <rect x="9" y="9" width="86" height="130" rx="9" fill="none" stroke="#fff7df" stroke-width="2" opacity=".9"/>
-  <text x="15" y="28" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="800" fill="#c72d2d">A</text>
-  <path d="M20 37 C13 29 5 40 13 49 C17 54 20 58 20 63 C20 58 23 54 27 49 C35 40 27 29 20 37Z" fill="#c72d2d"/>
-  <path d="M52 52 C37 34 20 59 35 78 C43 88 51 96 52 111 C53 96 61 88 69 78 C84 59 67 34 52 52Z" fill="#c72d2d" opacity=".92"/>
-  <text x="89" y="120" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="800" fill="#c72d2d" transform="rotate(180 89 120)">A</text>
-  <path d="M84 111 C77 103 69 114 77 123 C81 128 84 132 84 137 C84 132 87 128 91 123 C99 114 91 103 84 111Z" fill="#c72d2d" transform="rotate(180 84 124)"/>
+  <rect x="3" y="3" width="98" height="142" rx="10" fill="url(#paper)" stroke="#c9a056" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="3" y="3" width="98" height="142" rx="10" fill="url(#paperSheen)" pointer-events="none"/>
+  <rect x="8" y="8" width="88" height="132" rx="7" fill="none" stroke="#fff8e8" stroke-width="1.5" opacity=".95"/>
+  <rect x="9.5" y="9.5" width="85" height="129" rx="6" fill="none" stroke="#d4b06a" stroke-width=".75" opacity=".35"/>
+  <g fill="#c62828">
+    <text x="14" y="28" font-family="Georgia, Times New Roman, serif" font-size="22" font-weight="700">A</text>
+    <path d="M20 36 C15.2 30.2 8.8 35.6 13.5 42.2 C16.2 45.8 18.6 48.6 20 51.5 C21.4 48.6 23.8 45.8 26.5 42.2 C31.2 35.6 24.8 30.2 20 36Z"/>
+  </g>
+  <path d="M52 48 C36 30 18 52 34 74 C42 86 50 96 52 112 C54 96 62 86 70 74 C86 52 68 30 52 48Z" fill="#c62828"/>
+  <g fill="#c62828" transform="rotate(180 84 118)">
+    <text x="78" y="112" font-family="Georgia, Times New Roman, serif" font-size="22" font-weight="700">A</text>
+    <path d="M84 120 C79.2 114.2 72.8 119.6 77.5 126.2 C80.2 129.8 82.6 132.6 84 135.5 C85.4 132.6 87.8 129.8 90.5 126.2 C95.2 119.6 88.8 114.2 84 120Z"/>
+  </g>
 </svg>
