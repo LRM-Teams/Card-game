@@ -1,17 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Dou Dizhu card front template">
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Dou Dizhu card front template v2">
   <defs>
-    <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#fffdf4"/>
-      <stop offset="0.55" stop-color="#f8f0da"/>
-      <stop offset="1" stop-color="#ecd7a8"/>
+    <linearGradient id="paperV2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffcf7"/>
+      <stop offset="0.45" stop-color="#fbf8f0"/>
+      <stop offset="1" stop-color="#f3eee3"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#2b1604" flood-opacity=".28"/></filter>
+    <radialGradient id="paperSheen" cx="32%" cy="18%" r="70%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="fiber" width="6" height="6" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="2" r="0.45" fill="#c9b89a" opacity=".18"/>
+      <circle cx="4" cy="5" r="0.35" fill="#b7a68a" opacity=".12"/>
+    </pattern>
+    <filter id="cardShadow" x="-25%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.2" flood-color="#1a1008" flood-opacity=".28"/>
+    </filter>
   </defs>
-  <rect x="4" y="4" width="96" height="140" rx="12" fill="url(#paper)" stroke="#c89b4f" stroke-width="2" filter="url(#shadow)"/>
-  <rect x="9" y="9" width="86" height="130" rx="9" fill="none" stroke="#fff7df" stroke-width="2" opacity=".9"/>
-  <text x="15" y="28" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="800" fill="#c72d2d">A</text>
-  <path d="M20 37 C13 29 5 40 13 49 C17 54 20 58 20 63 C20 58 23 54 27 49 C35 40 27 29 20 37Z" fill="#c72d2d"/>
-  <path d="M52 52 C37 34 20 59 35 78 C43 88 51 96 52 111 C53 96 61 88 69 78 C84 59 67 34 52 52Z" fill="#c72d2d" opacity=".92"/>
-  <text x="89" y="120" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="800" fill="#c72d2d" transform="rotate(180 89 120)">A</text>
-  <path d="M84 111 C77 103 69 114 77 123 C81 128 84 132 84 137 C84 132 87 128 91 123 C99 114 91 103 84 111Z" fill="#c72d2d" transform="rotate(180 84 124)"/>
+  <!-- outer shell -->
+  <rect x="3.5" y="3.5" width="97" height="141" rx="10" fill="#e8dfd0" filter="url(#cardShadow)"/>
+  <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#paperV2)" stroke="#8a7355" stroke-width="1.25"/>
+  <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#paperSheen)"/>
+  <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#fiber)"/>
+  <!-- inner rim -->
+  <rect x="8" y="8" width="88" height="132" rx="7" fill="none" stroke="#d9cbb5" stroke-width="1" opacity=".9"/>
+  <!-- sample rank/suit (red) — component replaces these -->
+  <g fill="#c62828">
+    <text x="14" y="28" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="800">A</text>
+    <path d="M19.5 36.5 C13.5 29.5 6.5 39.5 13.5 48 C16.8 52.5 19.5 56 19.5 60.5 C19.5 56 22.2 52.5 25.5 48 C32.5 39.5 25.5 29.5 19.5 36.5Z"/>
+    <path d="M52 50 C39 34 24 56 37 74 C44 83 51 90 52 104 C53 90 60 83 67 74 C80 56 65 34 52 50Z" opacity=".94"/>
+  </g>
+  <g fill="#c62828" transform="rotate(180 52 74)">
+    <text x="14" y="28" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="800">A</text>
+    <path d="M19.5 36.5 C13.5 29.5 6.5 39.5 13.5 48 C16.8 52.5 19.5 56 19.5 60.5 C19.5 56 22.2 52.5 25.5 48 C32.5 39.5 25.5 29.5 19.5 36.5Z"/>
+  </g>
 </svg>

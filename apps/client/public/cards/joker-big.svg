@@ -1,10 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Big Joker card">
-  <defs><linearGradient id="paper" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fffdf4"/><stop offset="1" stop-color="#ead8ae"/></linearGradient><linearGradient id="flame" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#e23b2f"/><stop offset="1" stop-color="#8d131c"/></linearGradient></defs>
-  <rect x="4" y="4" width="96" height="140" rx="12" fill="url(#paper)" stroke="#c89b4f" stroke-width="2"/>
-  <text x="15" y="31" font-family="Georgia,serif" font-size="15" font-weight="900" fill="#bd1b23">JOKER</text>
-  <text x="17" y="50" font-family="sans-serif" font-size="13" font-weight="900" fill="#bd1b23">大王</text>
-  <path d="M52 27c14 22 28 30 25 53-2 20-17 34-25 41-8-7-23-21-25-41-3-23 11-31 25-53z" fill="url(#flame)"/>
-  <path d="M52 52c9 12 16 19 14 32-1 10-8 17-14 23-6-6-13-13-14-23-2-13 5-20 14-32z" fill="#ffd86d" opacity=".9"/>
-  <path d="M29 77c6-16 5-28 0-38 12 3 19 13 23 31 4-18 11-28 23-31-5 10-6 22 0 38" fill="none" stroke="#4b0b13" stroke-width="4" stroke-linejoin="round" opacity=".65"/>
-  <text x="88" y="121" font-family="sans-serif" font-size="13" font-weight="900" fill="#bd1b23" transform="rotate(180 88 121)">大王</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Big Joker card v2">
+  <defs>
+    <linearGradient id="paperBJ" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffcf7"/>
+      <stop offset="1" stop-color="#f3eee3"/>
+    </linearGradient>
+    <linearGradient id="flameBJ" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff6a3d"/>
+      <stop offset=".55" stop-color="#d32222"/>
+      <stop offset="1" stop-color="#7a0f18"/>
+    </linearGradient>
+    <filter id="bjShadow" x="-20%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#1a1008" flood-opacity=".26"/>
+    </filter>
+  </defs>
+  <rect x="3.5" y="3.5" width="97" height="141" rx="10" fill="#e8dfd0" filter="url(#bjShadow)"/>
+  <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#paperBJ)" stroke="#8a7355" stroke-width="1.25"/>
+  <rect x="8" y="8" width="88" height="132" rx="7" fill="none" stroke="#d9cbb5" stroke-width="1"/>
+  <!-- red identity rail -->
+  <rect x="10" y="12" width="6" height="124" rx="2" fill="#c62828"/>
+  <text x="22" y="28" font-family="Georgia, serif" font-size="13" font-weight="900" fill="#c62828" letter-spacing="0.5">JOKER</text>
+  <text x="22" y="46" font-family="system-ui, sans-serif" font-size="15" font-weight="900" fill="#b71c1c">大王</text>
+  <!-- flame motif -->
+  <path d="M52 30c12 20 26 28 24 50-2 18-15 31-24 38-9-7-22-20-24-38-2-22 12-30 24-50z" fill="url(#flameBJ)"/>
+  <path d="M52 52c8 11 15 18 13 30-1 9-7 16-13 21-6-5-12-12-13-21-2-12 5-19 13-30z" fill="#ffd76a" opacity=".92"/>
+  <path d="M40 78c4-12 4-22 0-32 9 3 15 11 18 26 3-15 9-23 18-26-4 10-4 20 0 32"
+        fill="none" stroke="#4a0c12" stroke-width="3.2" stroke-linejoin="round" opacity=".55"/>
+  <g transform="rotate(180 52 74)">
+    <text x="22" y="28" font-family="Georgia, serif" font-size="13" font-weight="900" fill="#c62828">JOKER</text>
+    <text x="22" y="46" font-family="system-ui, sans-serif" font-size="15" font-weight="900" fill="#b71c1c">大王</text>
+  </g>
 </svg>
