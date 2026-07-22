@@ -246,10 +246,96 @@ body::before {
   margin-left: auto;
 }
 .conn.connected { color: #7ef0a8; }
-.conn.connecting { color: #ffd166; }
+.conn.connecting,
+.conn.reconnecting { color: #ffd166; }
 .conn.disconnected,
+.conn.reconnect_failed,
 .conn.error,
 .conn.idle { color: #ff8e8e; }
+
+/* LRM-276：断线重连可见反馈 */
+.conn-banner {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: calc(-1 * var(--ddz-space-2)) 0 var(--ddz-space-2);
+  padding: 10px 16px;
+  border-radius: var(--ddz-radius-md);
+  background: rgba(20, 16, 8, 0.92);
+  border: 1px solid rgba(245, 197, 66, 0.45);
+  color: #ffe9a8;
+  font-size: var(--ddz-text-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.conn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 233, 168, 0.25);
+  border-top-color: #f5c542;
+  border-radius: 50%;
+  animation: ddz-spin 0.8s linear infinite;
+}
+@keyframes ddz-spin {
+  to { transform: rotate(360deg); }
+}
+.conn-toast {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  z-index: 130;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(18, 48, 32, 0.94);
+  border: 1px solid rgba(126, 240, 168, 0.5);
+  color: #7ef0a8;
+  font-size: var(--ddz-text-sm);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  animation: ddz-toast-in 220ms ease-out both;
+}
+@keyframes ddz-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.conn-fail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.72);
+  backdrop-filter: blur(4px);
+}
+.conn-fail-card {
+  width: min(100%, 380px);
+  padding: 24px 22px;
+  border-radius: var(--ddz-radius-lg);
+  background: linear-gradient(180deg, rgba(28, 22, 18, 0.98), rgba(14, 12, 10, 0.98));
+  border: 1px solid rgba(255, 142, 142, 0.35);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+.conn-fail-card h2 {
+  margin: 0 0 10px;
+  font-size: var(--ddz-text-lg);
+  color: #ffd0d0;
+}
+.conn-fail-card p {
+  margin: 0 0 18px;
+  font-size: var(--ddz-text-sm);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+.table-offline-wrap {
+  pointer-events: none;
+  opacity: 0.72;
+  filter: saturate(0.85);
+}
 
 .content {
   flex: 1;

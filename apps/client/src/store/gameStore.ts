@@ -27,6 +27,7 @@ import { onPassedFx, onPlayedFx, onSettledFx } from '../lib/audioFx';
 import type { SocialBubbleData } from '../lib/socialTypes';
 
 let autoRejoinAttempted = false;
+let prevConnStatus: ConnStatus = 'connecting';
 const socialBubbleTimers: [ReturnType<typeof setTimeout> | null, ReturnType<typeof setTimeout> | null, ReturnType<typeof setTimeout> | null] = [
   null,
   null,
@@ -82,6 +83,24 @@ function tryAutoRejoin(): void {
   useGameStore.setState({ myName: session.name });
 }
 
+/** 断线后 socket 恢复：重新 join 绑定座位并拉回 snapshot（LRM-256/276）。 */
+function tryReconnectRejoin(): void {
+  if (!shouldAutoRejoinPath()) return;
+  const st = useGameStore.getState();
+  if (st.mySeat == null && !st.roomId) return;
+  const session = readPlayerSession();
+  if (!session?.roomId) return;
+  const id = readIdentity();
+  send({
+    type: 'join',
+    name: session.name,
+    roomId: session.roomId,
+    guestId: session.guestId ?? id.guestId,
+    avatarId: session.avatarId ?? id.avatarId,
+    beans: id.beans,
+  });
+}
+
 export interface UiError {
   code: string;
   message: string;
@@ -119,6 +138,8 @@ interface UiState {
   socialBubbles: [SocialBubbleData | null, SocialBubbleData | null, SocialBubbleData | null];
   /** 本地冷却截止时间（与服务端 SOCIAL_COOLDOWN_MS 对齐）。 */
   socialCooldownUntil: number;
+  /** 重连成功后的短暂 toast（LRM-276）。 */
+  reconnectToast: boolean;
 
   init: () => void;
   join: (identity: GuestIdentity, roomId?: string) => void;
@@ -136,6 +157,7 @@ interface UiState {
   cycleHint: () => void;
   sendSocial: (kind: SocialKind, id: SocialEmoteId | SocialPhraseId) => void;
   dismissError: () => void;
+  dismissReconnectToast: () => void;
   clearPlayFx: () => void;
 }
 
@@ -159,14 +181,25 @@ export const useGameStore = create<UiState>((set, get) => ({
   dealKey: 0,
   socialBubbles: [null, null, null],
   socialCooldownUntil: 0,
+  reconnectToast: false,
 
   init: () => {
     const id = readIdentity();
     set({ myName: id.name, guestId: id.guestId, beans: id.beans });
     connect();
     onStatus((s) => {
+      const wasReconnecting =
+        prevConnStatus === 'reconnecting' || prevConnStatus === 'reconnect_failed';
+      prevConnStatus = s;
       set({ status: s });
-      if (s === 'connected') tryAutoRejoin();
+      if (s === 'connected') {
+        if (wasReconnecting) {
+          tryReconnectRejoin();
+          set({ reconnectToast: true });
+        } else {
+          tryAutoRejoin();
+        }
+      }
     });
     onEvent((e) => {
       switch (e.type) {
@@ -429,6 +462,8 @@ export const useGameStore = create<UiState>((set, get) => ({
   },
 
   dismissError: () => set({ lastError: null }),
+
+  dismissReconnectToast: () => set({ reconnectToast: false }),
 }));
 
 export function selectPhase(s: UiState): GamePhase | undefined {
