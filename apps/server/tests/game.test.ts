@@ -11,10 +11,10 @@ function card(rank: number, id?: string): Card {
   return { id: id ?? `c${rank}`, rank, display: String(rank), suit: 'spade' };
 }
 
-function mkHuman(name: string, guestId?: string) {
+function mkHuman(displayName: string, guestId?: string) {
   return {
-    name,
-    guestId: guestId ?? `g-${name}`,
+    displayName,
+    guestId: guestId ?? `g-${displayName}`,
     avatarId: 'av-1',
     beans: 1000,
   };
@@ -239,13 +239,13 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
 
   it('IdentityStore：同 guestId 改昵称/头像，豆子连续', () => {
     const store = new IdentityStore();
-    const a = store.resolve({ name: '甲', guestId: 'g1', avatarId: 'av-2' });
+    const a = store.resolve({ displayName: '甲甲', guestId: 'g1', avatarId: 'av-2' });
     expect(a.guestId).toBe('g1');
     expect(a.avatarId).toBe('av-2');
     expect(a.beans).toBe(1000);
     store.applyScore('g1', -100);
-    const b = store.resolve({ name: '甲改', guestId: 'g1', avatarId: 'av-3' });
-    expect(b.name).toBe('甲改');
+    const b = store.resolve({ displayName: '甲改名', guestId: 'g1', avatarId: 'av-3' });
+    expect(b.displayName).toBe('甲改名');
     expect(b.avatarId).toBe('av-3');
     expect(b.beans).toBe(900);
   });

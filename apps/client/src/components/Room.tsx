@@ -3,6 +3,13 @@ import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
 import { copyText } from '../lib/clipboard';
+import {
+  DISPLAY_NAME_MAX,
+  isValidDisplayName,
+  normalizeDisplayName,
+  readIdentity,
+  saveIdentity,
+} from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
 
 /**
@@ -20,7 +27,9 @@ export function Room() {
   const lastError = useGameStore((s) => s.lastError);
   const dismissError = useGameStore((s) => s.dismissError);
   const start = useGameStore((s) => s.start);
+  const updateDisplayName = useGameStore((s) => s.updateDisplayName);
   const [copied, setCopied] = useState<'id' | 'link' | null>(null);
+  const [nickDraft, setNickDraft] = useState(() => readIdentity().displayName);
 
   const phase = snapshot?.phase;
 
@@ -55,6 +64,16 @@ export function Room() {
   // 房主：凑齐 3 真人 → 纯人对战（fillBots=false）；不足 → 补机器人开始（fillBots=true）
   const handleStart = () => start(!fullHouse);
 
+  const commitNickname = () => {
+    const normalized = normalizeDisplayName(nickDraft);
+    if (!isValidDisplayName(normalized)) return;
+    const id = readIdentity();
+    const next = { ...id, displayName: normalized };
+    saveIdentity(next);
+    setNickDraft(normalized);
+    updateDisplayName(normalized);
+  };
+
   return (
     <div className="panel room">
       <h1 className="title">房间 {roomId ? `#${roomId.slice(0, 6)}` : ''}</h1>
@@ -79,11 +98,28 @@ export function Room() {
         </div>
       )}
 
+      <label className="field lobby-field lobby-field--compact">
+        <span>我的昵称</span>
+        <div className="actions lobby-actions">
+          <input
+            type="text"
+            value={nickDraft}
+            maxLength={DISPLAY_NAME_MAX}
+            onChange={(e) => setNickDraft(e.target.value)}
+            onBlur={commitNickname}
+            onKeyDown={(e) => e.key === 'Enter' && commitNickname()}
+          />
+          <button className="btn" type="button" onClick={commitNickname} disabled={!isValidDisplayName(normalizeDisplayName(nickDraft))}>
+            保存
+          </button>
+        </div>
+      </label>
+
       <div className="seats-preview">
         {seats.map((p, i) => (
           <div className={`seat-card ${p ? (p.isBot ? 'bot' : 'me') : 'empty'}`} key={i}>
             <div className="avatar"><PlayerAvatar kind={!p ? 'empty' : 'player'} avatarId={p?.avatarId} /></div>
-            <div className="seat-name">{p ? p.name : '空位'}</div>
+            <div className="seat-name">{p ? p.displayName : '空位'}</div>
             <div className="seat-role">
               {!p
                 ? '等待玩家加入'

@@ -139,7 +139,7 @@ export function GameTable() {
   const lastPlay = snapshot.lastPlay;
   const botThinkingSeat = snapshot.botThinkingSeat;
   const nameOf = (seat: number | null | undefined) =>
-    seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.name ?? `座位${seat}`;
+    seat == null ? '' : snapshot.players.find((p) => p.seat === seat)?.displayName ?? `座位${seat}`;
 
   const identified = selectedCards.length > 0 ? identifyHand(selectedCards) : null;
   const beats = identified != null && canPlay(lastPlay?.hand ?? null, selectedCards);
@@ -608,7 +608,7 @@ function SeatBadge({
 }: {
   p:
     | {
-        name: string;
+        displayName: string;
         isBot: boolean;
         handSize: number;
         role?: string;
@@ -632,7 +632,7 @@ function SeatBadge({
   return (
     <div
       className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}${p.doubled ? ' is-doubled' : ''}`}
-      aria-label={[p.name, roleLabel, p.doubled ? '已加倍' : null, active ? '行动中' : null]
+      aria-label={[p.displayName, roleLabel, p.doubled ? '已加倍' : null, active ? '行动中' : null]
         .filter(Boolean)
         .join('，')}
     >
@@ -659,7 +659,7 @@ function SeatBadge({
         {bubble}
       </div>
       <div className="seat-name">
-        {p.name}
+        {p.displayName}
         {p.doubled ? <span className="seat-double-tag">加倍</span> : null}
       </div>
       <div className="seat-count">剩 {p.handSize}</div>

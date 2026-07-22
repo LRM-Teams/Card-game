@@ -8,7 +8,7 @@ import type { BidEntry, Card, ErrorCode, GamePhase, MultiplierState, Role, Seat,
 /** 单个玩家的完整服务端状态（含私密手牌）。 */
 export interface PlayerState {
   seat: Seat;
-  name: string;
+  displayName: string;
   /** 头像图集 id；机器人用 `bot`。 */
   avatarId: string;
   /** 游客 ID；机器人无。 */
