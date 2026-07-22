@@ -165,8 +165,39 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     const registry = new RoomRegistry();
     const res = registry.join(mkHuman('A'), 'socket-a', 'missing-room');
     expect(res.result.ok).toBe(false);
-    if (!res.result.ok) expect(res.result.code).toBe('not_in_room');
+    if (!res.result.ok) expect(res.result.code).toBe('room_not_found');
     expect(registry.get('missing-room')).toBeUndefined();
+  });
+
+  it('房间号带 # / 空白时仍可加入已有房（LRM-318）', () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    const res = registry.join(mkHuman('B', 'g-b'), 'socket-b', `  #${a.room.roomId}  `);
+    expect(res.result.ok).toBe(true);
+    expect(res.room.roomId).toBe(a.room.roomId);
+    expect(res.seat).toBe(1);
+  });
+
+  it('对局已开始时新玩家得到 game_already_started（非笼统 room_full）', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    const res = registry.join(mkHuman('D', 'g-d'), 'socket-d', a.room.roomId);
+    expect(res.result.ok).toBe(false);
+    if (!res.result.ok) expect(res.result.code).toBe('game_already_started');
+  });
+
+  it('等待中满员时拒绝新人 room_full', () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A'), 'socket-a');
+    registry.join(mkHuman('B'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C'), 'socket-c', a.room.roomId);
+
+    const res = registry.join(mkHuman('D'), 'socket-d', a.room.roomId);
+    expect(res.result.ok).toBe(false);
+    if (!res.result.ok) expect(res.result.code).toBe('room_full');
   });
 
   it('满房开局后同 guest 可用原 roomId 重连原座位并拿回私有手牌', async () => {

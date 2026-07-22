@@ -6,13 +6,19 @@
  * - join：无 roomId 时新建房间；有 roomId 时只加入已存在房间。
  * - match：走 MatchQueue，满员或超时后成桌并自动开局。
  */
-import type { Seat } from '@card-game/rules';
+import { GamePhase, type Seat } from '@card-game/rules';
 import { GameRoom } from './game/GameRoom';
 import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
 import { IdentityStore, type GuestProfile } from './identity';
 import { MatchQueue, type MatchFormed, type MatchWaiter } from './matchQueue';
 import { opsLog } from './observability';
+
+/** 房间号归一：去空白、去前缀 #（复制时常见）。 */
+export function normalizeRoomId(roomId?: string): string | undefined {
+  const t = roomId?.trim().replace(/^#/, '') ?? '';
+  return t || undefined;
+}
 
 export interface JoinOutcome {
   room: GameRoom;
@@ -51,12 +57,17 @@ export class RoomRegistry {
     socketId: string,
     roomId?: string,
   ): JoinOutcome {
-    let room = roomId ? this.rooms.get(roomId) : undefined;
-    if (roomId && !room) {
+    const wantedId = normalizeRoomId(roomId);
+    let room = wantedId ? this.rooms.get(wantedId) : undefined;
+    if (wantedId && !room) {
       return {
-        room: new GameRoom(roomId, this.aiAdapter),
+        room: new GameRoom(wantedId, this.aiAdapter),
         seat: -1 as Seat,
-        result: { ok: false, code: 'not_in_room', message: '房间不存在，请检查房间号' },
+        result: {
+          ok: false,
+          code: 'room_not_found',
+          message: '房间不存在，请检查房间号或重新获取分享链接',
+        },
         kind: 'join',
       };
     }
@@ -95,10 +106,23 @@ export class RoomRegistry {
 
     const seat = room.firstEmptySeat();
     if (seat === null) {
+      // 对局中三席都占满：优先明确「已开局」而非笼统满员
+      if (room.phase !== GamePhase.WAITING) {
+        return {
+          room,
+          seat: -1 as Seat,
+          result: {
+            ok: false,
+            code: 'game_already_started',
+            message: '对局已开始，无法加入；请让房主新建房间再分享',
+          },
+          kind,
+        };
+      }
       return {
         room,
         seat: -1 as Seat,
-        result: { ok: false, code: 'room_full', message: '房间已满（3/3）' },
+        result: { ok: false, code: 'room_full', message: '房间已满（3/3），请让房主新建房间再分享' },
         kind,
       };
     }

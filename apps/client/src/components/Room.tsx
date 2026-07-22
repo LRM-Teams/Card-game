@@ -40,6 +40,13 @@ export function Room() {
     }
   }, [phase, navigate]);
 
+  // 未成功入房却落到 /room：回大厅，避免空房间白屏
+  useEffect(() => {
+    if (roomId || snapshot) return;
+    const t = window.setTimeout(() => navigate({ to: '/' }), 400);
+    return () => window.clearTimeout(t);
+  }, [roomId, snapshot, navigate]);
+
   const players = snapshot?.players ?? [];
   const seats = [0, 1, 2].map((seat) => players.find((p) => p.seat === seat) ?? null);
   const humans = players.filter((p) => !p.isBot).length;
@@ -77,25 +84,25 @@ export function Room() {
 
   return (
     <div className="panel room">
-      <h1 className="title">房间 {roomId ? `#${roomId.slice(0, 6)}` : ''}</h1>
+      <h1 className="title">房间</h1>
       <p className="subtitle">3 人桌 · 真人对战 · 当前 {humans}/3 真人</p>
 
       {roomId && (
         <div className="room-code-card">
-          <span className="room-code-label">房间号</span>
-          <code>{roomId}</code>
+          <span className="room-code-label">房间号（完整复制给好友）</span>
+          <code className="room-code-value">{roomId}</code>
           <button className="btn" type="button" onClick={copyRoomId}>
             {copied === 'id' ? '已复制' : '复制房间号'}
           </button>
-          <button className="btn" type="button" onClick={copyShareLink}>
-            {copied === 'link' ? '已复制' : '复制链接'}
+          <button className="btn primary" type="button" onClick={copyShareLink}>
+            {copied === 'link' ? '已复制' : '复制分享链接'}
           </button>
         </div>
       )}
 
       {lastError && (
-        <div className="hint warn lobby-error" onClick={dismissError}>
-          操作失败：{lastError.message}（{lastError.code}）
+        <div className="hint warn lobby-error" role="alert" onClick={dismissError}>
+          {lastError.message}
         </div>
       )}
 

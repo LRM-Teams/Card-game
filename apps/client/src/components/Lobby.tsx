@@ -16,9 +16,27 @@ import { GuideSpot } from './GuideSpot';
 
 function readRoomQuery(): string {
   try {
-    return new URLSearchParams(window.location.search).get('room')?.trim() ?? '';
+    return normalizeRoomCode(new URLSearchParams(window.location.search).get('room') ?? '');
   } catch {
     return '';
+  }
+}
+
+/** 房间号输入归一：去空白、去前缀 #。 */
+function normalizeRoomCode(raw: string): string {
+  return raw.trim().replace(/^#/, '');
+}
+
+function friendlyJoinError(code: string, message: string): string {
+  switch (code) {
+    case 'room_not_found':
+      return '房间不存在：请核对房间号，或让房主重新复制分享链接。';
+    case 'room_full':
+      return '房间已满（3/3）：请让房主新建房间后再分享。';
+    case 'game_already_started':
+      return '对局已开始：无法中途加入，请让房主新建房间后再分享。';
+    default:
+      return message || `加入失败（${code}）`;
   }
 }
 
@@ -42,28 +60,36 @@ export function Lobby() {
 
   const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
   const [roomCode, setRoomCode] = useState(readRoomQuery);
+  const [joining, setJoining] = useState(false);
   const deepLinkPending = useRef(Boolean(readRoomQuery()));
   const deepLinkDone = useRef(false);
 
   const trimmedNick = normalizeDisplayName(identity.displayName);
-  const trimmedRoomCode = roomCode.trim();
-  const canAct = isValidDisplayName(trimmedNick) && status === 'connected' && !matching;
+  const trimmedRoomCode = normalizeRoomCode(roomCode);
+  const canAct = isValidDisplayName(trimmedNick) && status === 'connected' && !matching && !joining;
   const canJoinRoom = canAct && trimmedRoomCode.length > 0;
   const showIdentityGuide = guideActive && !seenIdentity && !matching;
   const showStartGuide = guideActive && seenIdentity && !seenStart && !matching;
 
-  // 匹配成功入房后跳转
+  // 匹配/进房成功后跳转（失败留在大厅展示 lastError，避免空房间白屏）
   useEffect(() => {
-    if (roomId && snapshot) navigate({ to: '/room' });
+    if (roomId && snapshot) {
+      setJoining(false);
+      navigate({ to: '/room' });
+    }
   }, [roomId, snapshot, navigate]);
 
-  // 分享链接 ?room=xxx：连上后自动加入私房（只触发一次）
+  useEffect(() => {
+    if (lastError) setJoining(false);
+  }, [lastError]);
+
+  // 分享链接 ?room=xxx：连上后自动加入私房（只触发一次；成功后再跳 /room）
   useEffect(() => {
     if (!deepLinkPending.current || deepLinkDone.current || !canJoinRoom || roomId) return;
     deepLinkDone.current = true;
     saveIdentity(identity);
+    setJoining(true);
     join(identity, trimmedRoomCode);
-    navigate({ to: '/room' });
     try {
       const url = new URL(window.location.href);
       if (url.searchParams.has('room')) {
@@ -73,7 +99,7 @@ export function Lobby() {
     } catch {
       /* ignore */
     }
-  }, [canJoinRoom, roomId, identity, trimmedRoomCode, join, navigate]);
+  }, [canJoinRoom, roomId, identity, trimmedRoomCode, join]);
 
   const persist = (next: GuestIdentity) => {
     setIdentity(next);
@@ -89,10 +115,10 @@ export function Lobby() {
 
   const enterPrivateRoom = (targetRoomId?: string) => {
     if (!canAct) return;
-    if (targetRoomId !== undefined && !targetRoomId.trim()) return;
+    if (targetRoomId !== undefined && !normalizeRoomCode(targetRoomId)) return;
     saveIdentity(identity);
-    join(identity, targetRoomId);
-    navigate({ to: '/room' });
+    setJoining(true);
+    join(identity, targetRoomId === undefined ? undefined : normalizeRoomCode(targetRoomId));
   };
 
   return (
@@ -121,8 +147,14 @@ export function Lobby() {
       )}
 
       {lastError && (
-        <div className="hint warn lobby-error" onClick={dismissError}>
-          失败：{lastError.message}（{lastError.code}）
+        <div className="hint warn lobby-error" role="alert" onClick={dismissError}>
+          {friendlyJoinError(lastError.code, lastError.message)}
+        </div>
+      )}
+
+      {joining && !lastError && (
+        <div className="hint" role="status" aria-live="polite">
+          正在加入房间…
         </div>
       )}
 

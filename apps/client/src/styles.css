@@ -595,7 +595,7 @@ body::before {
 }
 .room-code-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--ddz-space-2);
   margin: 0 0 var(--ddz-space-4);
@@ -605,11 +605,13 @@ body::before {
   background: rgba(255, 255, 255, 0.08);
 }
 .room-code-label {
+  grid-column: 1 / -1;
   color: var(--ddz-cream);
   font-size: var(--ddz-text-xs);
   opacity: 0.82;
 }
-.room-code-card code {
+.room-code-card code,
+.room-code-value {
   overflow: hidden;
   color: #fff;
   font-family: var(--ddz-font-display);
@@ -617,6 +619,7 @@ body::before {
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
+  user-select: all;
 }
 .btn {
   appearance: none;
