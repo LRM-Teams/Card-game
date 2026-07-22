@@ -16,6 +16,8 @@ Env (read lazily by the helpers below):
   DOUZERO_LANDLORD_CKPT
   DOUZERO_LANDLORD_UP_CKPT
   DOUZERO_LANDLORD_DOWN_CKPT  paths to the three identity checkpoints.
+  DOUZERO_CKPT_DIR            optional root; used when per-position paths unset.
+  DOUZERO_MODEL_ID            optional subdir under DOUZERO_CKPT_DIR (ckpt switch).
 """
 import importlib.util
 import os
@@ -50,11 +52,28 @@ INITIAL = {"landlord": 20, "landlord_up": 17, "landlord_down": 17}
 
 
 def load_ckpt_paths():
-    """Read the three identity checkpoint paths from the environment."""
+    """Read the three identity checkpoint paths from the environment.
+
+    Precedence (LRM-310 ckpt switch scaffold):
+      1. Explicit DOUZERO_LANDLORD[_UP|_DOWN]_CKPT
+      2. DOUZERO_CKPT_DIR[/DOUZERO_MODEL_ID]/{position}.ckpt
+    """
+    model_id = (os.environ.get("DOUZERO_MODEL_ID") or "").strip()
+    ckpt_dir = (os.environ.get("DOUZERO_CKPT_DIR") or "").strip()
+    base = os.path.join(ckpt_dir, model_id) if ckpt_dir and model_id else (ckpt_dir or None)
+
+    def pick(env_key, filename):
+        explicit = (os.environ.get(env_key) or "").strip()
+        if explicit:
+            return explicit
+        if base:
+            return os.path.join(base, filename)
+        raise KeyError(env_key)
+
     return {
-        "landlord": os.environ["DOUZERO_LANDLORD_CKPT"],
-        "landlord_up": os.environ["DOUZERO_LANDLORD_UP_CKPT"],
-        "landlord_down": os.environ["DOUZERO_LANDLORD_DOWN_CKPT"],
+        "landlord": pick("DOUZERO_LANDLORD_CKPT", "landlord.ckpt"),
+        "landlord_up": pick("DOUZERO_LANDLORD_UP_CKPT", "landlord_up.ckpt"),
+        "landlord_down": pick("DOUZERO_LANDLORD_DOWN_CKPT", "landlord_down.ckpt"),
     }
 
 

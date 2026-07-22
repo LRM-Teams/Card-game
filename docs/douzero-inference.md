@@ -36,9 +36,15 @@ Environment variables:
 export DOUZERO_LANDLORD_CKPT=$PWD/models/douzero/landlord.ckpt
 export DOUZERO_LANDLORD_UP_CKPT=$PWD/models/douzero/landlord_up.ckpt
 export DOUZERO_LANDLORD_DOWN_CKPT=$PWD/models/douzero/landlord_down.ckpt
+# Or directory + model id (LRM-310 ckpt switch; no code change):
+# export DOUZERO_CKPT_DIR=$PWD/models/douzero
+# export DOUZERO_MODEL_ID=run-42   # → $CKPT_DIR/run-42/{landlord,landlord_up,landlord_down}.ckpt
 export DOUZERO_INFER_TIMEOUT_MS=1500
+export DOUZERO_HEALTH_TIMEOUT_MS=800
 export DOUZERO_INFER_COMMAND='python3 apps/server/scripts/douzero-infer.example.py'
 ```
+
+**89 现网（脚手架）**：游戏容器内设 `DOUZERO_INFER_URL=http://172.17.0.1:8765`。启动与对局前会 `GET /health` 并打 `[douzero]` 日志；不可用时 fallback 到规则机器人普通档（LRM-260）。Adapter 契约一页纸见 `docs/douzero-adapter-interface.md`。探活脚本：`apps/server/scripts/douzero-health-check.sh`。
 
 `DOUZERO_INFER_COMMAND` is called synchronously with a JSON `DouZeroPlayState` on stdin and must print either a raw DouZero action or an object with an `action` field:
 

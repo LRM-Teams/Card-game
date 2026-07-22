@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { canPlay } from '@card-game/rules';
 import type { Card, Hand, Seat } from '@card-game/rules';
 import { botChoosePlay } from './bot';
+import { resolveDouZeroInferConfig, resolveDouZeroTimeout } from './douzeroHealth';
 import { refinePlaySuggestions } from './hintPostProcess';
 
 export type DouZeroPosition = 'landlord' | 'landlord_up' | 'landlord_down';
@@ -95,6 +96,8 @@ export function createDouZeroCommandAdapter(
 
 export interface DouZeroHttpAdapterOptions {
   timeoutMs?: number;
+  /** 透传给 /infer 的可选 modelId（ckpt 切换 stub，Python 可忽略） */
+  modelId?: string | null;
 }
 
 /**
@@ -135,15 +138,18 @@ async function postInfer(
   base: string,
   state: DouZeroPlayState,
   timeoutMs: number,
-  topN?: number,
+  options: { topN?: number; modelId?: string | null } = {},
 ): Promise<{ action: DouZeroAction | null; top?: RankEntry[] } | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const body: Record<string, unknown> = { ...state };
+    if (options.topN && options.topN > 0) body.topN = options.topN;
+    if (options.modelId) body.modelId = options.modelId;
     const res = await fetch(`${base}/infer`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(topN && topN > 0 ? { ...state, topN } : state),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
     if (!res.ok) return null;
@@ -158,30 +164,31 @@ async function postInfer(
 
 export function createDouZeroHttpAdapter(url: string, options: DouZeroHttpAdapterOptions = {}): DouZeroBotAdapter {
   const timeoutMs = options.timeoutMs ?? 1500;
+  const modelId = options.modelId ?? null;
   const base = url.replace(/\/+$/, '');
   return {
     async choosePlay(state) {
-      const r = await postInfer(base, state, timeoutMs);
+      const r = await postInfer(base, state, timeoutMs, { modelId });
       return r?.action ?? null;
     },
     async rankActions(state, topN) {
-      const r = await postInfer(base, state, timeoutMs, topN);
+      const r = await postInfer(base, state, timeoutMs, { topN, modelId });
       return r?.top ?? null;
     },
   };
 }
 
 export function createConfiguredDouZeroAdapter(env: NodeJS.ProcessEnv = process.env): DouZeroBotAdapter | undefined {
-  const url = env.DOUZERO_INFER_URL?.trim();
-  if (url) return createDouZeroHttpAdapter(url, { timeoutMs: resolveDouZeroTimeout(env) });
+  const config = resolveDouZeroInferConfig(env);
+  if (config.url) {
+    return createDouZeroHttpAdapter(config.url, {
+      timeoutMs: config.timeoutMs,
+      modelId: config.modelId,
+    });
+  }
   const command = env.DOUZERO_INFER_COMMAND?.trim();
   if (!command) return undefined;
   return createDouZeroCommandAdapter(command, { timeoutMs: resolveDouZeroTimeout(env) });
-}
-
-function resolveDouZeroTimeout(env: NodeJS.ProcessEnv): number {
-  const parsed = Number(env.DOUZERO_INFER_TIMEOUT_MS ?? '1500');
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1500;
 }
 
 function isDouZeroAction(action: unknown): action is DouZeroAction {

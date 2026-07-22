@@ -22,6 +22,44 @@ curl -sS http://127.0.0.1:8088/health | jq .
 
 举证写 issue 时带：**commit SHA + live bundle 名 + health 200**。
 
+## DouZero 推理探活（8765，LRM-310）
+
+89 现网约定：游戏容器经 Docker 网关访问宿主机推理服务：
+
+```bash
+export DOUZERO_INFER_URL=http://172.17.0.1:8765
+```
+
+探活（服务未起或无 ckpt 时允许失败；游戏服会 fallback 规则机器人普通档，**不卡局**）：
+
+```bash
+# 脚本（仓库内）
+DOUZERO_INFER_URL=http://172.17.0.1:8765 ./apps/server/scripts/douzero-health-check.sh
+
+# 或手工
+curl -sS --max-time 1 http://172.17.0.1:8765/health | jq .
+# 期望：{"status":"ok","models":["landlord","landlord_up","landlord_down"]}
+```
+
+游戏服日志：
+
+- 启动：`[douzero] {"event":"infer.config",...}` + `infer.health`
+- 对局前（有 adapter 且缓存过期）：`[douzero] {"event":"infer.health","reason":"pre_game",...}`
+
+```bash
+docker logs ddz --since 30m 2>&1 | grep '\[douzero\]'
+```
+
+ckpt 切换（无需改代码，见 `docs/douzero-adapter-interface.md`）：
+
+```bash
+# 推理进程侧
+export DOUZERO_CKPT_DIR=/path/to/models/douzero
+export DOUZERO_MODEL_ID=run-42   # → $CKPT_DIR/run-42/{landlord,landlord_up,landlord_down}.ckpt
+```
+
+边界：脚手架只保证探活 + fallback；**真 ckpt 上线**等训模 Agent + PO 点名。
+
 ## 结构化对局日志
 
 服务端 stdout 前缀 `[ops]`，每行一条 JSON：
@@ -66,6 +104,7 @@ docker build -t ddz:latest \
 docker rm -f ddz 2>/dev/null || true
 docker run -d --name ddz --restart unless-stopped \
   -e GIT_COMMIT="$COMMIT" \
+  -e DOUZERO_INFER_URL=http://172.17.0.1:8765 \
   -p 127.0.0.1:3000:3000 \
   ddz:latest
 
@@ -83,6 +122,7 @@ curl -sf http://127.0.0.1:8088/health | grep -q '"ok":true'
 | health 无 `commit`/`bundle` | 确认已滚含 LRM-275 的 tip；容器环境变量 `GIT_COMMIT`；`CLIENT_DIST` 指向含 `assets/index-*.js` 的 dist |
 | Socket 连不上 | 浏览器 Network 看 `/socket.io`；nginx 须透传 `Upgrade`/`Connection`（`deploy/nginx-8088.conf`） |
 | 对局卡住 / 疑似断线 | `docker logs ddz --since 30m \| grep '\[ops\]'`，按 `roomId` 查是否有 `player.reconnect` / 是否缺 `game.settle` |
+| DouZero 8765 不通 | `curl http://172.17.0.1:8765/health`；不通时确认游戏服有 `[douzero] infer.health` 且 `fallback=rules_normal`，对局应仍可推进 |
 | 版本对不上 | 对比频道回帖 tip 与 `curl …/health` 的 `commit`、`bundle`；不一致则重滚 |
 
 ## 边界

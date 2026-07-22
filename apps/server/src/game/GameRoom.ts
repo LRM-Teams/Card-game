@@ -54,6 +54,7 @@ import { botBid, botDouble, botName, botReveal } from './bot';
 import { botThinkDelayMs, sleep } from './botTiming';
 import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
+import { probeConfiguredDouZeroInfer } from './douzeroHealth';
 import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
 
 const SEATS: readonly Seat[] = [0, 1, 2];
@@ -246,6 +247,10 @@ export class GameRoom {
       this.fillBots();
     } else if (this.humanCount < 3) {
       return err('not_enough_players', '人数不足 3 人，等人加入或选择补机器人');
+    }
+    // 对局前 DouZero 探活（有缓存）；不可用时不卡局，出牌仍走规则机器人普通档。
+    if (this.aiAdapter) {
+      void probeConfiguredDouZeroInfer(process.env, { reason: 'pre_game' });
     }
     return this.dealAndBeginBid();
   }

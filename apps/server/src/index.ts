@@ -11,6 +11,7 @@ import { createServer } from 'node:http';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
 import { Server as IoServer } from 'socket.io';
+import { probeConfiguredDouZeroInfer } from './game/douzeroHealth';
 import { buildHealthPayload } from './observability';
 import { createGame } from './transport';
 
@@ -75,4 +76,6 @@ createGame(io);
 httpServer.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`[card-game server] listening on :${PORT} (Socket.IO)${CLIENT_DIST ? ' + static' : ''}`);
+  // DouZero 推理探活（LRM-310）：失败只打日志，不阻断听端口 / 对局。
+  void probeConfiguredDouZeroInfer(process.env, { reason: 'startup', force: true });
 });
