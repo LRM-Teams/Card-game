@@ -14,3 +14,5 @@ export * from './bidding';
 export * from './settlement';
 export * from './protocol';
 export * from './social';
+export * from './legal';
+export * from './ai';

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { identifyHand, RANK } from '@card-game/rules';
+import { canPlay, identifyHand, RANK } from '@card-game/rules';
 import type { Card, Seat } from '@card-game/rules';
 import { botBid, botChoosePlay, botDouble, botReveal } from '../src/game/bot';
 import { GameRoom } from '../src/game/GameRoom';
@@ -478,18 +478,22 @@ describe('GameRoom · 明牌 / 加倍（LRM-182）', () => {
   });
 });
 
-describe('bot AI 占位（最小合法）', () => {
-  it('领出返回单牌；压不过返回 null（pass）', () => {
+describe('bot AI 普通档（规则包策略）', () => {
+  it('领出返回合法牌；压不过返回 null（pass）', () => {
     const hand = [card(RANK.THREE), card(RANK.FIVE)];
     const lead = botChoosePlay(hand, null);
     expect(lead).not.toBeNull();
-    expect(lead!).toHaveLength(1);
+    expect(canPlay(null, lead!)).toBe(true);
     const prev = identifyHand([card(RANK.NINE)])!;
     expect(botChoosePlay(hand, prev)).toBeNull();
   });
 
   it('botBid 返回 claim 或 pass', () => {
     expect(['claim', 'pass']).toContain(botBid([card(RANK.THREE)]));
+  });
+
+  it('有王炸时 botBid 为 claim', () => {
+    expect(botBid([card(RANK.SMALL_JOKER), card(RANK.BIG_JOKER), card(RANK.THREE)])).toBe('claim');
   });
 });
 

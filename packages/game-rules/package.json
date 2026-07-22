@@ -2,7 +2,7 @@
   "name": "@card-game/rules",
   "version": "0.1.0",
   "private": true,
-  "description": "斗地主规则引擎：牌型识别、大小比较、合法判定、叫地主、结算（单一事实来源）",
+  "description": "斗地主规则引擎：牌型识别、大小比较、合法判定、叫地主、结算、机器人 AI（单一事实来源）",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
