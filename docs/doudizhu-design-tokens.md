@@ -224,10 +224,10 @@ box-shadow:
 |---|---|---|
 | 顶栏 | ≤44px | `--ddz-vp-topnav-h`；`.app--game .topnav` |
 | 内容边距 | ≤10px | `.app--game .content` padding |
-| 椭圆台呢内边距（上下） | 18px + 12px | `--ddz-vp-table-pad-y` |
+| 椭圆台呢内边距（上下） | 18px + **4px** | `--ddz-vp-table-pad-y`；底边收紧贴操作区 |
 | 中央舞台 | 140–220px | `--ddz-vp-stage-min`；`max-height: min(220px, 26vh)` |
-| 手牌区 | ≥132px | `--ddz-vp-hand-min`（含选中抬起 34px 余量） |
-| 提示+按钮 | ≤96px | `--ddz-vp-controls-budget` |
+| 手牌区 | ≥132px | `--ddz-vp-hand-min`；`.hand { margin-top: auto }` 下沉贴底 |
+| 提示+按钮 | ≤96px | `--ddz-vp-controls-budget`；相对手牌 `margin-top: -8px` |
 | 页脚 | 0（对局壳隐藏） | `.app--game .foot { display: none }` |
 
 ### 11.2 硬规则
