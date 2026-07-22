@@ -176,6 +176,24 @@
 - 矢量优先：Logo、图标、特效用 SVG/Lottie；卡牌 P0 以 SVG 为主。
 - 风格基线：一律向腾讯《欢乐斗地主》靠拢（caozs2 2026-07-15 决定）。
 
+## 10. 关键音效（LRM-259 · baseline 状态3/4）
+
+> 接线已在 LRM-176 完成（`audio.ts` / `audioFx.ts`）；本单交付**素材 + 规格**。设置面板开启 SFX 后即可播放。
+
+| 文件 | 触发时机 | 代码入口 | 动效对齐 |
+|---|---|---|---|
+| `sfx/play.ogg` | 普通出牌 | `onPlayedFx` | 飞牌 260ms |
+| `sfx/bomb.ogg` | 炸弹 | `onPlayedFx` (BOMB) | burst 420ms |
+| `sfx/rocket.ogg` | 王炸 | `onPlayedFx` (ROCKET) | burst 560ms |
+| `sfx/win.ogg` | 结算胜 | `onSettledFx` (myWin) | settle-pop 180ms |
+| `sfx/lose.ogg` | 结算负 | `onSettledFx` (!myWin) | settle-pop 180ms |
+| `sfx/pass.ogg` | 不要/过 | `onPassedFx` | — |
+| `sfx/button.ogg` | UI 按钮点击 | `audio.installUiHooks` | — |
+
+- 许可：`docs/assets/audio/LICENSE.md`（程序化自绘，可商用）
+- 再生成：`docs/assets/audio/generate_sfx.py`
+- 听审：`/fx-demo` 对局全流程 或设置开启 SFX 后实测
+
 ## 8. 进度记录
 
 - [x] 2026-07-15 小林：首版清单建立，覆盖大厅/房间/牌桌/叫地主/结算/通用；当前客户端均为 CSS 占位，无图片资源。
