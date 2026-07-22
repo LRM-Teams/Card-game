@@ -89,8 +89,15 @@ box-shadow:
 | `--ddz-space-2` | `8px` | 小组件间距 |
 | `--ddz-space-3` | `12px` | 按钮/卡片内边距 |
 | `--ddz-space-4` | `16px` | 模块间距 |
-| `--ddz-space-5` | `20px` | 牌桌区块间距 |
+| `--ddz-space-5` | `20px` | 牌桌区块间距（非对局壳默认） |
 | `--ddz-space-6` | `24px` | 页面块间距 |
+| `--ddz-vp-topnav-h` | `44px` | **LRM-246** 对局顶栏目标高度 |
+| `--ddz-vp-table-pad-y` | `18px` | **LRM-246** 椭圆台呢上下内边距 |
+| `--ddz-vp-table-gap` | `10px` | **LRM-246** 桌内竖向区块间距（替代对局壳内 space-5） |
+| `--ddz-vp-stage-min` | `140px` | **LRM-246** 中央舞台最小高度 |
+| `--ddz-vp-hand-min` | `132px` | **LRM-246** 手牌区最小高度（含选中抬起余量） |
+| `--ddz-vp-controls-budget` | `96px` | **LRM-246** 提示+按钮区高度预算 |
+| `--ddz-vp-ellipse-y` | `28%` | **LRM-246** 台呢纵向椭圆比（原 34%，压扁减高度） |
 | `--ddz-radius-sm` | `8px` | 小标签、输入框 |
 | `--ddz-radius-md` | `12px` | 按钮、座位卡 |
 | `--ddz-radius-lg` | `18px` | 面板、桌面容器 |
@@ -197,6 +204,7 @@ box-shadow:
 2. **再接桌面/座位**：`.table` 使用 rail/felt token；`.meta-corner` 承载倒计时+倍数。
 3. **再接按钮层级**：出牌 `.btn.primary.cta`；不出/提示/清空走次按钮 token。
 4. **卡牌尺寸**：维持 `--ddz-card-w/h` = 52×74、`--ddz-card-small-*` = 40×56，移动端可等比缩小但不得回到 64×90。
+5. **对局一屏**：`.app--game` 锁 `100dvh` + `--ddz-vp-*` 预算（LRM-246），见 §11。
 
 ## 10. 变更记录
 
@@ -204,3 +212,34 @@ box-shadow:
 - LRM-166（2026-07-21，小雅）：锁死桌沿木色 rail 厚度/颜色、台呢降饱和去泛光、按钮/HUD 信息层级可测规则、卡牌 52×74 / 40×56；同步客户端 `:root`。
 - LRM-206（2026-07-21，小雅）：牌面纸质感精修（冷米白/红黑花色/大小王轨色/牌背去字）。
 - LRM-208（2026-07-21，小雅）：关键动效正式时长表，替换 LRM-168 interim；同步 `motionSpec.ts`。
+- LRM-246（2026-07-22，小雅）：对局页一屏视口预算 `--ddz-vp-*`；椭圆纵比 34%→28%；对局壳隐藏 footer、压缩手牌/按钮区。
+
+## 11. 对局页一屏视口（LRM-246）
+
+> 目标视口：`1920×1080` 与常见 27″ 浏览器全屏（含约 `1440×900`）。出牌态**首屏无纵向滚动**，顶栏 + 对手区 + 中央出牌/倒计时 + 手牌 + 底栏按钮同屏可见。
+
+### 11.1 垂直分区预算（1080 高）
+
+| 分区 | 目标高度 | Token / 实现 |
+|---|---|---|
+| 顶栏 | ≤44px | `--ddz-vp-topnav-h`；`.app--game .topnav` |
+| 内容边距 | ≤10px | `.app--game .content` padding |
+| 椭圆台呢内边距（上下） | 18px + 12px | `--ddz-vp-table-pad-y` |
+| 中央舞台 | 140–220px | `--ddz-vp-stage-min`；`max-height: min(220px, 26vh)` |
+| 手牌区 | ≥132px | `--ddz-vp-hand-min`（含选中抬起 34px 余量） |
+| 提示+按钮 | ≤96px | `--ddz-vp-controls-budget` |
+| 页脚 | 0（对局壳隐藏） | `.app--game .foot { display: none }` |
+
+### 11.2 硬规则
+
+1. `.app--game`：`height/max-height: 100dvh; overflow: hidden` — 禁止对局页整页纵滚。
+2. 台呢椭圆纵比 `--ddz-vp-ellipse-y: 28%`（原 34%），只压高度不改木色 rail。
+3. **不改**牌面 SVG、手牌逻辑尺寸 52×74、动效正式表（LRM-208/209）。
+4. 结算态 `.table.settled` 允许区内滚动（内容可长），但不撑破外层 `100dvh`。
+5. 验收：同视口 before/after 对照；预览 `docs/assets/previews/lrm-246/viewport-fit-sheet.svg`。
+
+### 11.3 给小林的落地核对
+
+- 改动面：`apps/client/src/styles.css`（`.app--game` 作用域）+ token 文档本节。
+- 烟测：`/game` 与 `/fx-demo?scene=cards` 在 1920×1080；底栏五键完整可见且无 `document` 级纵滚。
+- 若仍溢出：优先再压 `--ddz-vp-stage-min` / `--ddz-vp-table-pad-y`，勿缩小牌面到不可读。
