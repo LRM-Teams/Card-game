@@ -2,7 +2,17 @@ import { spawnSync } from 'node:child_process';
 import { canPlay } from '@card-game/rules';
 import type { Card, Hand, Seat } from '@card-game/rules';
 import { botChoosePlay } from './bot';
+import { resolveDouZeroTimeout } from './douzeroConfig';
 import { refinePlaySuggestions } from './hintPostProcess';
+
+export {
+  probeInferHealth,
+  logInferProbeOnBoot,
+  resolveDouZeroCkptConfig,
+  resolveDouZeroRuntimeConfig,
+  resolveDouZeroTimeout,
+} from './douzeroConfig';
+export type { DouZeroCkptConfig, DouZeroRuntimeConfig, InferHealthResult } from './douzeroConfig';
 
 export type DouZeroPosition = 'landlord' | 'landlord_up' | 'landlord_down';
 /** DouZero official rank encoding: 3..14(A), 17(2), 20(small joker), 30(big joker). */
@@ -102,9 +112,9 @@ export interface DouZeroHttpAdapterOptions {
  * `douzero-server.py` HTTP service that loads the three models once, so each
  * move is a single forward pass instead of a process cold start.
  *
- * Configured via `DOUZERO_INFER_URL` (e.g. http://127.0.0.1:8080). Any network
+ * Configured via `DOUZERO_INFER_URL` (e.g. http://172.17.0.1:8765). Any network
  * error, non-2xx response, timeout, or invalid payload resolves to `null`, and
- * the caller falls back to the minimal legal bot.
+ * the caller falls back to the LRM-260 normal rule bot (`botChoosePlay`).
  */
 function parseDouZeroAction(payload: unknown): DouZeroAction | null {
   const action = Array.isArray(payload)
@@ -177,11 +187,6 @@ export function createConfiguredDouZeroAdapter(env: NodeJS.ProcessEnv = process.
   const command = env.DOUZERO_INFER_COMMAND?.trim();
   if (!command) return undefined;
   return createDouZeroCommandAdapter(command, { timeoutMs: resolveDouZeroTimeout(env) });
-}
-
-function resolveDouZeroTimeout(env: NodeJS.ProcessEnv): number {
-  const parsed = Number(env.DOUZERO_INFER_TIMEOUT_MS ?? '1500');
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1500;
 }
 
 function isDouZeroAction(action: unknown): action is DouZeroAction {

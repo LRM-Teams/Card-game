@@ -11,6 +11,7 @@ import { createServer } from 'node:http';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
 import { Server as IoServer } from 'socket.io';
+import { logInferProbeOnBoot } from './game/douzeroConfig';
 import { buildHealthPayload } from './observability';
 import { createGame } from './transport';
 
@@ -75,4 +76,6 @@ createGame(io);
 httpServer.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`[card-game server] listening on :${PORT} (Socket.IO)${CLIENT_DIST ? ' + static' : ''}`);
+  // LRM-310：启动探活 8765；失败只打日志，不阻断开服（fallback 规则机器人）
+  void logInferProbeOnBoot();
 });

@@ -14,12 +14,12 @@ Contract:
            {"action":[...], "top":[{"action":[...],"value":float}, ...]}   # when topN given
     500  : {"error": "..."}                          # TS adapter falls back to the bot
   GET /health
-    200  : {"status":"ok","models":["landlord","landlord_up","landlord_down"]}
+    200  : {"status":"ok","models":[...],"modelId":"...","ckptDir":null|str}
 
 Run:
   python douzero-server.py --host 127.0.0.1 --port 8080
   # env: DOUZERO_DOUZERO_REPO, DOUZERO_LANDLORD_CKPT, DOUZERO_LANDLORD_UP_CKPT,
-  #      DOUZERO_LANDLORD_DOWN_CKPT
+  #      DOUZERO_LANDLORD_DOWN_CKPT, DOUZERO_MODEL_ID / DOUZERO_CKPT / DOUZERO_CKPT_DIR
 
 The forward pass is serialized with a lock: torch models are not safe for
 concurrent forward on the same object. A single game server issues moves
@@ -57,7 +57,20 @@ class _Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
-            self._send_json(200, {"status": "ok", "models": list(lib.POSITIONS)})
+            model_id = (
+                os.environ.get("DOUZERO_MODEL_ID")
+                or os.environ.get("DOUZERO_CKPT")
+                or "default"
+            )
+            self._send_json(
+                200,
+                {
+                    "status": "ok",
+                    "models": list(lib.POSITIONS),
+                    "modelId": model_id,
+                    "ckptDir": os.environ.get("DOUZERO_CKPT_DIR") or None,
+                },
+            )
         else:
             self._send_json(404, {"error": "not found"})
 
