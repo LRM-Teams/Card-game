@@ -112,9 +112,9 @@ export interface DouZeroHttpAdapterOptions {
  * `douzero-server.py` HTTP service that loads the three models once, so each
  * move is a single forward pass instead of a process cold start.
  *
- * Configured via `DOUZERO_INFER_URL` (e.g. http://127.0.0.1:8080). Any network
+ * Configured via `DOUZERO_INFER_URL` (e.g. http://172.17.0.1:8765). Any network
  * error, non-2xx response, timeout, or invalid payload resolves to `null`, and
- * the caller falls back to the minimal legal bot.
+ * the caller falls back to the LRM-260 normal rule bot (`botChoosePlay`).
  */
 function parseDouZeroAction(payload: unknown): DouZeroAction | null {
   const action = Array.isArray(payload)

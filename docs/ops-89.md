@@ -77,17 +77,20 @@ curl -sf http://127.0.0.1:8088/health | grep -q '"ok":true'
 
 ## DouZero 推理脚手架探活（LRM-310）
 
-现网约定：`DOUZERO_INFER_URL=http://172.17.0.1:8765`（容器访问宿主机推理口）。**训模冻结期可不启 8765**；游戏服启动仍会探活，失败只打日志，出牌 fallback 规则机器人普通档（LRM-260）。
+现网约定：`DOUZERO_INFER_URL=http://172.17.0.1:8765`（容器经 docker bridge 访问宿主机推理口）。**训模冻结期可不启 8765**；游戏服启动仍会探活，失败只打日志，出牌 fallback 规则机器人普通档（LRM-260），不得卡局。
 
 ```bash
-# 登录 89：推理口探活（期望 200 + status=ok；未启服则 connection refused）
+# 宿主机 / 可达 docker0
 curl -sS -m 3 http://127.0.0.1:8765/health | jq .
+curl -sS -m 2 http://172.17.0.1:8765/health | jq .
 # 期望示例
 # {"status":"ok","models":["landlord","landlord_up","landlord_down"],"modelId":"default","ckptDir":null}
 
-# 从 ddz 容器视角（与现网 env 一致）
+# 从 ddz 容器视角
 docker exec ddz printenv DOUZERO_INFER_URL
-# 游戏服启动日志（探活结果）
+docker exec ddz sh -c 'curl -sS -m 2 "$DOUZERO_INFER_URL/health"' || true
+
+# 游戏服启动探活日志
 docker logs ddz --since 10m 2>&1 | grep -E 'douzero\.probe\.(ok|fail|skip)'
 ```
 
@@ -100,7 +103,7 @@ ckpt 切换（无需改代码，重启推理进程即可）：
 | `DOUZERO_LANDLORD_CKPT` / `_UP_` / `_DOWN_` | 三角色真实路径 |
 | `DOUZERO_INFER_TIMEOUT_MS` | 游戏服 HTTP 超时（默认 1500） |
 
-接口说明见 `docs/douzero-adapter.md`。
+接口说明：`docs/douzero-adapter.md`、`docs/douzero-adapter-contract.md`。
 
 ## 常见故障
 
@@ -117,4 +120,4 @@ ckpt 切换（无需改代码，重启推理进程即可）：
 
 - 不做外部 APM / Prometheus；本手册 + `docker logs` 即最小闭环。
 - 不改游戏规则；日志仅服务端 stdout。
-- DouZero：**不接新 ckpt / 不上线人机对战**，直至训模 Agent + PO 点名。
+- DouZero：**不接新 ckpt / 不上线人机对战**，直至训模 Agent + PO 点名；本手册只保留探活与 fallback 脚手架。

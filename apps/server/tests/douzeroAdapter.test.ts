@@ -131,7 +131,7 @@ describe('DouZero adapter', () => {
     expect(createConfiguredDouZeroAdapter({})).toBeUndefined();
   });
 
-  it('非法模型输出会 fallback 到当前最小合法 bot 行为', async () => {
+  it('非法模型输出会 fallback 到规则机器人普通档（LRM-260）', async () => {
     const hand = [card(RANK.THREE), card(RANK.FIVE)];
     const prev = identifyHand([card(RANK.FOUR)])!;
     const chosen = await choosePlayWithDouZero(
@@ -249,7 +249,7 @@ describe('DouZero adapter', () => {
     });
   });
 
-  it('HTTP 服务 500 / 解析失败 → choosePlay 返回 null，上层可 fallback', async () => {
+  it('HTTP 服务 500 / 解析失败 → choosePlay 返回 null，上层 fallback 规则机器人', async () => {
     await withMockServer((_req, res) => {
       res.statusCode = 500;
       res.end('{}');
@@ -383,6 +383,26 @@ describe('DouZero adapter', () => {
       );
       expect(suggestions.map((cs) => cs.map((c) => c.rank))).toEqual([[RANK.FIVE]]);
     });
+  });
+
+  it('无 adapter / choosePlay 返回 null → fallback 规则机器人普通档且不抛错（LRM-310）', async () => {
+    const hand = [card(RANK.THREE), card(RANK.FIVE), card(RANK.SEVEN)];
+    const ctx = {
+      seat: 0 as const,
+      landlordSeat: 0 as const,
+      hand,
+      prev: null,
+      bottom: [] as Card[],
+      handCounts: { 0: 3, 1: 17, 2: 17 } as const,
+      history: [],
+    };
+    const leadNoAdapter = await choosePlayWithDouZero(ctx);
+    expect(leadNoAdapter).not.toBeNull();
+    expect(leadNoAdapter!.length).toBeGreaterThan(0);
+
+    const leadNull = await choosePlayWithDouZero(ctx, { choosePlay: async () => null });
+    expect(leadNull).not.toBeNull();
+    expect(leadNull!.length).toBeGreaterThan(0);
   });
 
   it('GameRoom 机器人出牌可调用适配器，模型异常时仍能 fallback 跑完', async () => {
