@@ -26,8 +26,8 @@
 | `--ddz-gold-600` | `#c49218` | 金色按下态、描边 |
 | `--ddz-red-500` | `#d63031` | 红桃/方片、危险按钮、地主角标 |
 | `--ddz-red-600` | `#a82020` | 红色按下态 |
-| `--ddz-settle-win-1` / `--ddz-settle-win-2` | `#7a1c14` / `#3d140f` | 结算胜方暖金红底 |
-| `--ddz-settle-lose-1` / `--ddz-settle-lose-2` | `#2a3544` / `#1a222c` | 结算负方蓝灰底（降饱和） |
+| `--ddz-settle-win-1` / `-2` / `-3` | `#8a2a1c` / `#5a1a12` / `#2e100e` | 结算胜方三阶底（暖金红） |
+| `--ddz-settle-lose-1` / `-2` / `-3` | `#344052` / `#232c38` / `#151a22` | 结算负方三阶底（蓝灰降饱和） |
 | `--ddz-settle-win-title` / `--ddz-settle-lose-title` | `#ffe08a` / `#b8c4d4` | 结算胜负标题色 |
 | `--ddz-paper` | `#fbfbf6` | 卡牌牌面 |
 | `--ddz-ink` | `#1c1c1c` | 黑桃/梅花、正文深色 |
@@ -214,6 +214,7 @@ box-shadow:
 - LRM-208（2026-07-21，小雅）：关键动效正式时长表，替换 LRM-168 interim；同步 `motionSpec.ts`。
 - LRM-246（2026-07-22，小雅）：对局页一屏视口预算 `--ddz-vp-*`；椭圆纵比 34%→28%；对局壳隐藏 footer、压缩手牌/按钮区。
 - LRM-246 follow-up（2026-07-22，小雅）：手牌 `margin-top: auto` 下沉贴底，控件上移贴紧手牌（Frank 反馈）。
+- LRM-257（2026-07-22，小雅）：结算胜负配色 token 精修（§12）；胜暖金红 / 负蓝灰；`.result-card` 全走 token。
 
 ## 11. 对局页一屏视口（LRM-246）
 
@@ -244,3 +245,35 @@ box-shadow:
 - 改动面：`apps/client/src/styles.css`（`.app--game` 作用域）+ token 文档本节。
 - 烟测：`/game` 与 `/fx-demo?scene=cards` 在 1920×1080；底栏五键完整可见且无 `document` 级纵滚。
 - 若仍溢出：优先再压 `--ddz-vp-stage-min` / `--ddz-vp-table-pad-y`，勿缩小牌面到不可读。
+
+## 12. 结算胜负配色（LRM-257 · baseline 状态4）
+
+> 胜方暖金红、负方蓝灰降饱和；**不刺眼**、不与 LRM-207 牌面抢层级。再来一局仍为唯一金色主按钮。
+
+### 12.1 胜方 `--ddz-settle-win-*`
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--ddz-settle-win-1` / `-2` / `-3` | `#8a2a1c` / `#5a1a12` / `#2e100e` | 卡片三阶渐变底 |
+| `--ddz-settle-win-highlight` | `rgba(255,200,100,0.32)` | 顶光（克制，禁止大面积 bloom） |
+| `--ddz-settle-win-border` | `rgba(232,188,58,0.36)` | 卡片描边 |
+| `--ddz-settle-win-glow` | `rgba(245,197,66,0.28)` | 外圈柔光 |
+| `--ddz-settle-win-title` | `#ffe08a` | 胜负标题 |
+| `--ddz-settle-win-score-plus` | `#e8c86a` | 得分正数（降饱和金，非 `#ffd166`） |
+
+### 12.2 负方 `--ddz-settle-lose-*`
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--ddz-settle-lose-1` / `-2` / `-3` | `#344052` / `#232c38` / `#151a22` | 卡片三阶渐变底 |
+| `--ddz-settle-lose-highlight` | `rgba(148,168,196,0.14)` | 顶光 |
+| `--ddz-settle-lose-border` | `rgba(148,168,196,0.26)` | 卡片描边 |
+| `--ddz-settle-lose-title` | `#b8c4d4` | 胜负标题 |
+| `--ddz-settle-lose-muted` | `#8a97a8` | 元信息/得分 |
+| `--ddz-settle-lose-badge-filter` | `grayscale(0.28) saturate(0.7) brightness(0.92)` | 徽章弱化 |
+
+### 12.3 验收
+
+1. `.result-card.win` / `.result-card.lose` **全部**走 token，无散落 hex。
+2. 预览：`docs/assets/previews/lrm-257/settle-colors-sheet.svg`
+3. 演示：`/fx-demo?scene=settle`（胜）与 `settle-lose`（负）各一屏对比。

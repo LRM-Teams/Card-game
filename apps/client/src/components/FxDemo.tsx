@@ -395,14 +395,41 @@ export function FxDemo() {
       )}
 
       {scene === 'settle' && (
-        <div className="table settled settled-win fx-demo-table" data-fx="settle">
-          <div className="result-card" data-fx="settle-pop">
+        <div className="table settled fx-demo-table" data-fx="settle">
+          <div className="result-card win" data-fx="settle-pop">
             <SettleCoins win />
             <img className="result-badge" src="/states/victory-badge.svg" alt="" aria-hidden="true" />
-            <h2>你赢了</h2>
+            <h2 className="result-title">你赢了</h2>
             <p className="result-meta">农民胜 · 单注 8</p>
             <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
-            <p className="scores">得分：你 +16　对手 -8　对手 -8</p>
+            <ul className="score-list" aria-label="本局得分">
+              <li><span>你</span><span className="score-val plus">+16</span></li>
+              <li><span>对手</span><span className="score-val minus">-8</span></li>
+            </ul>
+            <div className="result-actions">
+              <button type="button" className="btn primary cta">
+                <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />
+                再来一局
+              </button>
+              <button type="button" className="btn secondary">
+                返回大厅
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {scene === 'settle-lose' && (
+        <div className="table settled fx-demo-table" data-fx="settle">
+          <div className="result-card lose" data-fx="settle-pop">
+            <img className="result-badge" src="/states/defeat-badge.svg" alt="" aria-hidden="true" />
+            <h2 className="result-title">你输了</h2>
+            <p className="result-meta">地主胜 · 单注 8</p>
+            <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
+            <ul className="score-list" aria-label="本局得分">
+              <li><span>你</span><span className="score-val minus">-16</span></li>
+              <li><span>对手</span><span className="score-val plus">+8</span></li>
+            </ul>
             <div className="result-actions">
               <button type="button" className="btn primary cta">
                 <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />

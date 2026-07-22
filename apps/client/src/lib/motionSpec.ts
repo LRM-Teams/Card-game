@@ -77,6 +77,7 @@ export type FxDemoScene =
   | 'bomb'
   | 'rocket'
   | 'settle'
+  | 'settle-lose'
   | 'reveal'
   | 'double'
   | 'mult';
@@ -91,6 +92,7 @@ export const FX_DEMO_SCENES: FxDemoScene[] = [
   'bomb',
   'rocket',
   'settle',
+  'settle-lose',
   'reveal',
   'double',
   'mult',
