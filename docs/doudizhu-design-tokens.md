@@ -213,6 +213,7 @@ box-shadow:
 - LRM-206（2026-07-21，小雅）：牌面纸质感精修（冷米白/红黑花色/大小王轨色/牌背去字）。
 - LRM-208（2026-07-21，小雅）：关键动效正式时长表，替换 LRM-168 interim；同步 `motionSpec.ts`。
 - LRM-246（2026-07-22，小雅）：对局页一屏视口预算 `--ddz-vp-*`；椭圆纵比 34%→28%；对局壳隐藏 footer、压缩手牌/按钮区。
+- LRM-246 follow-up（2026-07-22，小雅）：手牌 `margin-top: auto` 下沉贴底，控件上移贴紧手牌（Frank 反馈）。
 
 ## 11. 对局页一屏视口（LRM-246）
 
@@ -224,10 +225,10 @@ box-shadow:
 |---|---|---|
 | 顶栏 | ≤44px | `--ddz-vp-topnav-h`；`.app--game .topnav` |
 | 内容边距 | ≤10px | `.app--game .content` padding |
-| 椭圆台呢内边距（上下） | 18px + 12px | `--ddz-vp-table-pad-y` |
+| 椭圆台呢内边距（上下） | 18px + **4px** | `--ddz-vp-table-pad-y`；底边收紧贴操作区 |
 | 中央舞台 | 140–220px | `--ddz-vp-stage-min`；`max-height: min(220px, 26vh)` |
-| 手牌区 | ≥132px | `--ddz-vp-hand-min`（含选中抬起 34px 余量） |
-| 提示+按钮 | ≤96px | `--ddz-vp-controls-budget` |
+| 手牌区 | ≥132px | `--ddz-vp-hand-min`；`.hand { margin-top: auto }` 下沉贴底 |
+| 提示+按钮 | ≤96px | `--ddz-vp-controls-budget`；相对手牌 `margin-top: -8px` |
 | 页脚 | 0（对局壳隐藏） | `.app--game .foot { display: none }` |
 
 ### 11.2 硬规则

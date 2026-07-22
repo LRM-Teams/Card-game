@@ -800,7 +800,8 @@ body::before {
   min-height: 0;
   max-height: 100%;
   gap: var(--ddz-vp-table-gap);
-  padding: var(--ddz-vp-table-pad-y) 44px 12px;
+  /* 底边收紧：手牌+操作贴视口下沿（Frank：牌再往下） */
+  padding: var(--ddz-vp-table-pad-y) 44px 4px;
   border-radius: 50% / var(--ddz-vp-ellipse-y);
   box-shadow:
     0 0 0 var(--ddz-rail-thickness) var(--ddz-rail-wood-700),
@@ -1282,8 +1283,10 @@ body::before {
 }
 .app--game .hand {
   flex: 0 0 auto;
+  /* 吃掉舞台下方余白，把手牌+底栏整体下沉 */
+  margin-top: auto;
   min-height: var(--ddz-vp-hand-min);
-  padding: 30px 6px 6px;
+  padding: 28px 6px 0;
 }
 .hand::before {
   content: '';
@@ -1732,13 +1735,15 @@ body::before {
 }
 .app--game .controls {
   flex: 0 0 auto;
-  gap: 6px;
-  margin-top: 0;
+  gap: 4px;
+  /* 贴紧手牌，减少牌与按钮之间的台呢空隙 */
+  margin-top: -8px;
+  padding-bottom: 2px;
   max-height: var(--ddz-vp-controls-budget);
 }
 .app--game .hint {
-  padding: 4px 12px;
-  min-height: 2.2em;
+  padding: 3px 12px;
+  min-height: 2em;
   font-size: var(--ddz-text-xs);
 }
 .app--game .turn-line {
