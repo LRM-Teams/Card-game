@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>DDZ felt texture tile (LRM-314)</title>
+  <defs>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.92" numOctaves="4" stitchTiles="stitch" result="n"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.22  0 0 0 0 0.14  0 0 0 0.35 0" in="n" result="g"/>
+      <feBlend in="SourceGraphic" in2="g" mode="soft-light"/>
+    </filter>
+    <pattern id="feltWeave" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#1b4a37"/>
+      <path d="M0 4h8M4 0v8" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
+      <circle cx="2" cy="2" r="0.35" fill="rgba(0,0,0,0.12)"/>
+      <circle cx="6" cy="6" r="0.35" fill="rgba(255,255,255,0.04)"/>
+    </pattern>
+    <radialGradient id="feltBase" cx="50%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#2a6349"/>
+      <stop offset="42%" stop-color="#1f5540"/>
+      <stop offset="68%" stop-color="#1b4a37"/>
+      <stop offset="100%" stop-color="#0b2218"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#feltBase)" filter="url(#grain)"/>
+  <rect width="512" height="512" fill="url(#feltWeave)" opacity="0.55"/>
+  <ellipse cx="256" cy="180" rx="220" ry="140" fill="rgba(168,198,178,0.10)"/>
+</svg>

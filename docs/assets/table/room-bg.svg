@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <title>DDZ game room background (LRM-314)</title>
+  <defs>
+    <linearGradient id="roomBase" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#33221a"/>
+      <stop offset="48%" stop-color="#43301f"/>
+      <stop offset="100%" stop-color="#241612"/>
+    </linearGradient>
+    <radialGradient id="warmSpot" cx="50%" cy="-8%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,218,140,0.14)"/>
+      <stop offset="100%" stop-color="rgba(255,218,140,0)"/>
+    </radialGradient>
+    <radialGradient id="sideGlowL" cx="8%" cy="18%" r="32%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.06)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="50%" cy="50%" r="72%">
+      <stop offset="55%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.42)"/>
+    </radialGradient>
+    <pattern id="panelLines" width="96" height="96" patternUnits="userSpaceOnUse" patternTransform="rotate(12)">
+      <path d="M0 48h96" stroke="rgba(255,255,255,0.025)" stroke-width="1"/>
+      <path d="M48 0v96" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+    </pattern>
+    <filter id="softBlur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1.2"/>
+    </filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#roomBase)"/>
+  <rect width="1920" height="1080" fill="url(#panelLines)" opacity="0.55"/>
+  <rect width="1920" height="1080" fill="url(#warmSpot)"/>
+  <rect width="1920" height="1080" fill="url(#sideGlowL)"/>
+  <!-- decorative ceiling lamp halo -->
+  <ellipse cx="960" cy="120" rx="280" ry="90" fill="rgba(255,200,120,0.06)" filter="url(#softBlur)"/>
+  <rect width="1920" height="1080" fill="url(#vignette)"/>
+</svg>
