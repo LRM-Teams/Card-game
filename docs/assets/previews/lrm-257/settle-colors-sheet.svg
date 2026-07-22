@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img">
+  <rect width="960" height="520" fill="#241612"/>
+  <text x="24" y="32" fill="#e8bc3a" font-family="Arial,sans-serif" font-size="18" font-weight="700">LRM-257 settle colors - win vs lose</text>
+  <g transform="translate(40,60)">
+    <text x="0" y="0" fill="#ffe08a" font-family="Arial,sans-serif" font-size="14" font-weight="700">WIN (warm gold-red)</text>
+    <rect x="0" y="12" width="400" height="400" rx="16" fill="url(#winGrad)" stroke="rgba(232,188,58,0.36)"/>
+    <text x="140" y="80" fill="#ffe08a" font-family="Arial,sans-serif" font-size="28" font-weight="900">???</text>
+    <text x="130" y="115" fill="#fff3c4" font-family="Arial,sans-serif" font-size="12">???</text>
+    <rect x="90" y="330" width="220" height="44" rx="8" fill="#e8bc3a"/>
+    <text x="145" y="358" fill="#2c1d00" font-family="Arial,sans-serif" font-size="13" font-weight="700">????</text>
+  </g>
+  <g transform="translate(500,60)">
+    <text x="0" y="0" fill="#b8c4d4" font-family="Arial,sans-serif" font-size="14" font-weight="700">LOSE (blue-gray)</text>
+    <rect x="0" y="12" width="400" height="400" rx="16" fill="url(#loseGrad)" stroke="rgba(148,168,196,0.26)"/>
+    <text x="140" y="80" fill="#b8c4d4" font-family="Arial,sans-serif" font-size="28" font-weight="900">???</text>
+    <text x="130" y="115" fill="#8a97a8" font-family="Arial,sans-serif" font-size="12">???</text>
+    <rect x="90" y="330" width="220" height="44" rx="8" fill="#e8bc3a"/>
+    <text x="145" y="358" fill="#2c1d00" font-family="Arial,sans-serif" font-size="13" font-weight="700">????</text>
+  </g>
+  <defs>
+    <linearGradient id="winGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a2a1c"/>
+      <stop offset="48%" stop-color="#5a1a12"/>
+      <stop offset="100%" stop-color="#2e100e"/>
+    </linearGradient>
+    <linearGradient id="loseGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#344052"/>
+      <stop offset="52%" stop-color="#232c38"/>
+      <stop offset="100%" stop-color="#151a22"/>
+    </linearGradient>
+  </defs>
+</svg>
