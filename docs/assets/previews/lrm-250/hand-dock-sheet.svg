@@ -1,27 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img">
-  <rect width="960" height="420" fill="#241612"/>
-  <text x="24" y="32" fill="#e8bc3a" font-family="Arial, sans-serif" font-size="18" font-weight="700">LRM-250 hand dock lower</text>
-  <text x="24" y="54" fill="#fff3c4" font-family="Arial, sans-serif" font-size="12" opacity="0.75">Before: floating hand + empty green under cards. After: margin-top auto + controls -8px.</text>
-  <g transform="translate(24,80)">
-    <text x="0" y="0" fill="#ff8e8e" font-family="Arial, sans-serif" font-size="14" font-weight="700">BEFORE</text>
-    <rect x="0" y="10" width="420" height="300" rx="8" fill="#1b4a37"/>
-    <rect x="40" y="70" width="340" height="50" rx="4" fill="#fbf8f0"/>
-    <text x="150" y="100" fill="#1a1a1a" font-family="Arial, sans-serif" font-size="12">hand (high)</text>
-    <rect x="120" y="160" width="180" height="22" rx="11" fill="#0b2218"/>
-    <text x="165" y="175" fill="#e8bc3a" font-family="Arial, sans-serif" font-size="10">hint</text>
-    <rect x="80" y="200" width="260" height="40" rx="6" fill="#e8bc3a"/>
-    <text x="160" y="225" fill="#2c1d00" font-family="Arial, sans-serif" font-size="12" font-weight="700">controls</text>
-    <text x="90" y="280" fill="#7ef0a8" font-family="Arial, sans-serif" font-size="11" opacity="0.7">empty green under hand</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="LRM-250 hand dock before after">
+  <rect width="1280" height="640" fill="#241612"/>
+  <text x="40" y="36" fill="#e8bc3a" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="22" font-weight="700">LRM-250 Hand Dock  —ddz-vp-* 下沉规格</text>
+  <text x="40" y="60" fill="#fff3c4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" opacity="0.75">Frank：牌再往下。246 一屏不变；本单压按钮下空绿，手牌+底栏贴底。</text>
+
+  <!-- BEFORE -->
+  <g transform="translate(40,88)">
+    <text x="0" y="0" fill="#ff8e8e" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">BEFORE（246 一屏，手牌偏高）</text>
+    <rect x="0" y="12" width="560" height="460" rx="8" fill="#33221a" stroke="rgba(255,255,255,0.14)"/>
+    <rect x="16" y="28" width="528" height="28" rx="4" fill="#0b2218"/>
+    <text x="24" y="47" fill="#fff3c4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11">topnav &lt;=44</text>
+    <ellipse cx="280" cy="230" rx="240" ry="150" fill="#1b4a37" stroke="#8a5a2b" stroke-width="10"/>
+    <rect x="90" y="160" width="380" height="40" rx="4" fill="#2a6349" opacity="0.55"/>
+    <text x="210" y="185" fill="#fff3c4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11" opacity="0.8">stage</text>
+    <rect x="80" y="250" width="400" height="56" rx="6" fill="#fbf8f0"/>
+    <text x="200" y="284" fill="#1a1a1a" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700">hand（偏上）</text>
+    <rect x="160" y="320" width="240" height="22" rx="11" fill="#0b2218"/>
+    <text x="245" y="335" fill="#e8bc3a" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11">hint</text>
+    <rect x="120" y="354" width="320" height="44" rx="8" fill="#e8bc3a"/>
+    <text x="230" y="382" fill="#2c1d00" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700">controls</text>
+    <rect x="100" y="416" width="360" height="36" rx="4" fill="#7ef0a8" opacity="0.28"/>
+    <text x="170" y="439" fill="#7ef0a8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12">大块空绿（pad-bottom 12）</text>
   </g>
-  <g transform="translate(500,80)">
-    <text x="0" y="0" fill="#7ef0a8" font-family="Arial, sans-serif" font-size="14" font-weight="700">AFTER</text>
-    <rect x="0" y="10" width="420" height="300" rx="8" fill="#1b4a37"/>
-    <rect x="40" y="150" width="340" height="50" rx="4" fill="#fbf8f0"/>
-    <text x="145" y="180" fill="#1a1a1a" font-family="Arial, sans-serif" font-size="12">hand (lower)</text>
-    <rect x="120" y="210" width="180" height="20" rx="10" fill="#0b2218"/>
-    <text x="165" y="224" fill="#e8bc3a" font-family="Arial, sans-serif" font-size="10">hint</text>
-    <rect x="80" y="240" width="260" height="40" rx="6" fill="#e8bc3a"/>
-    <text x="150" y="265" fill="#2c1d00" font-family="Arial, sans-serif" font-size="12" font-weight="700">controls docked</text>
-    <text x="70" y="300" fill="#7ef0a8" font-family="Arial, sans-serif" font-size="11">tight gap / less bottom green</text>
+
+  <!-- AFTER -->
+  <g transform="translate(680,88)">
+    <text x="0" y="0" fill="#7ef0a8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">AFTER（250 下沉贴底）</text>
+    <rect x="0" y="12" width="560" height="460" rx="8" fill="#33221a" stroke="rgba(255,255,255,0.14)"/>
+    <rect x="0" y="12" width="560" height="460" fill="none" stroke="#7ef0a8" stroke-width="2"/>
+    <rect x="16" y="28" width="528" height="28" rx="4" fill="#0b2218"/>
+    <text x="24" y="47" fill="#fff3c4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11">topnav &lt;=44 · 仍 100dvh 无纵滚</text>
+    <ellipse cx="280" cy="200" rx="240" ry="130" fill="#1b4a37" stroke="#8a5a2b" stroke-width="10"/>
+    <rect x="90" y="130" width="380" height="36" rx="4" fill="#2a6349" opacity="0.55"/>
+    <text x="210" y="153" fill="#fff3c4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11" opacity="0.8">stage（余白被 hand 吃掉）</text>
+    <rect x="80" y="290" width="400" height="56" rx="6" fill="#fbf8f0"/>
+    <text x="170" y="324" fill="#1a1a1a" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700">hand · margin-top:auto</text>
+    <rect x="160" y="348" width="240" height="20" rx="10" fill="#0b2218"/>
+    <text x="220" y="362" fill="#e8bc3a" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="11">hint · pull -8</text>
+    <rect x="120" y="376" width="320" height="44" rx="8" fill="#e8bc3a"/>
+    <text x="210" y="404" fill="#2c1d00" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700">controls docked</text>
+    <text x="90" y="450" fill="#7ef0a8" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12">pad-bottom 4 · 空绿明显压缩</text>
   </g>
+
+  <text x="40" y="590" fill="#fff3c4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" opacity="0.85">tokens: --ddz-vp-table-pad-bottom:4px · --ddz-vp-hand-pad-top/bottom:28/0 · --ddz-vp-controls-pull:-8px · --ddz-vp-controls-gap:4px</text>
+  <text x="40" y="612" fill="#fff3c4" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" opacity="0.7">规格源：docs/doudizhu-design-tokens.md §11.4 · 实现：apps/client/src/styles.css :root + .app--game</text>
 </svg>

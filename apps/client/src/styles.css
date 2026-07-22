@@ -115,6 +115,12 @@
   --ddz-vp-hand-min: 132px;
   --ddz-vp-controls-budget: 96px;
   --ddz-vp-ellipse-y: 28%;
+  /* LRM-250：手牌下沉贴底（在 246 一屏预算上微调，压按钮下空绿） */
+  --ddz-vp-table-pad-bottom: 4px;
+  --ddz-vp-hand-pad-top: 28px;
+  --ddz-vp-hand-pad-bottom: 0px;
+  --ddz-vp-controls-pull: -8px;
+  --ddz-vp-controls-gap: 4px;
 
   color-scheme: dark;
 }
@@ -800,8 +806,8 @@ body::before {
   min-height: 0;
   max-height: 100%;
   gap: var(--ddz-vp-table-gap);
-  /* 底边收紧：手牌+操作贴视口下沿（Frank：牌再往下） */
-  padding: var(--ddz-vp-table-pad-y) 44px 4px;
+  /* LRM-250：底边用 --ddz-vp-table-pad-bottom，压空绿贴操作区 */
+  padding: var(--ddz-vp-table-pad-y) 44px var(--ddz-vp-table-pad-bottom);
   border-radius: 50% / var(--ddz-vp-ellipse-y);
   box-shadow:
     0 0 0 var(--ddz-rail-thickness) var(--ddz-rail-wood-700),
@@ -1283,10 +1289,10 @@ body::before {
 }
 .app--game .hand {
   flex: 0 0 auto;
-  /* 吃掉舞台下方余白，把手牌+底栏整体下沉 */
+  /* LRM-250：margin-top:auto 吃掉舞台下余白，手牌+底栏整体下沉 */
   margin-top: auto;
   min-height: var(--ddz-vp-hand-min);
-  padding: 28px 6px 0;
+  padding: var(--ddz-vp-hand-pad-top) 6px var(--ddz-vp-hand-pad-bottom);
 }
 .hand::before {
   content: '';
@@ -1735,9 +1741,9 @@ body::before {
 }
 .app--game .controls {
   flex: 0 0 auto;
-  gap: 4px;
-  /* 贴紧手牌，减少牌与按钮之间的台呢空隙 */
-  margin-top: -8px;
+  gap: var(--ddz-vp-controls-gap);
+  /* LRM-250：--ddz-vp-controls-pull 贴紧手牌 */
+  margin-top: var(--ddz-vp-controls-pull);
   padding-bottom: 2px;
   max-height: var(--ddz-vp-controls-budget);
 }
