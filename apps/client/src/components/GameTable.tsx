@@ -6,6 +6,7 @@ import { useOnboardingStore } from '../store/onboardingStore';
 import { HandView } from './HandView';
 import { CardView, OpponentBackFan } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
+import { PlayerKindBadge, playerKindLabel } from './PlayerKindBadge';
 import { SeatPlayZone } from './SeatPlayZone';
 import { SettleCoins } from './SettleCoins';
 import { GuideSpot } from './GuideSpot';
@@ -640,13 +641,20 @@ function SeatBadge({
   return (
     <div
       className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}${p.doubled ? ' is-doubled' : ''}`}
-      aria-label={[p.displayName, roleLabel, p.doubled ? '已加倍' : null, active ? '行动中' : null]
+      aria-label={[
+        p.displayName,
+        playerKindLabel(p.isBot),
+        roleLabel,
+        p.doubled ? '已加倍' : null,
+        active ? '行动中' : null,
+      ]
         .filter(Boolean)
         .join('，')}
     >
       <div className="avatar-wrap">
         <div className="avatar">
           <PlayerAvatar kind="player" avatarId={p.avatarId} />
+          <PlayerKindBadge isBot={p.isBot} />
           {role && (
             <img
               className="role-badge-corner"
@@ -668,6 +676,9 @@ function SeatBadge({
       </div>
       <div className="seat-name">
         {p.displayName}
+        <span className={`seat-kind-inline ${p.isBot ? 'bot' : 'human'}`}>
+          {playerKindLabel(p.isBot)}
+        </span>
         {p.doubled ? <span className="seat-double-tag">加倍</span> : null}
       </div>
       <div className="seat-count">剩 {p.handSize}</div>

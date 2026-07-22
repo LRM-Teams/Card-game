@@ -733,6 +733,15 @@ body::before {
   opacity: 0.62;
   border-style: dashed;
 }
+.seat-card.bot {
+  border-color: rgba(126, 240, 168, 0.38);
+  background:
+    linear-gradient(180deg, rgba(61, 90, 69, 0.22), rgba(0, 0, 0, 0.2)),
+    rgba(6, 40, 26, 0.76);
+}
+.seat-card.human {
+  border-color: rgba(47, 111, 237, 0.28);
+}
 .avatar {
   display: inline-grid;
   place-items: center;
@@ -844,6 +853,49 @@ body::before {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+.player-kind-badge {
+  position: absolute;
+  top: -5px;
+  left: -6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  z-index: 3;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.player-kind-badge.human {
+  background: rgba(47, 111, 237, 0.92);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+}
+.player-kind-badge.bot {
+  background: rgba(45, 74, 52, 0.96);
+  color: #b8f0c8;
+  border: 1px solid rgba(126, 240, 168, 0.5);
+}
+.seat-kind-inline {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+.seat-kind-inline.human {
+  background: rgba(47, 111, 237, 0.22);
+  color: #9ec0ff;
+  border: 1px solid rgba(47, 111, 237, 0.45);
+}
+.seat-kind-inline.bot {
+  background: rgba(61, 90, 69, 0.28);
+  color: #9ee8b0;
+  border: 1px solid rgba(126, 240, 168, 0.4);
 }
 
 .status-row {
@@ -2873,6 +2925,15 @@ body::before {
 .matching-panel {
   text-align: center;
   padding: var(--ddz-space-5) 0;
+}
+.matching-panel .matching-status {
+  font-size: var(--ddz-text-lg);
+  font-weight: 800;
+  color: var(--ddz-gold-300);
+  margin-bottom: var(--ddz-space-2);
+}
+.matching-panel .matching-hint {
+  margin-bottom: var(--ddz-space-4);
 }
 
 /* LRM-167 identity badge + action highlight */
