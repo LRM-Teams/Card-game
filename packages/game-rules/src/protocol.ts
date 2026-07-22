@@ -43,7 +43,8 @@ export type ErrorCode =
   | 'already_in_room' // 已在房间内，不能再匹配/加入
   | 'not_matching' // 当前不在匹配队列
   | 'rate_limited' // 动作发送过快（如局内表情/快捷语冷却）
-  | 'invalid_social'; // 表情/快捷语 id 不在白名单
+  | 'invalid_social' // 表情/快捷语 id 不在白名单
+  | 'invalid_display_name'; // 昵称长度或空白不合法（2–12 字符）
 
 /** 内置头像 id（客户端图集；允许任意非空字符串，未知则 fallback 剪影）。 */
 export type AvatarId = string;
@@ -51,7 +52,8 @@ export type AvatarId = string;
 /** 牌桌上某玩家的公开视图（绝不含他人手牌）。 */
 export interface PlayerView {
   seat: Seat;
-  name: string;
+  /** 入座临时昵称（同房可见）。 */
+  displayName: string;
   /** 头像图集 id；机器人用 `bot`。 */
   avatarId: AvatarId;
   isBot: boolean;
@@ -149,7 +151,8 @@ export interface GameStateSnapshot {
 
 /** 加入 / 匹配时携带的游客身份（可缺省；服务端会补齐 guestId）。 */
 export interface PlayerIdentity {
-  name: string;
+  /** 入座临时昵称（2–12 字符；服务端 normalize 后广播）。 */
+  displayName: string;
   /** 客户端持久化的游客 ID；缺省时服务端生成并在 you_joined 回传。 */
   guestId?: string;
   /** 内置头像 id，缺省 `av-1`。 */

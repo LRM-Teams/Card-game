@@ -73,13 +73,13 @@ function tryAutoRejoin(): void {
   const id = readIdentity();
   send({
     type: 'join',
-    name: session.name,
+    displayName: session.displayName,
     roomId: session.roomId ?? undefined,
     guestId: session.guestId ?? id.guestId,
     avatarId: session.avatarId ?? id.avatarId,
     beans: id.beans,
   });
-  useGameStore.setState({ myName: session.name });
+  useGameStore.setState({ myDisplayName: session.displayName });
 }
 
 export interface UiError {
@@ -98,7 +98,7 @@ export interface PlayFxPulse {
 
 interface UiState {
   status: ConnStatus;
-  myName: string;
+  myDisplayName: string;
   guestId: string | null;
   beans: number;
   matching: boolean;
@@ -135,13 +135,14 @@ interface UiState {
   requestHint: () => void;
   cycleHint: () => void;
   sendSocial: (kind: SocialKind, id: SocialEmoteId | SocialPhraseId) => void;
+  updateDisplayName: (displayName: string) => void;
   dismissError: () => void;
   clearPlayFx: () => void;
 }
 
 export const useGameStore = create<UiState>((set, get) => ({
   status: 'connecting',
-  myName: '',
+  myDisplayName: '',
   guestId: null,
   beans: 1000,
   matching: false,
@@ -162,7 +163,7 @@ export const useGameStore = create<UiState>((set, get) => ({
 
   init: () => {
     const id = readIdentity();
-    set({ myName: id.name, guestId: id.guestId, beans: id.beans });
+    set({ myDisplayName: id.displayName, guestId: id.guestId, beans: id.beans });
     connect();
     onStatus((s) => {
       set({ status: s });
@@ -182,10 +183,10 @@ export const useGameStore = create<UiState>((set, get) => ({
             ...prev,
             guestId: e.guestId,
             beans: e.beans,
-            name: get().myName || prev.name,
+            displayName: get().myDisplayName || prev.displayName,
           };
           saveIdentity(next);
-          savePlayerSession(next.name, e.roomId, {
+          savePlayerSession(next.displayName, e.roomId, {
             guestId: e.guestId,
             avatarId: next.avatarId,
           });
@@ -307,13 +308,13 @@ export const useGameStore = create<UiState>((set, get) => ({
 
   join: (identity, roomId) => {
     saveIdentity(identity);
-    savePlayerSession(identity.name, roomId, {
+    savePlayerSession(identity.displayName, roomId, {
       guestId: identity.guestId,
       avatarId: identity.avatarId,
     });
     autoRejoinAttempted = true;
     set({
-      myName: identity.name,
+      myDisplayName: identity.displayName,
       guestId: identity.guestId,
       beans: identity.beans,
       matching: false,
@@ -334,7 +335,7 @@ export const useGameStore = create<UiState>((set, get) => ({
     });
     send({
       type: 'join',
-      name: identity.name,
+      displayName: identity.displayName,
       roomId: roomId?.trim() || undefined,
       guestId: identity.guestId,
       avatarId: identity.avatarId,
@@ -346,7 +347,7 @@ export const useGameStore = create<UiState>((set, get) => ({
     saveIdentity(identity);
     autoRejoinAttempted = true;
     set({
-      myName: identity.name,
+      myDisplayName: identity.displayName,
       guestId: identity.guestId,
       beans: identity.beans,
       matching: true,
@@ -363,7 +364,7 @@ export const useGameStore = create<UiState>((set, get) => ({
     });
     send({
       type: 'match',
-      name: identity.name,
+      displayName: identity.displayName,
       guestId: identity.guestId,
       avatarId: identity.avatarId,
       beans: identity.beans,
@@ -371,6 +372,27 @@ export const useGameStore = create<UiState>((set, get) => ({
   },
 
   cancelMatch: () => send({ type: 'cancel_match' }),
+
+  updateDisplayName: (displayName) => {
+    const id = readIdentity();
+    const next: GuestIdentity = { ...id, displayName };
+    saveIdentity(next);
+    set({ myDisplayName: displayName });
+    const roomId = get().roomId;
+    if (!roomId) return;
+    savePlayerSession(displayName, roomId, {
+      guestId: id.guestId,
+      avatarId: id.avatarId,
+    });
+    send({
+      type: 'join',
+      displayName,
+      roomId,
+      guestId: id.guestId,
+      avatarId: id.avatarId,
+      beans: id.beans,
+    });
+  },
 
   clearPlayFx: () => set({ playFx: null }),
 

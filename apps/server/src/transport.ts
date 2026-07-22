@@ -8,7 +8,7 @@
  */
 import type { Server as IoServer, Socket } from 'socket.io';
 import type { ClientAction, ErrorCode, Seat, ServerEvent } from '@card-game/rules';
-import { GamePhase } from '@card-game/rules';
+import { GamePhase, isValidDisplayName, normalizeDisplayName } from '@card-game/rules';
 import type { ActionResult, RoomEvent } from './game/types';
 import type { GameRoom } from './game/GameRoom';
 import { RoomRegistry } from './registry';
@@ -35,6 +35,24 @@ export function createGame(io: IoServer): RoomRegistry {
   const fail = (socket: Socket, code: ErrorCode, message: string): void => {
     const ev: ServerEvent = { type: 'error', code, message };
     socket.emit('event', ev);
+  };
+
+  const resolveIdentity = (
+    action: Extract<ClientAction, { type: 'join' } | { type: 'match' }>,
+  ) => {
+    const displayName = normalizeDisplayName(action.displayName);
+    if (!isValidDisplayName(displayName)) {
+      return { ok: false as const, message: '昵称需 2–12 个字符（不含首尾空白）' };
+    }
+    return {
+      ok: true as const,
+      profile: registry.identities.resolve({
+        displayName,
+        guestId: action.guestId,
+        avatarId: action.avatarId,
+        beans: action.beans,
+      }),
+    };
   };
 
   const apply = (roomId: string, events: RoomEvent[]): void => {
@@ -159,13 +177,12 @@ export function createGame(io: IoServer): RoomRegistry {
           socket.emit('event', { type: 'matching' } satisfies ServerEvent);
           return;
         }
-        const profile = registry.identities.resolve({
-          name: action.name,
-          guestId: action.guestId,
-          avatarId: action.avatarId,
-          beans: action.beans,
-        });
-        registry.enqueueMatch(profile, socket.id);
+        const resolved = resolveIdentity(action);
+        if (!resolved.ok) {
+          fail(socket, 'invalid_display_name', resolved.message);
+          return;
+        }
+        registry.enqueueMatch(resolved.profile, socket.id);
         socket.emit('event', { type: 'matching' } satisfies ServerEvent);
         return;
       }
@@ -181,13 +198,12 @@ export function createGame(io: IoServer): RoomRegistry {
 
       if (action.type === 'join') {
         if (registry.isMatching(socket.id)) registry.cancelMatch(socket.id);
-        const profile = registry.identities.resolve({
-          name: action.name,
-          guestId: action.guestId,
-          avatarId: action.avatarId,
-          beans: action.beans,
-        });
-        const { room, seat, result } = registry.join(profile, socket.id, action.roomId);
+        const resolved = resolveIdentity(action);
+        if (!resolved.ok) {
+          fail(socket, 'invalid_display_name', resolved.message);
+          return;
+        }
+        const { room, seat, result } = registry.join(resolved.profile, socket.id, action.roomId);
         if (!result.ok) {
           fail(socket, result.code, result.message);
           return;

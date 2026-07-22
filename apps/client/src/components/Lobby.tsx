@@ -4,6 +4,9 @@ import { useGameStore } from '../store/gameStore';
 import { useOnboardingStore } from '../store/onboardingStore';
 import {
   BUILTIN_AVATARS,
+  DISPLAY_NAME_MAX,
+  isValidDisplayName,
+  normalizeDisplayName,
   readIdentity,
   saveIdentity,
   type GuestIdentity,
@@ -42,9 +45,9 @@ export function Lobby() {
   const deepLinkPending = useRef(Boolean(readRoomQuery()));
   const deepLinkDone = useRef(false);
 
-  const trimmedNick = identity.name.trim();
+  const trimmedNick = normalizeDisplayName(identity.displayName);
   const trimmedRoomCode = roomCode.trim();
-  const canAct = trimmedNick.length > 0 && status === 'connected' && !matching;
+  const canAct = isValidDisplayName(trimmedNick) && status === 'connected' && !matching;
   const canJoinRoom = canAct && trimmedRoomCode.length > 0;
   const showIdentityGuide = guideActive && !seenIdentity && !matching;
   const showStartGuide = guideActive && seenIdentity && !seenStart && !matching;
@@ -152,11 +155,14 @@ export function Lobby() {
                 <input
                   type="text"
                   placeholder="给自己起个名字"
-                  value={identity.name}
-                  onChange={(e) => persist({ ...identity, name: e.target.value })}
-                  maxLength={12}
+                  value={identity.displayName}
+                  onChange={(e) => persist({ ...identity, displayName: e.target.value })}
+                  maxLength={DISPLAY_NAME_MAX}
                   autoFocus
                 />
+                {!isValidDisplayName(trimmedNick) && (
+                  <span className="hint warn">昵称需 2–12 个字符</span>
+                )}
               </label>
 
               <div className="field lobby-field">

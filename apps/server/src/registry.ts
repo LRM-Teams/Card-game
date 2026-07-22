@@ -63,7 +63,7 @@ export class RoomRegistry {
     }
 
     const reconnect = room.reconnectHuman(
-      profile.name,
+      profile.displayName,
       profile.guestId,
       profile.avatarId,
       profile.beans,
@@ -78,7 +78,7 @@ export class RoomRegistry {
       return { room, seat: -1 as Seat, result: { ok: false, code: 'room_full', message: '房间已满（3/3）' } };
     }
     const result = room.addHuman({
-      name: profile.name,
+      displayName: profile.displayName,
       guestId: profile.guestId,
       avatarId: profile.avatarId,
       beans: profile.beans,
@@ -117,7 +117,7 @@ export class RoomRegistry {
       const seat = room.firstEmptySeat();
       if (seat === null) break;
       const result = room.addHuman({
-        name: h.profile.name,
+        displayName: h.profile.displayName,
         guestId: h.profile.guestId,
         avatarId: h.profile.avatarId,
         beans: h.profile.beans,

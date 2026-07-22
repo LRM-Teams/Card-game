@@ -15,3 +15,4 @@ export * from './botStrategy';
 export * from './settlement';
 export * from './protocol';
 export * from './social';
+export * from './displayName';

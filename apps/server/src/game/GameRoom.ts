@@ -139,12 +139,12 @@ export class GameRoom {
    * 否则回退同昵称断线座位（兼容旧客户端）。
    */
   reconnectHuman(
-    name: string,
+    displayName: string,
     guestId?: string,
     avatarId?: string,
     beans = 1000,
   ): { seat: Seat; result: ActionResult } | null {
-    const trimmed = name.trim();
+    const trimmed = displayName.trim();
     const gid = guestId?.trim() || '';
     const findSeat = (pred: (p: NonNullable<(typeof this.players)[number]>) => boolean): number =>
       this.players.findIndex((p) => p !== null && !p.isBot && pred(p));
@@ -157,14 +157,14 @@ export class GameRoom {
       if (idx === -1) idx = findSeat((p) => p.guestId === gid);
     }
     if (idx === -1 && trimmed) {
-      idx = findSeat((p) => !p.connected && p.name === trimmed);
+      idx = findSeat((p) => !p.connected && p.displayName === trimmed);
     }
     if (idx === -1) return null;
 
     const seat = idx as Seat;
     const p = this.players[seat]!;
     p.connected = true;
-    if (trimmed) p.name = trimmed;
+    if (trimmed) p.displayName = trimmed;
     if (avatarId) p.avatarId = avatarId;
     if (gid) p.guestId = gid;
     this.disconnectDeadlineAt = null;
@@ -199,7 +199,7 @@ export class GameRoom {
 
   /** 真人加入，占第一个空座位。 */
   addHuman(opts: {
-    name: string;
+    displayName: string;
     guestId: string;
     avatarId: string;
     beans: number;
@@ -210,7 +210,7 @@ export class GameRoom {
     const seat = idx as Seat;
     this.players[seat] = {
       seat,
-      name: opts.name.trim() || `玩家${seat + 1}`,
+      displayName: opts.displayName.trim() || `玩家${seat + 1}`,
       avatarId: opts.avatarId || 'av-1',
       guestId: opts.guestId,
       isBot: false,
@@ -266,7 +266,7 @@ export class GameRoom {
         this.botCounter += 1;
         this.players[seat] = {
           seat,
-          name: botName(this.botCounter),
+          displayName: botName(this.botCounter),
           avatarId: 'bot',
           isBot: true,
           connected: true,
@@ -926,7 +926,7 @@ export class GameRoom {
       if (p) {
         const view: PlayerView = {
           seat,
-          name: p.name,
+          displayName: p.displayName,
           avatarId: p.avatarId,
           isBot: p.isBot,
           connected: p.connected,
