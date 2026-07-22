@@ -39,6 +39,7 @@ export type ErrorCode =
   | 'must_play_when_leading' // 领出（自由出牌）时不能 pass
   | 'not_enough_players' // 不足 3 名真人且未选择补机器人，无法开局
   | 'not_your_turn' // 当前不是你的回合（如非自己出牌回合请求出牌提示）
+  | 'not_host' // 非房主不能开局
   | 'already_in_room' // 已在房间内，不能再匹配/加入
   | 'not_matching' // 当前不在匹配队列
   | 'rate_limited' // 动作发送过快（如局内表情/快捷语冷却）

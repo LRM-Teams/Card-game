@@ -8,6 +8,7 @@
  */
 import type { Server as IoServer, Socket } from 'socket.io';
 import type { ClientAction, ErrorCode, Seat, ServerEvent } from '@card-game/rules';
+import { GamePhase } from '@card-game/rules';
 import type { ActionResult, RoomEvent } from './game/types';
 import type { GameRoom } from './game/GameRoom';
 import { RoomRegistry } from './registry';
@@ -52,6 +53,7 @@ export function createGame(io: IoServer): RoomRegistry {
       apply(roomId, events);
     });
     scheduleDecisionTimeout(room, roomId);
+    scheduleDisconnectGrace(room, roomId);
     if (room.result) {
       const updated = registry.applySettlementBeans(room);
       for (const seat of [0, 1, 2] as Seat[]) {
@@ -69,6 +71,8 @@ export function createGame(io: IoServer): RoomRegistry {
 
   /** roomId → 明牌/加倍决策超时定时器 */
   const decisionTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  /** roomId → 断线真人行棋宽限定时器 */
+  const disconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   const scheduleDecisionTimeout = (room: GameRoom, roomId: string): void => {
     const prev = decisionTimers.get(roomId);
@@ -97,6 +101,36 @@ export function createGame(io: IoServer): RoomRegistry {
       });
     }, remaining);
     decisionTimers.set(roomId, timer);
+  };
+
+  const scheduleDisconnectGrace = (room: GameRoom, roomId: string): void => {
+    const prev = disconnectTimers.get(roomId);
+    if (prev) clearTimeout(prev);
+    disconnectTimers.delete(roomId);
+    room.armDisconnectGraceIfNeeded();
+    const remaining = room.disconnectGraceRemainingMs();
+    if (remaining == null) return;
+    if (remaining <= 0) {
+      runRoomAction(roomId, async () => {
+        const events = room.expireDisconnectGrace();
+        if (events.length === 0) return;
+        apply(roomId, events);
+        await pumpBots(room, roomId);
+      });
+      return;
+    }
+    const timer = setTimeout(() => {
+      disconnectTimers.delete(roomId);
+      runRoomAction(roomId, async () => {
+        const live = registry.get(roomId);
+        if (!live) return;
+        const events = live.expireDisconnectGrace();
+        if (events.length === 0) return;
+        apply(roomId, events);
+        await pumpBots(live, roomId);
+      });
+    }, remaining);
+    disconnectTimers.set(roomId, timer);
   };
 
   const deliverMatch = (formed: MatchFormed): void => {
@@ -161,6 +195,16 @@ export function createGame(io: IoServer): RoomRegistry {
         bindings.set(socket.id, { roomId: room.roomId, seat });
         void socket.join(room.roomId);
         apply(room.roomId, result.events);
+        scheduleDisconnectGrace(room, room.roomId);
+        // 私房满 3 真人 → 自动纯人开局（也可房主手动 start）
+        if (room.phase === GamePhase.WAITING && room.humanCount >= 3) {
+          runRoomAction(room.roomId, async () => {
+            const started = await room.maybeAutoStartWhenFull();
+            if (!started?.ok) return;
+            apply(room.roomId, started.events);
+            await pumpBots(room, room.roomId);
+          });
+        }
         return;
       }
 
@@ -193,6 +237,8 @@ export function createGame(io: IoServer): RoomRegistry {
       if (!binding) return;
       const result = registry.disconnect(binding.roomId, binding.seat, socket.id);
       if (result.ok) apply(binding.roomId, result.events);
+      const live = registry.get(binding.roomId);
+      if (live) scheduleDisconnectGrace(live, binding.roomId);
     });
   });
 

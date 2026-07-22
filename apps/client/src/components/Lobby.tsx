@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useGameStore } from '../store/gameStore';
 import { useOnboardingStore } from '../store/onboardingStore';
@@ -10,6 +10,14 @@ import {
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
 import { GuideSpot } from './GuideSpot';
+
+function readRoomQuery(): string {
+  try {
+    return new URLSearchParams(window.location.search).get('room')?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
 
 /** 大厅：游客身份 + 唯一主 CTA「开始游戏」(匹配) + 次级房间码入口。 */
 export function Lobby() {
@@ -30,7 +38,9 @@ export function Lobby() {
   const mark = useOnboardingStore((s) => s.mark);
 
   const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
-  const [roomCode, setRoomCode] = useState('');
+  const [roomCode, setRoomCode] = useState(readRoomQuery);
+  const deepLinkPending = useRef(Boolean(readRoomQuery()));
+  const deepLinkDone = useRef(false);
 
   const trimmedNick = identity.name.trim();
   const trimmedRoomCode = roomCode.trim();
@@ -43,6 +53,24 @@ export function Lobby() {
   useEffect(() => {
     if (roomId && snapshot) navigate({ to: '/room' });
   }, [roomId, snapshot, navigate]);
+
+  // 分享链接 ?room=xxx：连上后自动加入私房（只触发一次）
+  useEffect(() => {
+    if (!deepLinkPending.current || deepLinkDone.current || !canJoinRoom || roomId) return;
+    deepLinkDone.current = true;
+    saveIdentity(identity);
+    join(identity, trimmedRoomCode);
+    navigate({ to: '/room' });
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('room')) {
+        url.searchParams.delete('room');
+        window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [canJoinRoom, roomId, identity, trimmedRoomCode, join, navigate]);
 
   const persist = (next: GuestIdentity) => {
     setIdentity(next);
@@ -58,7 +86,7 @@ export function Lobby() {
 
   const enterPrivateRoom = (targetRoomId?: string) => {
     if (!canAct) return;
-    if (targetRoomId && !trimmedRoomCode) return;
+    if (targetRoomId !== undefined && !targetRoomId.trim()) return;
     saveIdentity(identity);
     join(identity, targetRoomId);
     navigate({ to: '/room' });
@@ -206,7 +234,7 @@ export function Lobby() {
 
       <ul className="tips lobby-tips">
         <li>开始游戏：自动匹配；人数不足时 AI 补位开局。</li>
-        <li>私房：创建房间后分享房间号，好友可加入；房主开局。</li>
+        <li>私房：创建房间后分享房间号或链接（?room=），满 3 真人自动开局；也可房主手动开始。</li>
         <li>无微信/QQ 登录；游客身份本地持久化（允许重名）。</li>
       </ul>
     </div>

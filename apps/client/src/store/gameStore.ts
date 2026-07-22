@@ -209,12 +209,20 @@ export const useGameStore = create<UiState>((set, get) => ({
             e.state.lastPlay === null;
           const phaseLeftPlaying =
             prev?.phase === GamePhase.PLAYING && e.state.phase !== GamePhase.PLAYING;
+          // 重连后只有 snapshot、没有中间 played 事件：用 lastPlay 灌回座位出牌区
+          const zonesEmpty = get().seatLastPlays.every((x) => x === null);
+          let seatLastPlaysPatch: Partial<UiState> = {};
+          if (roundCleared || phaseLeftPlaying) {
+            seatLastPlaysPatch = { seatLastPlays: [null, null, null] as SeatLastPlays, playFx: null };
+          } else if (zonesEmpty && e.state.lastPlay) {
+            const hydrated: SeatLastPlays = [null, null, null];
+            hydrated[e.state.lastPlay.seat] = e.state.lastPlay;
+            seatLastPlaysPatch = { seatLastPlays: hydrated };
+          }
           set({
             snapshot: e.state,
             ...(turnChanged ? { hints: [], hintIndex: 0, hintMessage: null } : {}),
-            ...(roundCleared || phaseLeftPlaying
-              ? { seatLastPlays: [null, null, null] as SeatLastPlays, playFx: null }
-              : {}),
+            ...seatLastPlaysPatch,
           });
           break;
         }

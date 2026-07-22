@@ -192,6 +192,22 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     }
   });
 
+  it('刷新竞态：旧 socket 未 disconnect 时同 guest 仍可接管座位（LRM-256）', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    const beforeHand = a.room.players[0]!.hand.map((c) => c.id);
+    expect(a.room.players[0]!.connected).toBe(true);
+
+    const takeover = registry.join(mkHuman('A', 'g-a'), 'socket-a-new', a.room.roomId);
+    expect(takeover.seat).toBe(0);
+    expect(takeover.result.ok).toBe(true);
+    expect(registry.socketOf(a.room.roomId, 0)).toBe('socket-a-new');
+    expect(a.room.players[0]!.hand.map((c) => c.id)).toEqual(beforeHand);
+  });
+
   it('满房没有断线同名座位时仍拒绝新玩家加入', () => {
     const registry = new RoomRegistry();
     const a = registry.join(mkHuman('A'), 'socket-a');
@@ -529,5 +545,124 @@ describe('GameRoom · 局内表情/快捷语（LRM-177）', () => {
     });
     expect(unknown.ok).toBe(false);
     if (!unknown.ok) expect(unknown.code).toBe('invalid_social');
+  });
+});
+
+describe('GameRoom · 三人纯人对战加固（LRM-256）', () => {
+  it('非房主不能 start → not_host', async () => {
+    const r = threeHumans();
+    const denied = await r.handleAction(1, { type: 'start', fillBots: false });
+    expect(denied.ok).toBe(false);
+    if (!denied.ok) expect(denied.code).toBe('not_host');
+    expect(r.phase).toBe('waiting');
+
+    const okStart = await r.handleAction(0, { type: 'start', fillBots: false });
+    expect(okStart.ok).toBe(true);
+    expect(r.phase).toBe('bidding');
+  });
+
+  it('满 3 真人 maybeAutoStartWhenFull → 自动纯人开局', async () => {
+    const r = new GameRoom('auto-full');
+    r.addHuman(mkHuman('A'));
+    r.addHuman(mkHuman('B'));
+    expect(await r.maybeAutoStartWhenFull()).toBeNull();
+    expect(r.phase).toBe('waiting');
+    r.addHuman(mkHuman('C'));
+    const started = await r.maybeAutoStartWhenFull();
+    expect(started?.ok).toBe(true);
+    expect(r.phase).toBe('bidding');
+    expect(r.humanCount).toBe(3);
+    expect(r.players.every((p) => p && !p.isBot)).toBe(true);
+  });
+
+  it('出牌中断线重连：snapshot 含 lastPlay，手牌/回合一致', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    await a.room.handleBid(0, 'claim');
+    await a.room.handleBid(1, 'pass');
+    await a.room.handleBid(2, 'pass');
+    await a.room.handleReveal(0, false);
+    await a.room.handleDouble(0, false);
+    await a.room.handleDouble(1, false);
+    await a.room.handleDouble(2, false);
+    expect(a.room.phase).toBe('playing');
+
+    const leadId = a.room.players[0]!.hand[0]!.id;
+    expect((await a.room.handlePlay(0, [leadId])).ok).toBe(true);
+    expect(a.room.lastPlay).not.toBeNull();
+    expect(a.room.turnSeat).toBe(1);
+
+    registry.disconnect(a.room.roomId, 1, 'socket-b');
+    const beforeHand = a.room.players[1]!.hand.map((c) => c.id);
+    const re = registry.join(mkHuman('B', 'g-b'), 'socket-b2', a.room.roomId);
+    expect(re.seat).toBe(1);
+    expect(a.room.players[1]!.connected).toBe(true);
+    if (re.result.ok) {
+      const snapEv = re.result.events.find((e) => e.event.type === 'snapshot');
+      expect(snapEv?.event).toMatchObject({
+        type: 'snapshot',
+        state: {
+          turnSeat: 1,
+          lastPlay: { seat: 0 },
+        },
+      });
+      const dealt = re.result.events.find((e) => e.event.type === 'dealt');
+      expect(dealt?.event).toMatchObject({ type: 'dealt', hand: beforeHand });
+    }
+  });
+
+  it('断线真人出牌宽限到期 → 自动领出/pass，局面不卡死', async () => {
+    const r = await landlordAt0();
+    expect(r.turnSeat).toBe(0);
+    r.markDisconnected(0);
+    expect(r.pendingDisconnectedHumanSeat()).toBe(0);
+    expect(r.disconnectDeadlineAt).not.toBeNull();
+    const deadline = r.disconnectDeadlineAt!;
+    expect(r.expireDisconnectGrace(deadline - 1)).toHaveLength(0);
+    const events = r.expireDisconnectGrace(deadline + 1);
+    expect(events.length).toBeGreaterThan(0);
+    expect(r.turnSeat).toBe(1);
+    expect(r.lastPlay).not.toBeNull();
+    expect(r.pendingDisconnectedHumanSeat()).toBeNull();
+  });
+
+  it('3 真人驱动完整一局到 SETTLED（无机器人）', async () => {
+    const r = threeHumans();
+    await r.start();
+    for (let guard = 0; guard < 800 && r.phase !== 'settled'; guard++) {
+      if (r.phase === 'bidding' && r.bid) {
+        const seat = r.bid.order[r.bid.index]!;
+        await r.handleBid(seat, botBid(r.players[seat]!.hand));
+        continue;
+      }
+      if (r.phase === 'revealing' && r.landlordSeat !== null) {
+        await r.handleReveal(r.landlordSeat, botReveal(r.players[r.landlordSeat]!.hand));
+        continue;
+      }
+      if (r.phase === 'doubling' && r.pendingDoubleSeats.length > 0) {
+        const seat = r.pendingDoubleSeats[0]!;
+        await r.handleDouble(seat, botDouble(r.players[seat]!.hand, seat === r.landlordSeat));
+        continue;
+      }
+      if (r.phase === 'playing' && r.turnSeat !== null) {
+        const seat = r.turnSeat;
+        const prev = r.lastPlay ? r.lastPlay.hand : null;
+        const cards = botChoosePlay(r.players[seat]!.hand, prev);
+        if (cards && cards.length) await r.handlePlay(seat, cards.map((c) => c.id));
+        else if (r.lastPlay === null) await r.handlePlay(seat, [r.players[seat]!.hand[0]!.id]);
+        else await r.handlePass(seat);
+        continue;
+      }
+      break;
+    }
+    expect(r.phase).toBe('settled');
+    expect(r.result).not.toBeNull();
+    expect(r.humanCount).toBe(3);
+    expect(r.players.every((p) => p && !p.isBot)).toBe(true);
+    const sum = r.result!.scores.reduce((a, b) => a + b, 0);
+    expect(sum).toBe(0);
   });
 });
