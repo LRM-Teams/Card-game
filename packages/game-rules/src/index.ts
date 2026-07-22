@@ -11,6 +11,7 @@ export * from './identify';
 export * from './compare';
 export * from './multiplier';
 export * from './bidding';
+export * from './botStrategy';
 export * from './settlement';
 export * from './protocol';
 export * from './social';
