@@ -2935,6 +2935,26 @@ body::before {
 .matching-panel .matching-hint {
   margin-bottom: var(--ddz-space-4);
 }
+.matching-countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--ddz-space-2);
+  margin-bottom: var(--ddz-space-3);
+  font-variant-numeric: tabular-nums;
+}
+.matching-countdown__value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ddz-gold-400);
+  min-width: 2ch;
+  text-align: center;
+}
+.matching-countdown__label {
+  font-size: var(--ddz-text-sm);
+  color: var(--ddz-text-muted);
+}
 
 /* LRM-167 identity badge + action highlight */
 .seat-badge.is-turn,

@@ -194,7 +194,13 @@ export type ServerEvent =
       /** 豆子余额（游客本地连续；服务端内存权威）。 */
       beans: number;
     }
-  | { type: 'matching' } // 已进入快速匹配队列
+  | {
+      type: 'matching';
+      /** 当前队列中的真人数量（1–3）。 */
+      humans: number;
+      /** 补机截止时刻（Unix ms）；与服务端 MATCH_FILL_AFTER_MS 对齐。 */
+      fillDeadlineAt: number;
+    } // 已进入快速匹配队列 / 队列人数变更
   | { type: 'match_cancelled' } // 已取消匹配
   // —— 全量公开快照（任何状态变更后都会推，客户端可直接渲染）——
   | { type: 'snapshot'; state: GameStateSnapshot }

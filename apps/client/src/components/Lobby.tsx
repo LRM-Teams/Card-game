@@ -29,12 +29,13 @@ export function Lobby() {
   const match = useGameStore((s) => s.match);
   const cancelMatch = useGameStore((s) => s.cancelMatch);
   const matching = useGameStore((s) => s.matching);
+  const matchHumans = useGameStore((s) => s.matchHumans);
+  const matchFillDeadlineAt = useGameStore((s) => s.matchFillDeadlineAt);
   const status = useGameStore((s) => s.status);
   const lastError = useGameStore((s) => s.lastError);
   const dismissError = useGameStore((s) => s.dismissError);
   const beans = useGameStore((s) => s.beans);
   const roomId = useGameStore((s) => s.roomId);
-  const snapshot = useGameStore((s) => s.snapshot);
   const guideActive = useOnboardingStore((s) => s.active);
   const seenIdentity = useOnboardingStore((s) => s.seenIdentity);
   const seenStart = useOnboardingStore((s) => s.seenStart);
@@ -42,6 +43,7 @@ export function Lobby() {
 
   const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
   const [roomCode, setRoomCode] = useState(readRoomQuery);
+  const [secondsLeft, setSecondsLeft] = useState(0);
   const deepLinkPending = useRef(Boolean(readRoomQuery()));
   const deepLinkDone = useRef(false);
 
@@ -52,10 +54,24 @@ export function Lobby() {
   const showIdentityGuide = guideActive && !seenIdentity && !matching;
   const showStartGuide = guideActive && seenIdentity && !seenStart && !matching;
 
-  // 匹配成功入房后跳转
+  // 匹配成功入房后跳转（不等 snapshot，减少等待态闪断）
   useEffect(() => {
-    if (roomId && snapshot) navigate({ to: '/room' });
-  }, [roomId, snapshot, navigate]);
+    if (roomId && !matching) navigate({ to: '/room' });
+  }, [roomId, matching, navigate]);
+
+  // 与服务端 fillDeadlineAt 对齐的倒计时
+  useEffect(() => {
+    if (!matching || matchFillDeadlineAt == null) {
+      setSecondsLeft(0);
+      return;
+    }
+    const tick = () => {
+      setSecondsLeft(Math.max(0, Math.ceil((matchFillDeadlineAt - Date.now()) / 1000)));
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [matching, matchFillDeadlineAt]);
 
   // 分享链接 ?room=xxx：连上后自动加入私房（只触发一次）
   useEffect(() => {
@@ -129,9 +145,15 @@ export function Lobby() {
       {matching ? (
         <div className="matching-panel">
           <p className="subtitle matching-status" role="status" aria-live="polite">
-            正在寻找真人玩家…
+            已匹配 {matchHumans}/3 真人，等待中…
           </p>
-          <p className="hint matching-hint">凑齐三人即开；暂不足时由 AI 补位</p>
+          {matchFillDeadlineAt != null && (
+            <p className="matching-countdown" aria-live="polite">
+              <span className="matching-countdown__value">{secondsLeft}</span>
+              <span className="matching-countdown__label">秒后 AI 补位</span>
+            </p>
+          )}
+          <p className="hint matching-hint">凑齐 3 真人立即开局；超时由 AI 补位</p>
           <button className="btn big" type="button" onClick={() => cancelMatch()}>
             取消匹配
           </button>
@@ -190,7 +212,7 @@ export function Lobby() {
           <GuideSpot
             show={showStartGuide}
             title="点「开始游戏」"
-            body="快速匹配开局；人不够时会自动补机器人。这是大厅唯一主入口。"
+            body="快速匹配开局；满 3 真人立即开，不足时倒计时后 AI 补位。这是大厅唯一主入口。"
             onDismiss={() => mark('seenStart')}
             className="guide-spot--cta"
           >
@@ -242,7 +264,7 @@ export function Lobby() {
       )}
 
       <ul className="tips lobby-tips">
-        <li>开始游戏：自动匹配；人数不足时 AI 补位开局。</li>
+        <li>开始游戏：自动匹配；满 3 真人立即开，不足时倒计时后 AI 补位。</li>
         <li>私房：创建房间后分享房间号或链接（?room=），满 3 真人自动开局；也可房主手动开始。</li>
         <li>无微信/QQ 登录；游客身份本地持久化（允许重名）。</li>
       </ul>
