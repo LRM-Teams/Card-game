@@ -93,7 +93,7 @@ function tryReconnectRejoin(): void {
   const id = readIdentity();
   send({
     type: 'join',
-    name: session.name,
+    displayName: session.displayName ?? id.displayName,
     roomId: session.roomId,
     guestId: session.guestId ?? id.guestId,
     avatarId: session.avatarId ?? id.avatarId,
