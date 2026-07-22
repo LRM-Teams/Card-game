@@ -103,6 +103,15 @@ export function savePlayerSession(
   }
 }
 
+/** 主动离开房间/对局回大厅时清除，避免 Lobby 自动跳回 /room。 */
+export function clearPlayerSession(): void {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function readPlayerSession(): PlayerSession | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);

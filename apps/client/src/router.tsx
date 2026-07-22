@@ -31,13 +31,16 @@ function ConnBadge() {
 }
 
 function RootLayout() {
+  const leaveToLobby = useGameStore((s) => s.leaveToLobby);
   const isGame = useRouterState({
     select: (s) => s.location.pathname.startsWith('/game') || s.location.pathname.startsWith('/fx-demo'),
   });
   return (
     <div className={`app${isGame ? ' app--game' : ''}`}>
       <nav className="topnav">
-        <Link to="/" className="brand">♠ 斗地主</Link>
+        <Link to="/" className="brand" onClick={() => leaveToLobby()}>
+          ♠ 斗地主
+        </Link>
         <ConnBadge />
         <span className="tag">{SERVER_URL.replace(/^https?:\/\//, '')}</span>
         <AudioSettings />
