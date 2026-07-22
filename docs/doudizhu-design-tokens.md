@@ -92,11 +92,16 @@ box-shadow:
 | `--ddz-space-5` | `20px` | 牌桌区块间距（非对局壳默认） |
 | `--ddz-space-6` | `24px` | 页面块间距 |
 | `--ddz-vp-topnav-h` | `44px` | **LRM-246** 对局顶栏目标高度 |
-| `--ddz-vp-table-pad-y` | `18px` | **LRM-246** 椭圆台呢上下内边距 |
+| `--ddz-vp-table-pad-y` | `18px` | **LRM-246** 椭圆台呢**上**内边距 |
+| `--ddz-vp-table-pad-bottom` | `4px` | **LRM-250** 椭圆台呢**下**内边距（原硬编码 12px → 压底空绿） |
 | `--ddz-vp-table-gap` | `10px` | **LRM-246** 桌内竖向区块间距（替代对局壳内 space-5） |
 | `--ddz-vp-stage-min` | `140px` | **LRM-246** 中央舞台最小高度 |
 | `--ddz-vp-hand-min` | `132px` | **LRM-246** 手牌区最小高度（含选中抬起余量） |
+| `--ddz-vp-hand-pad-top` | `28px` | **LRM-250** 手牌区内上边距（选中抬起余量） |
+| `--ddz-vp-hand-pad-bottom` | `0px` | **LRM-250** 手牌区内下边距（贴控件） |
 | `--ddz-vp-controls-budget` | `96px` | **LRM-246** 提示+按钮区高度预算 |
+| `--ddz-vp-controls-pull` | `-8px` | **LRM-250** 控件相对手牌上移贴紧 |
+| `--ddz-vp-controls-gap` | `4px` | **LRM-250** 提示与按钮竖向间距 |
 | `--ddz-vp-ellipse-y` | `28%` | **LRM-246** 台呢纵向椭圆比（原 34%，压扁减高度） |
 | `--ddz-radius-sm` | `8px` | 小标签、输入框 |
 | `--ddz-radius-md` | `12px` | 按钮、座位卡 |
@@ -213,9 +218,9 @@ box-shadow:
 - LRM-206（2026-07-21，小雅）：牌面纸质感精修（冷米白/红黑花色/大小王轨色/牌背去字）。
 - LRM-208（2026-07-21，小雅）：关键动效正式时长表，替换 LRM-168 interim；同步 `motionSpec.ts`。
 - LRM-246（2026-07-22，小雅）：对局页一屏视口预算 `--ddz-vp-*`；椭圆纵比 34%→28%；对局壳隐藏 footer、压缩手牌/按钮区。
-- LRM-246 follow-up（2026-07-22，小雅）：手牌 `margin-top: auto` 下沉贴底，控件上移贴紧手牌（Frank 反馈）。
+- LRM-250（2026-07-22，小雅）：在 246 预算上出手牌下沉规格——`--ddz-vp-table-pad-bottom` / `--ddz-vp-controls-pull` / 手牌 pad；`.hand { margin-top: auto }` 贴底（Frank：牌再往下）。
 
-## 11. 对局页一屏视口（LRM-246）
+## 11. 对局页一屏视口（LRM-246 + LRM-250）
 
 > 目标视口：`1920×1080` 与常见 27″ 浏览器全屏（含约 `1440×900`）。出牌态**首屏无纵向滚动**，顶栏 + 对手区 + 中央出牌/倒计时 + 手牌 + 底栏按钮同屏可见。
 
@@ -225,10 +230,10 @@ box-shadow:
 |---|---|---|
 | 顶栏 | ≤44px | `--ddz-vp-topnav-h`；`.app--game .topnav` |
 | 内容边距 | ≤10px | `.app--game .content` padding |
-| 椭圆台呢内边距（上下） | 18px + **4px** | `--ddz-vp-table-pad-y`；底边收紧贴操作区 |
+| 椭圆台呢内边距（上/下） | 18px / **4px** | `--ddz-vp-table-pad-y` + `--ddz-vp-table-pad-bottom` |
 | 中央舞台 | 140–220px | `--ddz-vp-stage-min`；`max-height: min(220px, 26vh)` |
-| 手牌区 | ≥132px | `--ddz-vp-hand-min`；`.hand { margin-top: auto }` 下沉贴底 |
-| 提示+按钮 | ≤96px | `--ddz-vp-controls-budget`；相对手牌 `margin-top: -8px` |
+| 手牌区 | ≥132px | `--ddz-vp-hand-min`；`margin-top: auto` 下沉；pad=`--ddz-vp-hand-pad-*` |
+| 提示+按钮 | ≤96px | `--ddz-vp-controls-budget`；`margin-top: var(--ddz-vp-controls-pull)` |
 | 页脚 | 0（对局壳隐藏） | `.app--game .foot { display: none }` |
 
 ### 11.2 硬规则
@@ -237,10 +242,25 @@ box-shadow:
 2. 台呢椭圆纵比 `--ddz-vp-ellipse-y: 28%`（原 34%），只压高度不改木色 rail。
 3. **不改**牌面 SVG、手牌逻辑尺寸 52×74、动效正式表（LRM-208/209）。
 4. 结算态 `.table.settled` 允许区内滚动（内容可长），但不撑破外层 `100dvh`。
-5. 验收：同视口 before/after 对照；预览 `docs/assets/previews/lrm-246/viewport-fit-sheet.svg`。
+5. 验收：同视口 before/after 对照；预览 `docs/assets/previews/lrm-246/viewport-fit-sheet.svg`（一屏）+ `docs/assets/previews/lrm-250/hand-dock-sheet.svg`（下沉）。
 
 ### 11.3 给小林的落地核对
 
 - 改动面：`apps/client/src/styles.css`（`.app--game` 作用域）+ token 文档本节。
 - 烟测：`/game` 与 `/fx-demo?scene=cards` 在 1920×1080；底栏五键完整可见且无 `document` 级纵滚。
 - 若仍溢出：优先再压 `--ddz-vp-stage-min` / `--ddz-vp-table-pad-y`，勿缩小牌面到不可读。
+
+### 11.4 LRM-250 手牌下沉规格（Frank 跟进）
+
+> 现象：246 一屏已达标，但出牌态手牌/底栏偏上，按钮下空绿过大。本条只调垂直贴底，不重开一屏 AC。
+
+| Token | 值 | 相对 246 | 作用 |
+|---|---|---|---|
+| `--ddz-vp-table-pad-bottom` | `4px` | 硬编码 12→4 | 台呢底边收紧 |
+| `--ddz-vp-hand-pad-top` | `28px` | 30→28 | 抬起余量略收 |
+| `--ddz-vp-hand-pad-bottom` | `0px` | 6→0 | 手牌贴控件 |
+| `--ddz-vp-controls-pull` | `-8px` | 0→-8 | 提示+按钮上移贴手牌 |
+| `--ddz-vp-controls-gap` | `4px` | 6→4 | 控件内竖向更紧 |
+| （布局） | `margin-top: auto` on `.hand` | 新增 | 吃掉舞台下余白，整体下沉 |
+
+硬边界：仍守 246 的 `100dvh` / 无纵滚；不裁切手牌与底栏；不改牌面尺寸。微调幅度不够时优先再略减 `--ddz-vp-table-pad-bottom` 或加大 `|controls-pull|`，勿动舞台/椭圆。
