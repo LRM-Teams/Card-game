@@ -12,9 +12,11 @@ import { GuideSpot } from './GuideSpot';
 import { SocialPanel } from './SocialPanel';
 import { SocialBubble } from './SocialBubble';
 import { MultiplierBreakdownView } from './MultiplierBreakdownView';
+import { ConnectionBanner } from './ConnectionBanner';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
 import { useNavigate } from '@tanstack/react-router';
+import type { ConnStatus } from '../net/socket';
 
 /** 叫分/出牌回合倒计时（秒）。 */
 const TURN_SECS = 20;
@@ -90,16 +92,32 @@ export function GameTable() {
     return () => window.clearTimeout(t);
   }, [playFx, clearPlayFx]);
 
-  if (status !== 'connected') {
-    return (
-      <TableShell
-        message={status === 'connecting' ? '正在连接服务器…' : '未连接服务器'}
-        sub="连接恢复后将自动同步牌桌；也可返回大厅重新匹配。"
-      />
-    );
-  }
-
   if (!snapshot) {
+    if (status === 'reconnect_failed') {
+      return (
+        <>
+          <ConnectionBanner status={status} />
+          <TableShell message="无法恢复对局" sub="请返回大厅重新匹配或加入房间。" />
+        </>
+      );
+    }
+    if (status !== 'connected') {
+      return (
+        <>
+          {status === 'reconnecting' && <ConnectionBanner status={status} />}
+          <TableShell
+            message={
+              status === 'connecting'
+                ? '正在连接服务器…'
+                : status === 'reconnecting'
+                  ? '连接已断开，正在重连…'
+                  : '未连接服务器'
+            }
+            sub="连接恢复后将自动同步牌桌；也可返回大厅重新匹配。"
+          />
+        </>
+      );
+    }
     return (
       <TableShell
         message="正在恢复对局…"
@@ -107,6 +125,8 @@ export function GameTable() {
       />
     );
   }
+
+  const offline = status !== 'connected';
 
   const phase = snapshot.phase;
   const isMyTurn = snapshot.turnSeat === mySeat;
@@ -147,6 +167,7 @@ export function GameTable() {
         ? '/identity/landlord-character.svg'
         : '/identity/farmer-character.svg';
     return (
+      <GameTableFrame status={status} offline={offline}>
       <div className="table settled">
         <div className={`result-card ${myWin ? 'win' : 'lose'}`} data-fx="settle-pop">
           <SettleCoins win={myWin} />
@@ -227,6 +248,7 @@ export function GameTable() {
           </div>
         </div>
       </div>
+      </GameTableFrame>
     );
   }
 
@@ -245,6 +267,7 @@ export function GameTable() {
   const timerMax = showDecisionTimer ? DECISION_SECS : TURN_SECS;
 
   return (
+    <GameTableFrame status={status} offline={offline}>
     <div className={`table${isBidding || isRevealing || isDoubling ? ' is-bidding' : ''}`}>
       <div className="meta-corner meta-corner--mult">
         {(showTurnTimer || showDecisionTimer) && (
@@ -525,6 +548,25 @@ export function GameTable() {
         </div>
       )}
     </div>
+    </GameTableFrame>
+  );
+}
+
+/** 牌桌外层：断线 banner / 恢复 toast，离线时冻结交互。 */
+function GameTableFrame({
+  status,
+  offline,
+  children,
+}: {
+  status: ConnStatus;
+  offline: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <ConnectionBanner status={status} />
+      <div className={offline ? 'table-offline-wrap' : undefined}>{children}</div>
+    </>
   );
 }
 
