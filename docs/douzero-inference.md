@@ -196,6 +196,9 @@ Then replace `apps/server/scripts/douzero-infer.example.py` with the official Do
 
 A live smoke on 146 with `ground_truth_seed123_frame77430400.json` turn0 confirmed the wrapper now matches the training-side fixture on all 61 scored actions. The worst per-action value delta was below `5e-7`, and the wrapper produced the same best action `[3,3,4,4,5,5,6,6]`.
 
-## Current Blocker
+## Current Status (LRM-310 scaffold)
 
-At the time this document was added, this workspace does not contain the official DouZero Python package or pretrained checkpoint files, so a real model inference smoke cannot be completed locally. The server-side configuration seam is ready; model artifact acquisition/deployment remains required before LRM-120 can be marked done.
+- Adapter seam + HTTP/CLI clients + **LRM-260 rule-bot fallback** are in tree.
+- Interface one-pager for training agents: [`douzero-adapter-contract.md`](./douzero-adapter-contract.md).
+- 89 health probe for `8765`: see [`ops-89.md`](./ops-89.md) § DouZero 推理探活.
+- **Do not** land new training PRs or deploy new ckpts here; wait for the training Agent + PO go-ahead.

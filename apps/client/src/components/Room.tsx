@@ -11,6 +11,7 @@ import {
   saveIdentity,
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
+import { PlayerKindBadge } from './PlayerKindBadge';
 
 /**
  * 房间：展示 3 个座位（真人 / 空位 / 机器人补位）与等人状态。
@@ -117,17 +118,23 @@ export function Room() {
 
       <div className="seats-preview">
         {seats.map((p, i) => (
-          <div className={`seat-card ${p ? (p.isBot ? 'bot' : 'me') : 'empty'}`} key={i}>
-            <div className="avatar"><PlayerAvatar kind={!p ? 'empty' : 'player'} avatarId={p?.avatarId} /></div>
+          <div
+            className={`seat-card ${p ? (p.isBot ? 'bot' : p.seat === mySeat ? 'me' : 'human') : 'empty'}`}
+            key={i}
+          >
+            <div className="avatar">
+              <PlayerAvatar kind={!p ? 'empty' : 'player'} avatarId={p?.avatarId} />
+              {p ? <PlayerKindBadge isBot={p.isBot} /> : null}
+            </div>
             <div className="seat-name">{p ? p.displayName : '空位'}</div>
             <div className="seat-role">
               {!p
                 ? '等待玩家加入'
                 : p.isBot
-                  ? '机器人'
+                  ? 'AI 补位'
                   : p.seat === mySeat
-                    ? '你'
-                    : '玩家'}
+                    ? '你 · 真人'
+                    : '真人玩家'}
             </div>
             {p && p.seat === hostSeat && <div className="seat-host">房主</div>}
           </div>
