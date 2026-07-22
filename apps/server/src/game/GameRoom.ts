@@ -63,6 +63,8 @@ const BOT_LOOP_GUARD = 2000;
 const HINT_TOP_N = 5;
 /** 明牌 / 加倍决策窗口（毫秒）；超时自动跳过。可用环境变量覆盖。 */
 const DECISION_WINDOW_MS = Number(process.env.DECISION_WINDOW_MS ?? 15_000);
+/** 断线真人行棋宽限（毫秒）；超时自动 pass/跳过，避免纯人局卡死。 */
+const RECONNECT_GRACE_MS = Number(process.env.RECONNECT_GRACE_MS ?? 30_000);
 
 function ok(events: RoomEvent[]): ActionResult {
   return { ok: true, events };
@@ -109,6 +111,8 @@ export class GameRoom {
   bombCount = 0;
   /** 明牌/加倍决策截止时间戳；null 表示无窗口。 */
   decisionDeadlineAt: number | null = null;
+  /** 断线真人行棋宽限截止；null 表示无需等待重连。 */
+  disconnectDeadlineAt: number | null = null;
 
   private botCounter = 0;
 
@@ -131,7 +135,8 @@ export class GameRoom {
 
   /**
    * 断线真人恢复原座位与私有手牌。
-   * 优先 guestId；否则回退同昵称（兼容旧客户端）。
+   * 优先 guestId（含仍 connected 的刷新接管，避免旧 socket 未断开导致 room_full）；
+   * 否则回退同昵称断线座位（兼容旧客户端）。
    */
   reconnectHuman(
     name: string,
@@ -140,14 +145,20 @@ export class GameRoom {
     beans = 1000,
   ): { seat: Seat; result: ActionResult } | null {
     const trimmed = name.trim();
-    const byGuest =
-      guestId != null && guestId.trim()
-        ? this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.guestId === guestId.trim())
-        : -1;
-    const idx =
-      byGuest !== -1
-        ? byGuest
-        : this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.name === trimmed);
+    const gid = guestId?.trim() || '';
+    const findSeat = (pred: (p: NonNullable<(typeof this.players)[number]>) => boolean): number =>
+      this.players.findIndex((p) => p !== null && !p.isBot && pred(p));
+
+    let idx = -1;
+    if (gid) {
+      // 1) 已标记断线的同 guest
+      idx = findSeat((p) => !p.connected && p.guestId === gid);
+      // 2) 刷新竞态：旧连接尚未 disconnect，仍允许同 guest 接管座位
+      if (idx === -1) idx = findSeat((p) => p.guestId === gid);
+    }
+    if (idx === -1 && trimmed) {
+      idx = findSeat((p) => !p.connected && p.name === trimmed);
+    }
     if (idx === -1) return null;
 
     const seat = idx as Seat;
@@ -155,7 +166,8 @@ export class GameRoom {
     p.connected = true;
     if (trimmed) p.name = trimmed;
     if (avatarId) p.avatarId = avatarId;
-    if (guestId?.trim()) p.guestId = guestId.trim();
+    if (gid) p.guestId = gid;
+    this.disconnectDeadlineAt = null;
     const events: RoomEvent[] = [
       {
         scope: { seat },
@@ -179,6 +191,7 @@ export class GameRoom {
     const p = this.players[seat];
     if (!p || p.isBot || !p.connected) return [];
     p.connected = false;
+    this.armDisconnectGraceIfNeeded();
     return [{ scope: 'room', event: { type: 'snapshot', state: this.snapshot() } }];
   }
 
@@ -223,12 +236,8 @@ export class GameRoom {
   }
 
   /**
-   * 开局：不足 3 人则补机器人，然后发牌 + 进入叫地主。
-   * 产品上由真人触发（transport 层保证至少 1 名真人）；引擎允许全机器人局，便于联机/自动化测试。
-   */
-  /**
    * 开局：fillBots=true 时不足 3 人补机器人；默认 fillBots=false 要求 3 名真人（纯人对战）。
-   * 产品上由真人触发（transport 层保证至少 1 名真人）；引擎允许全机器人局，便于联机/自动化测试。
+   * 产品上由房主触发或满 3 真人自动开局；引擎允许全机器人局，便于联机/自动化测试。
    */
   async start(fillBots = false): Promise<ActionResult> {
     if (this.phase === GamePhase.SETTLED) return this.dealAndBeginBid(); // 再来一局：保留座位重新发牌
@@ -239,6 +248,16 @@ export class GameRoom {
       return err('not_enough_players', '人数不足 3 人，等人加入或选择补机器人');
     }
     return this.dealAndBeginBid();
+  }
+
+  /**
+   * 私房满 3 真人且仍在 WAITING 时自动纯人开局。
+   * 返回 null 表示未触发（未满员或已开局）。
+   */
+  async maybeAutoStartWhenFull(): Promise<ActionResult | null> {
+    if (this.phase !== GamePhase.WAITING) return null;
+    if (this.humanCount < 3) return null;
+    return this.start(false);
   }
 
   private fillBots(): void {
@@ -411,6 +430,83 @@ export class GameRoom {
         events.push(...this.iDouble(seat, false));
       }
       return events;
+    }
+    return [];
+  }
+
+  /**
+   * 当前需要行动且已断线的真人座位（叫/明牌/加倍/出牌）。
+   * 用于 30s 重连宽限；超时后自动推进，避免纯人局卡死。
+   */
+  pendingDisconnectedHumanSeat(): Seat | null {
+    if (this.phase === GamePhase.SETTLED || this.phase === GamePhase.WAITING) return null;
+    if (this.phase === GamePhase.BIDDING && this.bid) {
+      const seat = this.bid.order[this.bid.index]!;
+      const p = this.players[seat];
+      return p && !p.isBot && !p.connected ? seat : null;
+    }
+    if (this.phase === GamePhase.REVEALING && this.landlordSeat !== null) {
+      const p = this.players[this.landlordSeat];
+      return p && !p.isBot && !p.connected ? this.landlordSeat : null;
+    }
+    if (this.phase === GamePhase.DOUBLING) {
+      for (const seat of this.pendingDoubleSeats) {
+        const p = this.players[seat];
+        if (p && !p.isBot && !p.connected) return seat;
+      }
+      return null;
+    }
+    if (this.phase === GamePhase.PLAYING && this.turnSeat !== null) {
+      const p = this.players[this.turnSeat];
+      return p && !p.isBot && !p.connected ? this.turnSeat : null;
+    }
+    return null;
+  }
+
+  /** 若轮到断线真人，启动/保持 30s 宽限；否则清除。 */
+  armDisconnectGraceIfNeeded(now = Date.now()): void {
+    if (this.pendingDisconnectedHumanSeat() === null) {
+      this.disconnectDeadlineAt = null;
+      return;
+    }
+    if (this.disconnectDeadlineAt == null) {
+      this.disconnectDeadlineAt = now + Math.max(0, RECONNECT_GRACE_MS);
+    }
+  }
+
+  /** 断线宽限剩余毫秒；无需等待时返回 null。 */
+  disconnectGraceRemainingMs(now = Date.now()): number | null {
+    if (this.disconnectDeadlineAt == null) return null;
+    return Math.max(0, this.disconnectDeadlineAt - now);
+  }
+
+  /**
+   * 断线宽限到期：替断线真人自动 pass / 跳过 / 最小领出，推进局面。
+   */
+  expireDisconnectGrace(now = Date.now()): RoomEvent[] {
+    if (this.disconnectDeadlineAt == null || now < this.disconnectDeadlineAt) return [];
+    const seat = this.pendingDisconnectedHumanSeat();
+    this.disconnectDeadlineAt = null;
+    if (seat === null) return [];
+
+    if (this.phase === GamePhase.BIDDING) {
+      return this.iBid(seat, 'pass');
+    }
+    if (this.phase === GamePhase.REVEALING) {
+      return this.iReveal(seat, false);
+    }
+    if (this.phase === GamePhase.DOUBLING) {
+      return this.iDouble(seat, false);
+    }
+    if (this.phase === GamePhase.PLAYING) {
+      const p = this.players[seat];
+      if (!p) return [];
+      if (this.lastPlay === null) {
+        const cards = smallestFallback(p.hand);
+        if (cards.length === 0) return [];
+        return this.iPlay(seat, cards);
+      }
+      return this.iPass(seat);
     }
     return [];
   }
@@ -724,6 +820,9 @@ export class GameRoom {
       case 'pass':
         return this.handlePass(seat);
       case 'start':
+        if (this.hostSeat !== null && seat !== this.hostSeat) {
+          return err('not_host', '只有房主可以开局');
+        }
         return this.start(action.fillBots ?? false);
       case 'hint':
         return this.handleHint(seat);
