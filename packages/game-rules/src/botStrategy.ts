@@ -4,10 +4,10 @@
  * 普通档：叫分看手力启发式；出牌优先能走完 / 少拆炸弹，全部经 canPlay 校验。
  * DouZero adapter 不可用时服务端 fallback 到本模块。
  */
+import type { BidChoice } from './bidding';
 import { canPlay, identifyHand } from './identify';
-import type { BidChoice, Card, Hand } from './types';
+import type { Card, Hand } from './types';
 import { HandType, RANK, SEQ_RANK_MAX, SEQ_RANK_MIN } from './types';
-
 export type BotDifficulty = 'easy' | 'normal' | 'hard';
 
 /** 0=不叫 … 3=强叫（MVP 状态机仍映射为 claim/pass）。 */
