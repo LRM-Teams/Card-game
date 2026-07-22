@@ -90,10 +90,10 @@ export function GameTable() {
     return () => window.clearTimeout(t);
   }, [playFx, clearPlayFx]);
 
-  if (status !== 'connected') {
+  if (status !== 'connected' && !snapshot) {
     return (
       <TableShell
-        message={status === 'connecting' ? '正在连接服务器…' : '未连接服务器'}
+        message={status === 'connecting' || status === 'reconnecting' ? '正在连接服务器…' : '未连接服务器'}
         sub="连接恢复后将自动同步牌桌；也可返回大厅重新匹配。"
       />
     );

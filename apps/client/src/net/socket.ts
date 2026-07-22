@@ -14,26 +14,53 @@ import type { ClientAction, ServerEvent } from '@card-game/rules';
 export const SERVER_URL =
   (import.meta.env.VITE_SERVER_URL as string | undefined) ?? 'http://localhost:3000';
 
-export type ConnStatus = 'connecting' | 'connected' | 'disconnected';
+export type ConnStatus = 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
 
 type EventHandler = (e: ServerEvent) => void;
 type StatusHandler = (s: ConnStatus) => void;
+type AttemptHandler = (attempt: number) => void;
 
 const eventHandlers = new Set<EventHandler>();
 const statusHandlers = new Set<StatusHandler>();
+const attemptHandlers = new Set<AttemptHandler>();
 
 let socket: Socket | null = null;
+let hasConnectedOnce = false;
 
 function setStatus(s: ConnStatus): void {
   statusHandlers.forEach((h) => h(s));
 }
 
+function emitAttempt(n: number): void {
+  attemptHandlers.forEach((h) => h(n));
+}
+
 function ensure(): Socket {
   if (socket) return socket;
-  socket = io(SERVER_URL, { autoConnect: false, transports: ['websocket', 'polling'] });
-  socket.on('connect', () => setStatus('connected'));
-  socket.on('disconnect', () => setStatus('disconnected'));
-  socket.on('connect_error', () => setStatus('disconnected'));
+  socket = io(SERVER_URL, {
+    autoConnect: false,
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+  });
+  socket.on('connect', () => {
+    hasConnectedOnce = true;
+    setStatus('connected');
+  });
+  socket.on('disconnect', (reason) => {
+    if (reason === 'io client disconnect') {
+      setStatus('disconnected');
+      return;
+    }
+    setStatus(hasConnectedOnce ? 'reconnecting' : 'disconnected');
+  });
+  socket.on('reconnect_attempt', (attempt) => {
+    emitAttempt(attempt);
+    setStatus('reconnecting');
+  });
+  socket.on('connect_error', () => {
+    setStatus(hasConnectedOnce ? 'reconnecting' : 'connecting');
+  });
   socket.on('event', (e: ServerEvent) => {
     eventHandlers.forEach((h) => h(e));
   });
@@ -42,6 +69,7 @@ function ensure(): Socket {
 
 /** 建立连接（幂等）。先 onEvent/onStatus 订阅，再 connect，避免漏首个事件。 */
 export function connect(): void {
+  setStatus('connecting');
   ensure().connect();
 }
 
@@ -51,6 +79,7 @@ export function reconnect(): void {
   if (sk.connected) {
     sk.disconnect();
   }
+  setStatus('connecting');
   sk.connect();
 }
 
@@ -72,5 +101,13 @@ export function onStatus(h: StatusHandler): () => void {
   statusHandlers.add(h);
   return () => {
     statusHandlers.delete(h);
+  };
+}
+
+/** 订阅 socket.io 重连尝试次数（从 1 起），返回取消订阅函数。 */
+export function onReconnectAttempt(h: AttemptHandler): () => void {
+  attemptHandlers.add(h);
+  return () => {
+    attemptHandlers.delete(h);
   };
 }

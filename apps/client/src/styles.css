@@ -247,6 +247,7 @@ body::before {
 }
 .conn.connected { color: #7ef0a8; }
 .conn.connecting { color: #ffd166; }
+.conn.reconnecting { color: #ffd166; }
 .conn.disconnected,
 .conn.error,
 .conn.idle { color: #ff8e8e; }
@@ -1801,6 +1802,95 @@ body::before {
   text-align: center;
   cursor: pointer;
 }
+
+/* LRM-276：断线重连可见反馈 */
+.reconnect-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(20, 16, 8, 0.92);
+  border-bottom: 1px solid rgba(255, 210, 90, 0.35);
+  color: #ffe8a8;
+  font-size: var(--ddz-text-sm);
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.reconnect-banner__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 232, 168, 0.25);
+  border-top-color: var(--ddz-gold-400, #f0c14a);
+  border-radius: 50%;
+  animation: ddz-reconnect-spin 0.8s linear infinite;
+}
+@keyframes ddz-reconnect-spin {
+  to { transform: rotate(360deg); }
+}
+.reconnect-toast {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1201;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(24, 48, 32, 0.94);
+  border: 1px solid rgba(126, 240, 168, 0.45);
+  color: #7ef0a8;
+  font-size: var(--ddz-text-sm);
+  font-weight: 600;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  animation: ddz-reconnect-toast-in 220ms ease-out both;
+  pointer-events: none;
+}
+@keyframes ddz-reconnect-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.reconnect-fail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 10, 8, 0.72);
+  backdrop-filter: blur(4px);
+}
+.reconnect-fail-card {
+  width: min(100%, 400px);
+  padding: 28px 24px;
+  border-radius: var(--ddz-radius-lg);
+  background: linear-gradient(180deg, rgba(28, 22, 14, 0.98), rgba(14, 12, 10, 0.98));
+  border: 1px solid rgba(255, 210, 90, 0.2);
+  box-shadow: var(--ddz-shadow-panel);
+  text-align: center;
+}
+.reconnect-fail-title {
+  margin: 0 0 12px;
+  font-size: var(--ddz-text-lg, 1.125rem);
+  color: #ffd166;
+}
+.reconnect-fail-desc {
+  margin: 0 0 20px;
+  font-size: var(--ddz-text-sm);
+  line-height: 1.5;
+  color: rgba(255, 243, 220, 0.82);
+}
+.reconnect-fail-cta {
+  width: 100%;
+  max-width: 240px;
+}
+
 .tip-line {
   font-size: var(--ddz-text-xs);
   opacity: 0.72;

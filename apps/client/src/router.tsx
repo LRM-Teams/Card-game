@@ -11,13 +11,21 @@ import { Room } from './components/Room';
 import { GameTable } from './components/GameTable';
 import { AudioSettings } from './components/AudioSettings';
 import { FxDemo } from './components/FxDemo';
+import { ReconnectFeedback } from './components/ReconnectFeedback';
 import { useGameStore } from './store/gameStore';
 
 const SERVER_URL = (import.meta.env.VITE_SERVER_URL as string | undefined) ?? 'http://localhost:3000';
 
 function ConnBadge() {
   const status = useGameStore((s) => s.status);
-  const label = status === 'connected' ? '已连接' : status === 'connecting' ? '连接中…' : '未连接';
+  const label =
+    status === 'connected'
+      ? '已连接'
+      : status === 'connecting'
+        ? '连接中…'
+        : status === 'reconnecting'
+          ? '重连中…'
+          : '未连接';
   return <span className={`conn ${status}`}>● {label}</span>;
 }
 
@@ -27,6 +35,7 @@ function RootLayout() {
   });
   return (
     <div className={`app${isGame ? ' app--game' : ''}`}>
+      <ReconnectFeedback />
       <nav className="topnav">
         <Link to="/" className="brand">♠ 斗地主</Link>
         <ConnBadge />

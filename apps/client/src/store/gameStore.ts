@@ -13,7 +13,7 @@ import {
   type SocialKind,
   type SocialPhraseId,
 } from '@card-game/rules';
-import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
+import { connect, onEvent, onReconnectAttempt, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
 import {
   readIdentity,
@@ -27,6 +27,9 @@ import { onPassedFx, onPlayedFx, onSettledFx } from '../lib/audioFx';
 import type { SocialBubbleData } from '../lib/socialTypes';
 
 let autoRejoinAttempted = false;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+const RECONNECT_TIMEOUT_MS = 30_000;
+const RECONNECT_MAX_ATTEMPTS = 5;
 const socialBubbleTimers: [ReturnType<typeof setTimeout> | null, ReturnType<typeof setTimeout> | null, ReturnType<typeof setTimeout> | null] = [
   null,
   null,
@@ -61,6 +64,46 @@ function pushSocialBubble(seat: number, kind: SocialKind, id: SocialEmoteId | So
     return { socialBubbles: next };
   });
   socialBubbleTimers[seat as 0 | 1 | 2] = setTimeout(() => clearSocialBubble(seat), SOCIAL_BUBBLE_MS);
+}
+
+function clearReconnectTimer(): void {
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+}
+
+function isActiveGamePath(): boolean {
+  return shouldAutoRejoinPath() && useGameStore.getState().snapshot != null;
+}
+
+function beginReconnectUi(): void {
+  const st = useGameStore.getState();
+  if (!st.snapshot && st.mySeat == null) return;
+  useGameStore.setState({ reconnecting: true, wasInGameDisconnect: true, reconnectFailed: false });
+  clearReconnectTimer();
+  reconnectTimer = setTimeout(() => {
+    const cur = useGameStore.getState();
+    if (cur.reconnecting && !cur.reconnectFailed) {
+      useGameStore.setState({ reconnectFailed: true, reconnecting: false });
+    }
+  }, RECONNECT_TIMEOUT_MS);
+}
+
+function finishReconnectUi(): void {
+  clearReconnectTimer();
+  const st = useGameStore.getState();
+  const showToast = st.wasInGameDisconnect && st.snapshot != null;
+  useGameStore.setState({
+    reconnecting: false,
+    reconnectFailed: false,
+    reconnectAttempts: 0,
+    wasInGameDisconnect: false,
+    ...(showToast ? { reconnectToast: true } : {}),
+  });
+}
+
+function failReconnectUi(): void {
+  clearReconnectTimer();
+  useGameStore.setState({ reconnectFailed: true, reconnecting: false });
 }
 
 function tryAutoRejoin(): void {
@@ -119,6 +162,12 @@ interface UiState {
   socialBubbles: [SocialBubbleData | null, SocialBubbleData | null, SocialBubbleData | null];
   /** 本地冷却截止时间（与服务端 SOCIAL_COOLDOWN_MS 对齐）。 */
   socialCooldownUntil: number;
+  /** 对局中断线：顶部 banner 可见。 */
+  reconnecting: boolean;
+  reconnectFailed: boolean;
+  reconnectToast: boolean;
+  reconnectAttempts: number;
+  wasInGameDisconnect: boolean;
 
   init: () => void;
   join: (identity: GuestIdentity, roomId?: string) => void;
@@ -137,6 +186,8 @@ interface UiState {
   sendSocial: (kind: SocialKind, id: SocialEmoteId | SocialPhraseId) => void;
   dismissError: () => void;
   clearPlayFx: () => void;
+  dismissReconnectToast: () => void;
+  clearReconnectFailure: () => void;
 }
 
 export const useGameStore = create<UiState>((set, get) => ({
@@ -159,14 +210,37 @@ export const useGameStore = create<UiState>((set, get) => ({
   dealKey: 0,
   socialBubbles: [null, null, null],
   socialCooldownUntil: 0,
+  reconnecting: false,
+  reconnectFailed: false,
+  reconnectToast: false,
+  reconnectAttempts: 0,
+  wasInGameDisconnect: false,
 
   init: () => {
     const id = readIdentity();
     set({ myName: id.name, guestId: id.guestId, beans: id.beans });
     connect();
     onStatus((s) => {
+      const prev = get().status;
       set({ status: s });
-      if (s === 'connected') tryAutoRejoin();
+      if (s === 'connected') {
+        if (prev === 'reconnecting' || get().reconnecting || get().wasInGameDisconnect) {
+          finishReconnectUi();
+        }
+        tryAutoRejoin();
+      } else if (s === 'reconnecting') {
+        if (isActiveGamePath() || get().snapshot != null) {
+          beginReconnectUi();
+        }
+      } else if (s === 'disconnected' && prev === 'connected') {
+        beginReconnectUi();
+      }
+    });
+    onReconnectAttempt((attempt) => {
+      set({ reconnectAttempts: attempt });
+      if (attempt >= RECONNECT_MAX_ATTEMPTS && (get().snapshot != null || get().mySeat != null)) {
+        failReconnectUi();
+      }
     });
     onEvent((e) => {
       switch (e.type) {
@@ -437,6 +511,19 @@ export const useGameStore = create<UiState>((set, get) => ({
   },
 
   dismissError: () => set({ lastError: null }),
+
+  dismissReconnectToast: () => set({ reconnectToast: false }),
+
+  clearReconnectFailure: () => {
+    clearReconnectTimer();
+    set({
+      reconnectFailed: false,
+      reconnecting: false,
+      reconnectToast: false,
+      reconnectAttempts: 0,
+      wasInGameDisconnect: false,
+    });
+  },
 }));
 
 export function selectPhase(s: UiState): GamePhase | undefined {
