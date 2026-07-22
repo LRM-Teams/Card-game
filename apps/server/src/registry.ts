@@ -6,7 +6,7 @@
  * - join：无 roomId 时新建房间；有 roomId 时只加入已存在房间。
  * - match：走 MatchQueue，满员或超时后成桌并自动开局。
  */
-import type { Seat } from '@card-game/rules';
+import { GamePhase, type Seat } from '@card-game/rules';
 import { GameRoom } from './game/GameRoom';
 import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
@@ -51,12 +51,17 @@ export class RoomRegistry {
     socketId: string,
     roomId?: string,
   ): JoinOutcome {
-    let room = roomId ? this.rooms.get(roomId) : undefined;
-    if (roomId && !room) {
+    const wantedId = roomId?.trim() || undefined;
+    let room = wantedId ? this.rooms.get(wantedId) : undefined;
+    if (wantedId && !room) {
       return {
-        room: new GameRoom(roomId, this.aiAdapter),
+        room: new GameRoom(wantedId, this.aiAdapter),
         seat: -1 as Seat,
-        result: { ok: false, code: 'not_in_room', message: '房间不存在，请检查房间号' },
+        result: {
+          ok: false,
+          code: 'room_not_found',
+          message: '房间不存在，请检查房间号或链接是否过期',
+        },
         kind: 'join',
       };
     }
@@ -93,12 +98,30 @@ export class RoomRegistry {
       return { room, seat: reconnect.seat, result: reconnect.result, kind: 'reconnect' };
     }
 
+    // 已开局优先于满员提示，便于分享链接误入时给出明确文案
+    if (room.phase !== GamePhase.WAITING) {
+      return {
+        room,
+        seat: -1 as Seat,
+        result: {
+          ok: false,
+          code: 'game_started',
+          message: '对局已开始，无法中途加入',
+        },
+        kind,
+      };
+    }
+
     const seat = room.firstEmptySeat();
     if (seat === null) {
       return {
         room,
         seat: -1 as Seat,
-        result: { ok: false, code: 'room_full', message: '房间已满（3/3）' },
+        result: {
+          ok: false,
+          code: 'room_full',
+          message: '房间已满（3/3），请换一个房间',
+        },
         kind,
       };
     }

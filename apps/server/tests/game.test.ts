@@ -165,7 +165,10 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     const registry = new RoomRegistry();
     const res = registry.join(mkHuman('A'), 'socket-a', 'missing-room');
     expect(res.result.ok).toBe(false);
-    if (!res.result.ok) expect(res.result.code).toBe('not_in_room');
+    if (!res.result.ok) {
+      expect(res.result.code).toBe('room_not_found');
+      expect(res.result.message).toMatch(/不存在/);
+    }
     expect(registry.get('missing-room')).toBeUndefined();
   });
 
@@ -216,7 +219,26 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
 
     const res = registry.join(mkHuman('D'), 'socket-d', a.room.roomId);
     expect(res.result.ok).toBe(false);
-    if (!res.result.ok) expect(res.result.code).toBe('room_full');
+    if (!res.result.ok) {
+      expect(res.result.code).toBe('room_full');
+      expect(res.result.message).toMatch(/已满/);
+    }
+  });
+
+  it('已开局拒绝新玩家，返回 game_started（优先于满员）', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    expect(a.room.phase).not.toBe('waiting');
+
+    const res = registry.join(mkHuman('D', 'g-d'), 'socket-d', a.room.roomId);
+    expect(res.result.ok).toBe(false);
+    if (!res.result.ok) {
+      expect(res.result.code).toBe('game_started');
+      expect(res.result.message).toMatch(/已开始/);
+    }
   });
 
   it('快速匹配：1 人超时后 AI 补位并自动开局', async () => {

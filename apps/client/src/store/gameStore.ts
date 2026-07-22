@@ -122,6 +122,8 @@ interface UiState {
   guestId: string | null;
   beans: number;
   matching: boolean;
+  /** 私房 join 请求已发出、尚未收到 you_joined / error */
+  joining: boolean;
   mySeat: number | null;
   roomId: string | null;
   myHand: Card[];
@@ -171,6 +173,7 @@ export const useGameStore = create<UiState>((set, get) => ({
   guestId: null,
   beans: 1000,
   matching: false,
+  joining: false,
   mySeat: null,
   roomId: null,
   myHand: [],
@@ -232,6 +235,8 @@ export const useGameStore = create<UiState>((set, get) => ({
             guestId: e.guestId,
             beans: e.beans,
             matching: false,
+            joining: false,
+            lastError: null,
           });
           break;
         }
@@ -334,7 +339,15 @@ export const useGameStore = create<UiState>((set, get) => ({
           break;
         }
         case 'error':
-          set({ lastError: { code: e.code, message: e.message, at: Date.now() }, matching: false });
+          // 进房失败：清会话，避免失败后仍自动 rejoin / 空白房间页
+          if (get().joining) {
+            clearPlayerSession();
+          }
+          set({
+            lastError: { code: e.code, message: e.message, at: Date.now() },
+            matching: false,
+            joining: false,
+          });
           break;
         default:
           break;
@@ -344,16 +357,15 @@ export const useGameStore = create<UiState>((set, get) => ({
 
   join: (identity, roomId) => {
     saveIdentity(identity);
-    savePlayerSession(identity.displayName, roomId, {
-      guestId: identity.guestId,
-      avatarId: identity.avatarId,
-    });
+    // 会话仅在 you_joined 后写入，避免满员/不存在/已开局仍污染 sessionStorage
+    clearPlayerSession();
     autoRejoinAttempted = true;
     set({
       myDisplayName: identity.displayName,
       guestId: identity.guestId,
       beans: identity.beans,
       matching: false,
+      joining: true,
       mySeat: null,
       roomId: null,
       myHand: [],
@@ -387,6 +399,7 @@ export const useGameStore = create<UiState>((set, get) => ({
       guestId: identity.guestId,
       beans: identity.beans,
       matching: true,
+      joining: false,
       mySeat: null,
       roomId: null,
       myHand: [],
@@ -504,6 +517,7 @@ export const useGameStore = create<UiState>((set, get) => ({
     autoRejoinAttempted = false;
     set({
       matching: false,
+      joining: false,
       mySeat: null,
       roomId: null,
       myHand: [],

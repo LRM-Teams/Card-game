@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
 import { copyText } from '../lib/clipboard';
+import { joinErrorText } from '../lib/roomJoin';
 import {
   DISPLAY_NAME_MAX,
   isValidDisplayName,
@@ -25,8 +26,10 @@ export function Room() {
   const snapshot = useGameStore((s) => s.snapshot);
   const mySeat = useGameStore((s) => s.mySeat);
   const roomId = useGameStore((s) => s.roomId);
+  const joining = useGameStore((s) => s.joining);
   const lastError = useGameStore((s) => s.lastError);
   const dismissError = useGameStore((s) => s.dismissError);
+  const leaveToLobby = useGameStore((s) => s.leaveToLobby);
   const start = useGameStore((s) => s.start);
   const updateDisplayName = useGameStore((s) => s.updateDisplayName);
   const [copied, setCopied] = useState<'id' | 'link' | null>(null);
@@ -40,23 +43,63 @@ export function Room() {
     }
   }, [phase, navigate]);
 
-  const players = snapshot?.players ?? [];
+  const backToLobby = () => {
+    dismissError();
+    leaveToLobby();
+    navigate({ to: '/' });
+  };
+
+  // 未入座：进房中 / 失败兜底，避免空白房间页
+  if (!roomId || !snapshot) {
+    const pending = joining || (Boolean(roomId) && !snapshot && !lastError);
+    return (
+      <div className="panel room">
+        <h1 className="title">进入房间</h1>
+        {pending ? (
+          <p className="subtitle" role="status" aria-live="polite">
+            正在加入房间…
+          </p>
+        ) : lastError ? (
+          <>
+            <div className="hint warn lobby-error" role="alert">
+              {joinErrorText(lastError.code, lastError.message)}
+              <span className="lobby-error-code">（{lastError.code}）</span>
+            </div>
+            <div className="actions" style={{ marginTop: 16 }}>
+              <button className="btn primary big" type="button" onClick={backToLobby}>
+                返回大厅
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="subtitle">尚未加入房间</p>
+            <div className="actions" style={{ marginTop: 16 }}>
+              <button className="btn primary big" type="button" onClick={backToLobby}>
+                返回大厅
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  const players = snapshot.players ?? [];
   const seats = [0, 1, 2].map((seat) => players.find((p) => p.seat === seat) ?? null);
   const humans = players.filter((p) => !p.isBot).length;
-  const hostSeat = snapshot?.hostSeat ?? null;
+  const hostSeat = snapshot.hostSeat ?? null;
   const isHost = mySeat != null && mySeat === hostSeat;
   const fullHouse = humans >= 3;
-  const shareLink = roomId ? `${window.location.origin}/?room=${encodeURIComponent(roomId)}` : '';
+  const shareLink = `${window.location.origin}/?room=${encodeURIComponent(roomId)}`;
 
   const copyRoomId = async () => {
-    if (!roomId) return;
     const ok = await copyText(roomId);
     setCopied(ok ? 'id' : null);
     if (ok) window.setTimeout(() => setCopied(null), 1200);
   };
 
   const copyShareLink = async () => {
-    if (!shareLink) return;
     const ok = await copyText(shareLink);
     setCopied(ok ? 'link' : null);
     if (ok) window.setTimeout(() => setCopied(null), 1200);
@@ -80,22 +123,21 @@ export function Room() {
       <h1 className="title">房间 {roomId ? `#${roomId.slice(0, 6)}` : ''}</h1>
       <p className="subtitle">3 人桌 · 真人对战 · 当前 {humans}/3 真人</p>
 
-      {roomId && (
-        <div className="room-code-card">
-          <span className="room-code-label">房间号</span>
-          <code>{roomId}</code>
-          <button className="btn" type="button" onClick={copyRoomId}>
-            {copied === 'id' ? '已复制' : '复制房间号'}
-          </button>
-          <button className="btn" type="button" onClick={copyShareLink}>
-            {copied === 'link' ? '已复制' : '复制链接'}
-          </button>
-        </div>
-      )}
+      <div className="room-code-card">
+        <span className="room-code-label">房间号</span>
+        <code>{roomId}</code>
+        <button className="btn" type="button" onClick={copyRoomId}>
+          {copied === 'id' ? '已复制' : '复制房间号'}
+        </button>
+        <button className="btn" type="button" onClick={copyShareLink}>
+          {copied === 'link' ? '已复制' : '复制链接'}
+        </button>
+      </div>
 
       {lastError && (
-        <div className="hint warn lobby-error" onClick={dismissError}>
-          操作失败：{lastError.message}（{lastError.code}）
+        <div className="hint warn lobby-error" role="alert" onClick={dismissError}>
+          {joinErrorText(lastError.code, lastError.message)}
+          <span className="lobby-error-code">（{lastError.code}）</span>
         </div>
       )}
 

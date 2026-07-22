@@ -593,6 +593,11 @@ body::before {
 .lobby-error {
   cursor: pointer;
 }
+.lobby-error-code {
+  opacity: 0.72;
+  font-size: 0.9em;
+  margin-left: 0.25em;
+}
 .room-code-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

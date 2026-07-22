@@ -11,6 +11,7 @@ import {
   saveIdentity,
   type GuestIdentity,
 } from '../lib/session';
+import { joinErrorText, normalizeRoomInput } from '../lib/roomJoin';
 import { PlayerAvatar } from './PlayerAvatar';
 import { GuideSpot } from './GuideSpot';
 
@@ -29,6 +30,7 @@ export function Lobby() {
   const match = useGameStore((s) => s.match);
   const cancelMatch = useGameStore((s) => s.cancelMatch);
   const matching = useGameStore((s) => s.matching);
+  const joining = useGameStore((s) => s.joining);
   const status = useGameStore((s) => s.status);
   const lastError = useGameStore((s) => s.lastError);
   const dismissError = useGameStore((s) => s.dismissError);
@@ -41,29 +43,28 @@ export function Lobby() {
   const mark = useOnboardingStore((s) => s.mark);
 
   const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
-  const [roomCode, setRoomCode] = useState(readRoomQuery);
+  const [roomCode, setRoomCode] = useState(() => normalizeRoomInput(readRoomQuery()));
   const deepLinkPending = useRef(Boolean(readRoomQuery()));
   const deepLinkDone = useRef(false);
 
   const trimmedNick = normalizeDisplayName(identity.displayName);
-  const trimmedRoomCode = roomCode.trim();
-  const canAct = isValidDisplayName(trimmedNick) && status === 'connected' && !matching;
+  const trimmedRoomCode = normalizeRoomInput(roomCode);
+  const canAct = isValidDisplayName(trimmedNick) && status === 'connected' && !matching && !joining;
   const canJoinRoom = canAct && trimmedRoomCode.length > 0;
-  const showIdentityGuide = guideActive && !seenIdentity && !matching;
-  const showStartGuide = guideActive && seenIdentity && !seenStart && !matching;
+  const showIdentityGuide = guideActive && !seenIdentity && !matching && !joining;
+  const showStartGuide = guideActive && seenIdentity && !seenStart && !matching && !joining;
 
-  // 匹配成功入房后跳转
+  // 进房成功后再跳转，失败留在大厅展示明确错误（避免空白房间页）
   useEffect(() => {
     if (roomId && snapshot) navigate({ to: '/room' });
   }, [roomId, snapshot, navigate]);
 
-  // 分享链接 ?room=xxx：连上后自动加入私房（只触发一次）
+  // 分享链接 ?room=xxx：连上后自动加入私房（只触发一次；失败不跳转）
   useEffect(() => {
     if (!deepLinkPending.current || deepLinkDone.current || !canJoinRoom || roomId) return;
     deepLinkDone.current = true;
     saveIdentity(identity);
     join(identity, trimmedRoomCode);
-    navigate({ to: '/room' });
     try {
       const url = new URL(window.location.href);
       if (url.searchParams.has('room')) {
@@ -73,7 +74,7 @@ export function Lobby() {
     } catch {
       /* ignore */
     }
-  }, [canJoinRoom, roomId, identity, trimmedRoomCode, join, navigate]);
+  }, [canJoinRoom, roomId, identity, trimmedRoomCode, join]);
 
   const persist = (next: GuestIdentity) => {
     setIdentity(next);
@@ -89,10 +90,15 @@ export function Lobby() {
 
   const enterPrivateRoom = (targetRoomId?: string) => {
     if (!canAct) return;
-    if (targetRoomId !== undefined && !targetRoomId.trim()) return;
+    if (targetRoomId !== undefined) {
+      const code = normalizeRoomInput(targetRoomId);
+      if (!code) return;
+      saveIdentity(identity);
+      join(identity, code);
+      return;
+    }
     saveIdentity(identity);
-    join(identity, targetRoomId);
-    navigate({ to: '/room' });
+    join(identity);
   };
 
   return (
@@ -121,12 +127,22 @@ export function Lobby() {
       )}
 
       {lastError && (
-        <div className="hint warn lobby-error" onClick={dismissError}>
-          失败：{lastError.message}（{lastError.code}）
+        <div
+          className="hint warn lobby-error"
+          role="alert"
+          onClick={dismissError}
+        >
+          {joinErrorText(lastError.code, lastError.message)}
+          <span className="lobby-error-code">（{lastError.code}）</span>
         </div>
       )}
 
-      {matching ? (
+      {joining ? (
+        <div className="matching-panel" role="status" aria-live="polite">
+          <p className="subtitle matching-status">正在加入房间…</p>
+          <p className="hint matching-hint">请稍候，成功后自动进入房间</p>
+        </div>
+      ) : matching ? (
         <div className="matching-panel">
           <p className="subtitle matching-status" role="status" aria-live="polite">
             正在寻找真人玩家…
@@ -215,9 +231,10 @@ export function Lobby() {
               <span>房间码</span>
               <input
                 type="text"
-                placeholder="输入房间号加入好友同桌"
+                placeholder="房间号或分享链接"
                 value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.trim())}
+                onChange={(e) => setRoomCode(e.target.value)}
+                onBlur={() => setRoomCode(normalizeRoomInput(roomCode))}
                 onKeyDown={(e) =>
                   e.key === 'Enter' && canJoinRoom && enterPrivateRoom(trimmedRoomCode)
                 }
