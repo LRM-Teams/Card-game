@@ -85,7 +85,25 @@ curl -sf http://127.0.0.1:8088/health | grep -q '"ok":true'
 | 对局卡住 / 疑似断线 | `docker logs ddz --since 30m \| grep '\[ops\]'`，按 `roomId` 查是否有 `player.reconnect` / 是否缺 `game.settle` |
 | 版本对不上 | 对比频道回帖 tip 与 `curl …/health` 的 `commit`、`bundle`；不一致则重滚 |
 
+## DouZero 推理探活（LRM-310 脚手架，可选）
+
+89 现网容器通常带 `DOUZERO_INFER_URL=http://172.17.0.1:8765`（docker bridge 访问宿主机 infer）。
+**训模冻结期可不启 8765**；探活失败时机器人走规则普通档（LRM-260），不得卡局。
+
+```bash
+# 从 89 宿主机 / 能达 docker0 的机器
+curl -sS -m 2 http://172.17.0.1:8765/health | jq .
+# 期望：{"status":"ok","models":["landlord","landlord_up","landlord_down"]}
+# 超时/非 200：记一次告警即可，对局继续
+
+# 容器内（若 bridge 可达）
+docker exec ddz sh -c 'curl -sS -m 2 "$DOUZERO_INFER_URL/health"' || true
+```
+
+接口契约（给训模 Agent）：`docs/douzero-adapter-contract.md`。
+
 ## 边界
 
 - 不做外部 APM / Prometheus；本手册 + `docker logs` 即最小闭环。
 - 不改游戏规则；日志仅服务端 stdout。
+- DouZero 训模/新 ckpt 部署不在本手册；只保留探活与 fallback 脚手架。
