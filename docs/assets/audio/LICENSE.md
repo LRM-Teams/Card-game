@@ -1,12 +1,12 @@
-# 音频资源许可说明（LRM-176）
+# 音频资源许可说明（LRM-176 / LRM-259）
 
-本目录及 `apps/client/public/audio/` 下全部音频均为 **程序化合成的原创 placeholder**，供斗地主客户端 P0 听觉反馈使用。
+本目录及 `apps/client/public/audio/` 下全部音频均为 **程序化合成的原创素材**，供斗地主客户端听觉反馈使用。
 
 ## 来源
 
 | 类别 | 路径 | 生成方式 |
 |------|------|----------|
-| 音效 SFX | `sfx/*.ogg` | Python 合成正弦/噪声后经 ffmpeg→Opus |
+| 音效 SFX | `sfx/*.ogg` | `docs/assets/audio/generate_sfx.py`（Python stdlib + ffmpeg→Opus） |
 | BGM | `bgm/lobby.ogg` | Python 合成和弦琶音循环垫底后经 ffmpeg→Opus |
 | 语音 stub | `voice/*.ogg` | Python 合成区分旋律 stub（非真人采样）；运行时若浏览器有中文 SpeechSynthesis 则优先 TTS |
 
@@ -34,3 +34,9 @@ voice/spring.ogg  「春天」
 voice/win.ogg     「胜利」
 voice/lose.ogg    「失败」
 ```
+
+## LRM-259 更新（2026-07-22）
+
+- 重生成 P0 关键音效：`play` / `bomb` / `rocket` / `win` / `lose`（+ `pass` / `button`）
+- 时长与动效对齐：出牌飞入 260ms、炸弹 420ms、王炸 560ms、结算弹入 180ms
+- 再生成：`python3 docs/assets/audio/generate_sfx.py`（需 `ffmpeg`）
