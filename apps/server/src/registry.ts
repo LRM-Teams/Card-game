@@ -12,11 +12,14 @@ import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
 import { IdentityStore, type GuestProfile } from './identity';
 import { MatchQueue, type MatchFormed, type MatchWaiter } from './matchQueue';
+import { opsLog } from './observability';
 
 export interface JoinOutcome {
   room: GameRoom;
   seat: Seat;
   result: ActionResult;
+  /** create=新建私房；join=加入已有房；reconnect=断线重连 */
+  kind: 'create' | 'join' | 'reconnect';
 }
 
 export class RoomRegistry {
@@ -54,12 +57,21 @@ export class RoomRegistry {
         room: new GameRoom(roomId, this.aiAdapter),
         seat: -1 as Seat,
         result: { ok: false, code: 'not_in_room', message: '房间不存在，请检查房间号' },
+        kind: 'join',
       };
     }
+    let kind: JoinOutcome['kind'] = room ? 'join' : 'create';
     if (!room) {
       const id = `room-${(++this.seq).toString(36)}`;
       room = new GameRoom(id, this.aiAdapter);
       this.rooms.set(id, room);
+      opsLog({
+        event: 'room.create',
+        roomId: id,
+        phase: room.phase,
+        humanCount: 0,
+        playerCount: 0,
+      });
     }
 
     const reconnect = room.reconnectHuman(
@@ -70,12 +82,25 @@ export class RoomRegistry {
     );
     if (reconnect) {
       this.bindSeat(room.roomId, reconnect.seat, socketId);
-      return { room, seat: reconnect.seat, result: reconnect.result };
+      opsLog({
+        event: 'player.reconnect',
+        roomId: room.roomId,
+        phase: room.phase,
+        seat: reconnect.seat,
+        humanCount: room.humanCount,
+        playerCount: room.playerCount,
+      });
+      return { room, seat: reconnect.seat, result: reconnect.result, kind: 'reconnect' };
     }
 
     const seat = room.firstEmptySeat();
     if (seat === null) {
-      return { room, seat: -1 as Seat, result: { ok: false, code: 'room_full', message: '房间已满（3/3）' } };
+      return {
+        room,
+        seat: -1 as Seat,
+        result: { ok: false, code: 'room_full', message: '房间已满（3/3）' },
+        kind,
+      };
     }
     const result = room.addHuman({
       name: profile.name,
@@ -83,9 +108,17 @@ export class RoomRegistry {
       avatarId: profile.avatarId,
       beans: profile.beans,
     });
-    if (!result.ok) return { room, seat: -1 as Seat, result };
+    if (!result.ok) return { room, seat: -1 as Seat, result, kind };
     this.bindSeat(room.roomId, seat, socketId);
-    return { room, seat, result };
+    opsLog({
+      event: 'room.join',
+      roomId: room.roomId,
+      phase: room.phase,
+      seat,
+      humanCount: room.humanCount,
+      playerCount: room.playerCount,
+    });
+    return { room, seat, result, kind };
   }
 
   /** 进入快速匹配；由 MatchQueue 异步成桌。 */
@@ -112,6 +145,14 @@ export class RoomRegistry {
     const id = `match-${(++this.seq).toString(36)}`;
     const room = new GameRoom(id, this.aiAdapter);
     this.rooms.set(id, room);
+    opsLog({
+      event: 'room.create',
+      roomId: id,
+      phase: room.phase,
+      humanCount: 0,
+      playerCount: 0,
+      match: true,
+    });
     const seats: Array<{ socketId: string; seat: Seat; result: ActionResult }> = [];
     for (const h of humans) {
       const seat = room.firstEmptySeat();
@@ -124,6 +165,15 @@ export class RoomRegistry {
       });
       if (!result.ok) continue;
       this.bindSeat(room.roomId, seat, h.socketId);
+      opsLog({
+        event: 'room.join',
+        roomId: room.roomId,
+        phase: room.phase,
+        seat,
+        humanCount: room.humanCount,
+        playerCount: room.playerCount,
+        match: true,
+      });
       seats.push({ socketId: h.socketId, seat, result });
     }
     return { room, seats };
