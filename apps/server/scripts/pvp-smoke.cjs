@@ -84,13 +84,13 @@ async function drive(clients) {
   const b = mkClient('烟B', 'g-smoke-b');
   const c = mkClient('烟C', 'g-smoke-c');
   await Promise.all([a.ready, b.ready, c.ready]);
-  a.send({ type: 'join', name: '烟A', guestId: 'g-smoke-a', avatarId: 'av-1', beans: 1000 });
+  a.send({ type: 'join', displayName: '烟A', guestId: 'g-smoke-a', avatarId: 'av-1', beans: 1000 });
   await sleep(120);
   const roomId = a.state.roomId;
   if (!roomId) throw new Error('no room');
-  b.send({ type: 'join', name: '烟B', guestId: 'g-smoke-b', avatarId: 'av-2', beans: 1000, roomId });
+  b.send({ type: 'join', displayName: '烟B', guestId: 'g-smoke-b', avatarId: 'av-2', beans: 1000, roomId });
   await sleep(120);
-  c.send({ type: 'join', name: '烟C', guestId: 'g-smoke-c', avatarId: 'av-3', beans: 1000, roomId });
+  c.send({ type: 'join', displayName: '烟C', guestId: 'g-smoke-c', avatarId: 'av-3', beans: 1000, roomId });
   await sleep(300);
   for (let i = 0; i < 60 && (!a.state.snapshot || a.state.snapshot.phase === 'waiting'); i++) await sleep(40);
   if (!a.state.snapshot || a.state.snapshot.phase === 'waiting') {

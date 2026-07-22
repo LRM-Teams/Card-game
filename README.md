@@ -29,6 +29,20 @@ pnpm -r test               # 跑全部单测
 pnpm -r typecheck          # 类型检查
 ```
 
+## 人人对战 smoke（89 / 本地）
+
+三会话 Socket 烟测脚本，覆盖**快速匹配**（`match-smoke.cjs`）与**私房三真人完整局**（`pvp-smoke.cjs`）。详见 `docs/ops-89.md`。
+
+```bash
+# 对现网 89 一键跑（health + 两路烟测）
+./apps/server/scripts/smoke-89.sh
+
+# 本地 dev server
+SERVER_URL=http://127.0.0.1:3000 ./apps/server/scripts/smoke-89.sh
+```
+
+89 举证：`curl …/health` 的 tip/bundle + `docker logs ddz | grep match.form`。
+
 ## 协作约定
 
 - 牌型规则**只允许在 `packages/game-rules`（`@card-game/rules`）实现**，老胡只调用、小林只显示。

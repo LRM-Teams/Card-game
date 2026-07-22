@@ -8,6 +8,7 @@ import type { Seat } from '@card-game/rules';
 import type { GuestProfile } from './identity';
 import type { GameRoom } from './game/GameRoom';
 import type { ActionResult } from './game/types';
+import { opsLog } from './observability';
 
 export interface MatchWaiter {
   socketId: string;
@@ -97,8 +98,20 @@ export class MatchQueue {
     this.clearTimer();
     const batch = this.queue.splice(0, 3);
     if (batch.length === 0) return;
+    const fill = fillBots || batch.length < 3;
+    const oldest = batch.reduce((min, w) => Math.min(min, w.enqueuedAt), batch[0]!.enqueuedAt);
     const { room, seats } = this.formRoom(batch);
-    const startResult = await room.start(fillBots || batch.length < 3);
+    const startResult = await room.start(fill);
+    opsLog({
+      event: 'match.form',
+      roomId: room.roomId,
+      phase: room.phase,
+      humanCount: batch.length,
+      playerCount: room.playerCount,
+      fillBots: fill,
+      waitMs: Date.now() - oldest,
+      queueRemaining: this.queue.length,
+    });
     this.onFormed({ room, seats, startResult });
     if (this.queue.length > 0) this.armTimer();
   }

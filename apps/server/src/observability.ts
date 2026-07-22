@@ -10,7 +10,9 @@ export type OpsEvent =
   | 'room.join'
   | 'game.start'
   | 'game.settle'
-  | 'player.reconnect';
+  | 'player.reconnect'
+  /** 快速匹配成桌（fillBots=true 时为超时补机路径，可 grep match.form） */
+  | 'match.form';
 
 export interface OpsLogFields {
   event: OpsEvent;

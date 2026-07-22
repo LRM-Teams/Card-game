@@ -33,6 +33,7 @@ curl -sS http://127.0.0.1:8088/health | jq .
 | `game.start` | 开局（发牌进入叫地主） |
 | `game.settle` | 结算（含 winnerSeat / scores） |
 | `player.reconnect` | 断线重连接管座位 |
+| `match.form` | 快速匹配成桌（`fillBots` / `humanCount` / `waitMs`） |
 
 字段至少含：`roomId`、`phase`、`seat`（若有）、`humanCount`。
 
@@ -45,10 +46,39 @@ docker logs ddz --since 2h 2>&1 | grep '\[ops\]' | grep 'room-4'
 
 # 只看开局/结算
 docker logs ddz --since 2h 2>&1 | grep '\[ops\]' | grep -E 'game\.(start|settle)'
+
+# 快速匹配成桌（LRM-309/319）
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form'
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form' | grep '"fillBots":false'
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form' | grep '"fillBots":true'
 ```
 
 烟测一局三真人后，应能 grep 出同一 `roomId` 的  
-`room.create` → `room.join`×3 → `game.start` → … → `game.settle`（可夹杂 `player.reconnect`）。
+**私房**：`room.create` → `room.join`×3 → `game.start` → … → `game.settle`  
+**快速匹配**：`match.form`（`fillBots:false`）→ `room.create` → `room.join`×3 → `game.start` → … → `game.settle`  
+（可夹杂 `player.reconnect`）。
+
+## 人人对战烟测脚本（LRM-319）
+
+从仓库根目录，对现网或本地服务跑三会话 Socket 烟测：
+
+```bash
+# 一键：health + 快速匹配 + 私房全真人局
+chmod +x apps/server/scripts/smoke-89.sh
+./apps/server/scripts/smoke-89.sh
+
+# 指定目标（默认 89）
+SERVER_URL=http://82.157.184.89:8088 ./apps/server/scripts/smoke-89.sh
+
+# 分项
+SERVER_URL=http://82.157.184.89:8088 node apps/server/scripts/match-smoke.cjs
+SERVER_URL=http://82.157.184.89:8088 node apps/server/scripts/pvp-smoke.cjs
+
+# 超时补机路径（需服务端 MATCH_FILL_AFTER_MS 较短，如 2s）
+MODE=bots SERVER_URL=http://127.0.0.1:3000 node apps/server/scripts/match-smoke.cjs
+```
+
+脚本成功后，在 89 上按上文 grep `match.form` 与 `room.join` 举证。
 
 ## Docker 重启 SOP
 

@@ -9,7 +9,10 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
-    "test": "BOT_THINK_MS_MIN=0 BOT_THINK_MS_MAX=0 vitest run"
+    "test": "BOT_THINK_MS_MIN=0 BOT_THINK_MS_MAX=0 vitest run",
+    "smoke:match": "node scripts/match-smoke.cjs",
+    "smoke:pvp": "node scripts/pvp-smoke.cjs",
+    "smoke:89": "bash scripts/smoke-89.sh"
   },
   "dependencies": {
     "@card-game/rules": "workspace:*",
