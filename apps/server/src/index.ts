@@ -11,6 +11,7 @@ import { createServer } from 'node:http';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
 import { Server as IoServer } from 'socket.io';
+import { buildHealthPayload } from './observability';
 import { createGame } from './transport';
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -44,9 +45,9 @@ function serveStatic(absPath: string): { status: number; body: Buffer; contentTy
 const httpServer = createServer((req, res) => {
   const url = req.url ?? '/';
 
-  if (url === '/health') {
-    res.writeHead(200, { 'content-type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, service: 'card-game-server' }));
+  if (url === '/health' || url.startsWith('/health?')) {
+    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(buildHealthPayload(CLIENT_DIST)));
     return;
   }
 

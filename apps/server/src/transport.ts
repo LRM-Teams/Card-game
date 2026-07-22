@@ -11,6 +11,7 @@ import type { ClientAction, ErrorCode, Seat, ServerEvent } from '@card-game/rule
 import { GamePhase } from '@card-game/rules';
 import type { ActionResult, RoomEvent } from './game/types';
 import type { GameRoom } from './game/GameRoom';
+import { opsLog } from './observability';
 import { RoomRegistry } from './registry';
 import type { MatchFormed } from './matchQueue';
 
@@ -48,13 +49,26 @@ export function createGame(io: IoServer): RoomRegistry {
     }
   };
 
+  /** 已打印 settle 日志的 GameResult（防 drain 重复刷屏） */
+  const settleLogged = new WeakSet<object>();
+
   const pumpBots = async (room: GameRoom, roomId: string): Promise<void> => {
     await room.drainBots((events) => {
       apply(roomId, events);
     });
     scheduleDecisionTimeout(room, roomId);
     scheduleDisconnectGrace(room, roomId);
-    if (room.result) {
+    if (room.result && !settleLogged.has(room.result)) {
+      settleLogged.add(room.result);
+      opsLog({
+        event: 'game.settle',
+        roomId,
+        phase: room.phase,
+        humanCount: room.humanCount,
+        playerCount: room.playerCount,
+        winnerSeat: room.result.winnerSeat,
+        scores: room.result.scores,
+      });
       const updated = registry.applySettlementBeans(room);
       for (const seat of [0, 1, 2] as Seat[]) {
         const p = room.players[seat];
@@ -67,6 +81,16 @@ export function createGame(io: IoServer): RoomRegistry {
         io.to(sid).emit('event', ev);
       }
     }
+  };
+
+  const logGameStart = (room: GameRoom): void => {
+    opsLog({
+      event: 'game.start',
+      roomId: room.roomId,
+      phase: room.phase,
+      humanCount: room.humanCount,
+      playerCount: room.playerCount,
+    });
   };
 
   /** roomId → 明牌/加倍决策超时定时器 */
@@ -142,6 +166,7 @@ export function createGame(io: IoServer): RoomRegistry {
       if (sock) void sock.join(formed.room.roomId);
     }
     if (!formed.startResult.ok) return;
+    logGameStart(formed.room);
     apply(formed.room.roomId, formed.startResult.events);
     void pumpBots(formed.room, formed.room.roomId);
   };
@@ -201,6 +226,7 @@ export function createGame(io: IoServer): RoomRegistry {
           runRoomAction(room.roomId, async () => {
             const started = await room.maybeAutoStartWhenFull();
             if (!started?.ok) return;
+            logGameStart(room);
             apply(room.roomId, started.events);
             await pumpBots(room, room.roomId);
           });
@@ -220,10 +246,14 @@ export function createGame(io: IoServer): RoomRegistry {
       }
 
       runRoomAction(binding.roomId, async () => {
+        const beforePhase = room.phase;
         const result: ActionResult = await room.handleAction(binding.seat, action);
         if (!result.ok) {
           fail(socket, result.code, result.message);
           return;
+        }
+        if (action.type === 'start' && beforePhase !== room.phase) {
+          logGameStart(room);
         }
         apply(binding.roomId, result.events);
         await pumpBots(room, binding.roomId);

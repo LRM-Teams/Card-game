@@ -14,11 +14,13 @@ git checkout "$REF"
 git pull --ff-only origin "$REF" 2>/dev/null || true
 
 echo "==> Build image ${IMAGE_TAG}"
-docker build -t "$IMAGE_TAG" .
+COMMIT="$(git rev-parse HEAD)"
+docker build -t "$IMAGE_TAG" --build-arg "GIT_COMMIT=${COMMIT}" .
 
 echo "==> Recreate container (127.0.0.1:3000 only)"
 docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
 docker run -d --name "$CONTAINER_NAME" --restart unless-stopped \
+  -e "GIT_COMMIT=${COMMIT}" \
   -p 127.0.0.1:3000:3000 \
   "$IMAGE_TAG"
 

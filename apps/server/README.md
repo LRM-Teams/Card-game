@@ -52,7 +52,7 @@ pnpm --filter @card-game/server test     # 单测
 pnpm typecheck                            # 根目录全量类型检查
 ```
 
-健康检查：`GET http://localhost:3000/health` → `{ "ok": true }`
+健康检查：`GET http://localhost:3000/health` → `{ "ok": true, "commit": "…", "bundle": "index-….js" }`（见 `docs/ops-89.md`）
 
 ## 范围（MVP）
 已实现：房间/匹配、对局状态机、服务端权威校验、真人不足自动补机器人、Socket.IO 协议。
