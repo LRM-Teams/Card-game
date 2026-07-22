@@ -845,6 +845,48 @@ body::before {
   font-weight: 700;
   letter-spacing: 0.04em;
 }
+.player-type-tag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+.player-type-tag.is-human {
+  color: #d8f5e4;
+  background: rgba(46, 160, 98, 0.28);
+  border: 1px solid rgba(120, 220, 160, 0.45);
+}
+.player-type-tag.is-bot {
+  color: #e8edf8;
+  background: rgba(96, 120, 180, 0.32);
+  border: 1px solid rgba(150, 175, 230, 0.42);
+}
+.seat-card.bot {
+  border-color: rgba(150, 175, 230, 0.42);
+}
+.seat-card.human {
+  border-color: rgba(120, 220, 160, 0.35);
+}
+.seat-badge.is-bot-seat {
+  border-color: rgba(150, 175, 230, 0.38);
+}
+.seat-badge .seat-name .player-type-tag {
+  display: inline-block;
+  margin: 0 0 0 6px;
+  vertical-align: middle;
+}
+.matching-panel__title {
+  font-size: var(--ddz-text-lg);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.matching-panel__hint {
+  margin: 0 0 var(--ddz-space-4);
+}
 
 .status-row {
   display: flex;

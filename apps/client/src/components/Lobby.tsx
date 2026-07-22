@@ -127,8 +127,9 @@ export function Lobby() {
       )}
 
       {matching ? (
-        <div className="matching-panel">
-          <p className="subtitle">匹配中…凑齐三人即开；暂无人则 AI 补位</p>
+        <div className="matching-panel" role="status" aria-live="polite">
+          <p className="subtitle matching-panel__title">正在寻找真人玩家…</p>
+          <p className="hint matching-panel__hint">凑齐三人即开；暂无人则自动补机器人</p>
           <button className="btn big" type="button" onClick={() => cancelMatch()}>
             取消匹配
           </button>

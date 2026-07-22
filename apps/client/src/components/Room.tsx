@@ -11,6 +11,7 @@ import {
   saveIdentity,
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
+import { PlayerTypeTag } from './PlayerTypeTag';
 
 /**
  * 房间：展示 3 个座位（真人 / 空位 / 机器人补位）与等人状态。
@@ -116,22 +117,28 @@ export function Room() {
       </label>
 
       <div className="seats-preview">
-        {seats.map((p, i) => (
-          <div className={`seat-card ${p ? (p.isBot ? 'bot' : 'me') : 'empty'}`} key={i}>
-            <div className="avatar"><PlayerAvatar kind={!p ? 'empty' : 'player'} avatarId={p?.avatarId} /></div>
-            <div className="seat-name">{p ? p.displayName : '空位'}</div>
-            <div className="seat-role">
-              {!p
-                ? '等待玩家加入'
-                : p.isBot
-                  ? '机器人'
-                  : p.seat === mySeat
-                    ? '你'
-                    : '玩家'}
+        {seats.map((p, i) => {
+          const seatClass = !p
+            ? 'empty'
+            : p.isBot
+              ? 'bot'
+              : p.seat === mySeat
+                ? 'me'
+                : 'human';
+          return (
+            <div className={`seat-card ${seatClass}`} key={i}>
+              <div className="avatar">
+                <PlayerAvatar kind={!p ? 'empty' : 'player'} avatarId={p?.avatarId} />
+              </div>
+              <div className="seat-name">{p ? p.displayName : '空位'}</div>
+              {p ? <PlayerTypeTag isBot={p.isBot} /> : null}
+              <div className="seat-role">
+                {!p ? '等待玩家加入' : p.seat === mySeat ? '你' : p.isBot ? 'AI 补位' : '玩家'}
+              </div>
+              {p && p.seat === hostSeat && <div className="seat-host">房主</div>}
             </div>
-            {p && p.seat === hostSeat && <div className="seat-host">房主</div>}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="actions">

@@ -6,6 +6,7 @@ import { useOnboardingStore } from '../store/onboardingStore';
 import { HandView } from './HandView';
 import { CardView, OpponentBackFan } from './CardView';
 import { PlayerAvatar } from './PlayerAvatar';
+import { PlayerTypeTag } from './PlayerTypeTag';
 import { SeatPlayZone } from './SeatPlayZone';
 import { SettleCoins } from './SettleCoins';
 import { GuideSpot } from './GuideSpot';
@@ -637,10 +638,11 @@ function SeatBadge({
     .map((id) => cardOf(id))
     .filter((c): c is NonNullable<typeof c> => !!c)
     .slice(0, 8);
+  const playerTypeLabel = p.isBot ? '机器人' : '真人';
   return (
     <div
-      className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}${p.doubled ? ' is-doubled' : ''}`}
-      aria-label={[p.displayName, roleLabel, p.doubled ? '已加倍' : null, active ? '行动中' : null]
+      className={`seat-badge ${active ? 'is-turn turn-pulse' : ''} ${roleClass}${p.doubled ? ' is-doubled' : ''}${p.isBot ? ' is-bot-seat' : ' is-human-seat'}`}
+      aria-label={[p.displayName, playerTypeLabel, roleLabel, p.doubled ? '已加倍' : null, active ? '行动中' : null]
         .filter(Boolean)
         .join('，')}
     >
@@ -668,6 +670,7 @@ function SeatBadge({
       </div>
       <div className="seat-name">
         {p.displayName}
+        <PlayerTypeTag isBot={p.isBot} />
         {p.doubled ? <span className="seat-double-tag">加倍</span> : null}
       </div>
       <div className="seat-count">剩 {p.handSize}</div>
