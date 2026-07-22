@@ -1572,17 +1572,15 @@ body::before {
   background: linear-gradient(180deg, #4d8cff, #2d6cdf);
 }
 
-/* Cards — LRM-207：纸面 token + 资产接线（模板/王/背） */
+/* Cards — LRM-207/315：v2 纸面 SVG + 角标叠字 + 王/背全图 */
 .card {
   position: relative;
   width: var(--ddz-card-w);
   height: var(--ddz-card-h);
   margin-left: -18px;
-  border: 1px solid var(--ddz-card-stroke);
+  border: 1px solid transparent;
   border-radius: var(--ddz-radius-card);
-  background:
-    linear-gradient(180deg, var(--ddz-card-paper-0) 0%, var(--ddz-card-paper-1) 45%, var(--ddz-card-paper-2) 100%),
-    var(--ddz-paper);
+  background: transparent;
   color: var(--ddz-suit-ink);
   display: flex;
   flex-direction: column;
@@ -1591,7 +1589,7 @@ body::before {
   gap: 0;
   cursor: pointer;
   transition: transform 100ms ease, box-shadow 100ms ease, border-color 100ms ease, filter 120ms ease, opacity 120ms ease;
-  box-shadow: var(--ddz-card-shadow);
+  box-shadow: none;
   padding: 0;
   font-family: Georgia, 'Times New Roman', Times, 'Microsoft YaHei', serif;
   overflow: hidden;
@@ -1600,14 +1598,7 @@ body::before {
   margin-left: 0;
 }
 .card::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 5px;
-  border: 1px solid var(--ddz-card-inner-stroke);
-  pointer-events: none;
-  opacity: 0.9;
-  z-index: 1;
+  display: none;
 }
 .card:hover:not(:disabled) {
   /* 手牌区抬起由 .hand .card 的 --card-lift 负责，避免此处 transform 盖掉 */
@@ -1619,6 +1610,10 @@ body::before {
   box-shadow: var(--ddz-glow-gold), 0 12px 18px rgba(0, 0, 0, 0.35);
   z-index: 3;
 }
+.card.is-selected .card-front-art,
+.card.is-selected .card-joker-art {
+  filter: drop-shadow(0 0 6px rgba(246, 198, 91, 0.45));
+}
 .card:disabled {
   cursor: default;
 }
@@ -1629,13 +1624,14 @@ body::before {
   color: var(--ddz-suit-ink);
 }
 .card.is-joker {
-  background: var(--ddz-card-paper-0);
+  background: transparent;
 }
 .card.is-joker::after,
 .card.is-face-down::after {
   display: none;
 }
 .card-joker-art,
+.card-front-art,
 .card-back-art {
   width: 100%;
   height: 100%;
@@ -1672,21 +1668,22 @@ body::before {
   pointer-events: none;
 }
 .card-corner.top {
-  top: 4px;
-  left: 5px;
+  top: 6px;
+  left: 7px;
 }
 .card-corner.bottom {
-  right: 5px;
-  bottom: 4px;
+  right: 7px;
+  bottom: 6px;
   transform: rotate(180deg);
 }
 .card-corner-rank {
-  font-size: 11px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.03em;
+  line-height: 1;
 }
 .card-corner-suit {
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1;
   margin-top: 1px;
 }
@@ -1702,10 +1699,18 @@ body::before {
   font-size: 16px;
 }
 .card.is-small .card-corner-rank {
-  font-size: 9px;
+  font-size: 17px;
 }
 .card.is-small .card-corner-suit {
-  font-size: 8px;
+  font-size: 9px;
+}
+.card.is-small .card-corner.top {
+  top: 4px;
+  left: 5px;
+}
+.card.is-small .card-corner.bottom {
+  right: 5px;
+  bottom: 4px;
 }
 
 /* 对手牌背扇：可见资产，非纯数字占位 */
@@ -2493,7 +2498,7 @@ body::before {
     margin-left: -12px;
   }
   .card-corner-rank {
-    font-size: 10px;
+    font-size: 15px;
   }
   .card-suit-center {
     font-size: 16px;
