@@ -192,6 +192,67 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     }
   });
 
+  it('刷新竞态：旧 socket 未 disconnect 时同 guest 仍可接管座位（LRM-256）', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    const beforeHand = a.room.players[0]!.hand.map((c) => c.id);
+    expect(a.room.players[0]!.connected).toBe(true);
+
+    // 不先 disconnect：模拟刷新时旧连接尚未触发 disconnect
+    const takeover = registry.join(mkHuman('A', 'g-a'), 'socket-a-new', a.room.roomId);
+    expect(takeover.seat).toBe(0);
+    expect(takeover.result.ok).toBe(true);
+    expect(registry.socketOf(a.room.roomId, 0)).toBe('socket-a-new');
+    expect(a.room.players[0]!.hand.map((c) => c.id)).toEqual(beforeHand);
+  });
+
+  it('私房 3 真人凑齐后 start(false)：无机器人、进入叫地主（LRM-256）', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    expect(a.room.humanCount).toBe(3);
+    expect(a.room.playerCount).toBe(3);
+    const start = await a.room.start(false);
+    expect(start.ok).toBe(true);
+    expect(a.room.phase).toBe('bidding');
+    expect(a.room.players.every((p) => p !== null && !p.isBot)).toBe(true);
+  });
+
+  it('3 真人局可完整跑到 SETTLED（无机器人驱动，LRM-256）', async () => {
+    const r = threeHumans();
+    await r.start(false);
+    // 叫地主
+    expect((await r.handleBid(0, 'claim')).ok).toBe(true);
+    expect((await r.handleBid(1, 'pass')).ok).toBe(true);
+    expect((await r.handleBid(2, 'pass')).ok).toBe(true);
+    expect((await r.handleReveal(0, false)).ok).toBe(true);
+    expect((await r.handleDouble(0, false)).ok).toBe(true);
+    expect((await r.handleDouble(1, false)).ok).toBe(true);
+    expect((await r.handleDouble(2, false)).ok).toBe(true);
+    expect(r.phase).toBe('playing');
+    // 用 bot 启发式替真人出完（仍无 isBot 座位）
+    let guard = 0;
+    while (r.phase === 'playing' && guard++ < 200) {
+      const seat = r.turnSeat!;
+      const hand = r.players[seat]!.hand;
+      const prev = r.lastPlay?.hand ?? null;
+      const cards = botChoosePlay(hand, prev);
+      if (cards == null) {
+        expect((await r.handlePass(seat)).ok).toBe(true);
+      } else {
+        expect((await r.handlePlay(seat, cards.map((c) => c.id))).ok).toBe(true);
+      }
+    }
+    expect(r.phase).toBe('settled');
+    expect(r.result).not.toBeNull();
+    expect(r.humanCount).toBe(3);
+    expect(r.players.every((p) => p !== null && !p.isBot)).toBe(true);
+  });
+
   it('满房没有断线同名座位时仍拒绝新玩家加入', () => {
     const registry = new RoomRegistry();
     const a = registry.join(mkHuman('A'), 'socket-a');

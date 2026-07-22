@@ -7,7 +7,7 @@
  * 传输层不做任何规则判定，只搬运；权威判定全在 GameRoom + @card-game/rules。
  */
 import type { Server as IoServer, Socket } from 'socket.io';
-import type { ClientAction, ErrorCode, Seat, ServerEvent } from '@card-game/rules';
+import { GamePhase, type ClientAction, type ErrorCode, type Seat, type ServerEvent } from '@card-game/rules';
 import type { ActionResult, RoomEvent } from './game/types';
 import type { GameRoom } from './game/GameRoom';
 import { RoomRegistry } from './registry';
@@ -161,6 +161,22 @@ export function createGame(io: IoServer): RoomRegistry {
         bindings.set(socket.id, { roomId: room.roomId, seat });
         void socket.join(room.roomId);
         apply(room.roomId, result.events);
+        // LRM-256：私房凑齐 3 真人自动开局（fillBots=false）；房主手动开始仍可用
+        if (
+          room.phase === GamePhase.WAITING &&
+          room.humanCount === 3 &&
+          room.playerCount === 3
+        ) {
+          runRoomAction(room.roomId, async () => {
+            const live = registry.get(room.roomId);
+            if (!live || live.phase !== GamePhase.WAITING) return;
+            if (live.humanCount < 3 || live.playerCount < 3) return;
+            const startResult = await live.start(false);
+            if (!startResult.ok) return;
+            apply(live.roomId, startResult.events);
+            await pumpBots(live, live.roomId);
+          });
+        }
         return;
       }
 

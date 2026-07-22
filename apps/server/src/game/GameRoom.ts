@@ -131,7 +131,8 @@ export class GameRoom {
 
   /**
    * 断线真人恢复原座位与私有手牌。
-   * 优先 guestId；否则回退同昵称（兼容旧客户端）。
+   * 优先 guestId（含仍 connected 的刷新接管，避免旧 socket 未断开导致 room_full）；
+   * 否则回退同昵称断线座位（兼容旧客户端）。
    */
   reconnectHuman(
     name: string,
@@ -140,14 +141,20 @@ export class GameRoom {
     beans = 1000,
   ): { seat: Seat; result: ActionResult } | null {
     const trimmed = name.trim();
-    const byGuest =
-      guestId != null && guestId.trim()
-        ? this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.guestId === guestId.trim())
-        : -1;
-    const idx =
-      byGuest !== -1
-        ? byGuest
-        : this.players.findIndex((p) => p !== null && !p.isBot && !p.connected && p.name === trimmed);
+    const gid = guestId?.trim() || '';
+    const findSeat = (pred: (p: NonNullable<(typeof this.players)[number]>) => boolean): number =>
+      this.players.findIndex((p) => p !== null && !p.isBot && pred(p));
+
+    let idx = -1;
+    if (gid) {
+      // 1) 已标记断线的同 guest
+      idx = findSeat((p) => !p.connected && p.guestId === gid);
+      // 2) 刷新竞态：旧连接尚未 disconnect，仍允许同 guest 接管座位
+      if (idx === -1) idx = findSeat((p) => p.guestId === gid);
+    }
+    if (idx === -1 && trimmed) {
+      idx = findSeat((p) => !p.connected && p.name === trimmed);
+    }
     if (idx === -1) return null;
 
     const seat = idx as Seat;
@@ -155,7 +162,7 @@ export class GameRoom {
     p.connected = true;
     if (trimmed) p.name = trimmed;
     if (avatarId) p.avatarId = avatarId;
-    if (guestId?.trim()) p.guestId = guestId.trim();
+    if (gid) p.guestId = gid;
     const events: RoomEvent[] = [
       {
         scope: { seat },
