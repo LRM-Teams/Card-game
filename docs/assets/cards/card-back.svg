@@ -1,26 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="104" height="148" viewBox="0 0 104 148" role="img" aria-label="Dou Dizhu card back v2">
   <defs>
     <linearGradient id="backField" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6e1a1f"/>
-      <stop offset=".5" stop-color="#3d1018"/>
-      <stop offset="1" stop-color="#1c0c14"/>
+      <stop offset="0" stop-color="#7a1c22"/>
+      <stop offset=".45" stop-color="#3d1018"/>
+      <stop offset="1" stop-color="#160a12"/>
     </linearGradient>
-    <pattern id="lattice" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45 7 7)">
-      <rect width="14" height="14" fill="none"/>
-      <path d="M0 7 H14 M7 0 V14" stroke="#e8c56a" stroke-width=".9" opacity=".28"/>
-      <circle cx="7" cy="7" r="1.4" fill="#e8c56a" opacity=".22"/>
+    <radialGradient id="backVignette" cx="50%" cy="42%" r="68%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".28"/>
+    </radialGradient>
+    <pattern id="lattice" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45 6 6)">
+      <rect width="12" height="12" fill="none"/>
+      <path d="M0 6 H12 M6 0 V12" stroke="#e8c56a" stroke-width=".85" opacity=".30"/>
+      <circle cx="6" cy="6" r="1.2" fill="#e8c56a" opacity=".24"/>
     </pattern>
-    <filter id="backShadow" x="-20%" y="-15%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#12080a" flood-opacity=".35"/>
+    <linearGradient id="rimGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5e2a0"/>
+      <stop offset="1" stop-color="#c9a24a"/>
+    </linearGradient>
+    <filter id="backShadow" x="-22%" y="-16%" width="144%" height="144%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.2" flood-color="#12080a" flood-opacity=".38"/>
     </filter>
   </defs>
   <rect x="3.5" y="3.5" width="97" height="141" rx="10" fill="#d9c48a" filter="url(#backShadow)"/>
-  <rect x="5" y="5" width="94" height="138" rx="9" fill="url(#backField)" stroke="#c9a24a" stroke-width="1.5"/>
-  <rect x="11" y="11" width="82" height="126" rx="7" fill="url(#lattice)" stroke="#e8c56a" stroke-width="1.5" opacity=".95"/>
-  <rect x="18" y="18" width="68" height="112" rx="5" fill="none" stroke="#f0d78a" stroke-width="1" opacity=".35"/>
-  <!-- center medallion -->
-  <circle cx="52" cy="74" r="22" fill="#140910" stroke="#e8c56a" stroke-width="2.25"/>
-  <circle cx="52" cy="74" r="16" fill="none" stroke="#f0d78a" stroke-width="1" opacity=".55"/>
+  <rect x="5" y="5" width="94" height="138" rx="9" fill="url(#backField)" stroke="url(#rimGold)" stroke-width="1.6"/>
+  <rect x="5" y="5" width="94" height="138" rx="9" fill="url(#backVignette)"/>
+  <rect x="11" y="11" width="82" height="126" rx="7" fill="url(#lattice)" stroke="#e8c56a" stroke-width="1.4" opacity=".96"/>
+  <rect x="18" y="18" width="68" height="112" rx="5" fill="none" stroke="#f0d78a" stroke-width="1" opacity=".38"/>
+  <circle cx="52" cy="74" r="24" fill="#120910" stroke="#e8c56a" stroke-width="2.4"/>
+  <circle cx="52" cy="74" r="18" fill="none" stroke="#f0d78a" stroke-width="1" opacity=".5"/>
+  <circle cx="52" cy="74" r="12" fill="none" stroke="#c9a24a" stroke-width=".8" opacity=".35"/>
   <path d="M52 58 L58 70 L71 72 L61 81 L64 94 L52 87 L40 94 L43 81 L33 72 L46 70 Z"
-        fill="#f3df9a" stroke="#c9a24a" stroke-width=".6"/>
+        fill="#f3df9a" stroke="#c9a24a" stroke-width=".7"/>
+  <path d="M52 64 L55 71 L62 72 L57 77 L58 84 L52 81 L46 84 L47 77 L42 72 L49 71 Z"
+        fill="#fff8dc" opacity=".55"/>
 </svg>

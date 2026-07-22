@@ -2,36 +2,48 @@
   <defs>
     <linearGradient id="paperV2" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#fffcf7"/>
-      <stop offset="0.45" stop-color="#fbf8f0"/>
-      <stop offset="1" stop-color="#f3eee3"/>
+      <stop offset="0.42" stop-color="#fbf8f0"/>
+      <stop offset="1" stop-color="#f0ebe0"/>
     </linearGradient>
-    <radialGradient id="paperSheen" cx="32%" cy="18%" r="70%">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".55"/>
+    <radialGradient id="paperSheen" cx="30%" cy="14%" r="72%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".62"/>
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".12"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
-    <pattern id="fiber" width="6" height="6" patternUnits="userSpaceOnUse">
-      <circle cx="1" cy="2" r="0.45" fill="#c9b89a" opacity=".18"/>
-      <circle cx="4" cy="5" r="0.35" fill="#b7a68a" opacity=".12"/>
+    <linearGradient id="suitRed" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d32f2f"/>
+      <stop offset="1" stop-color="#b71c1c"/>
+    </linearGradient>
+    <pattern id="fiber" width="5" height="5" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.8" r="0.42" fill="#c4b296" opacity=".16"/>
+      <circle cx="3.6" cy="4.1" r="0.32" fill="#b8a78c" opacity=".11"/>
+      <path d="M0 2.5 H5" stroke="#d8ccb8" stroke-width=".25" opacity=".08"/>
     </pattern>
-    <filter id="cardShadow" x="-25%" y="-20%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="4" stdDeviation="3.2" flood-color="#1a1008" flood-opacity=".28"/>
+    <filter id="cardShadow" x="-28%" y="-22%" width="156%" height="156%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.4" flood-color="#1a1008" flood-opacity=".30"/>
+    </filter>
+    <filter id="innerDepth" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blur"/>
+      <feOffset dx="0" dy="1.5"/>
+      <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="inner"/>
+      <feColorMatrix in="inner" type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0.22 0"/>
+      <feBlend in="SourceGraphic" mode="normal"/>
     </filter>
   </defs>
-  <!-- outer shell -->
-  <rect x="3.5" y="3.5" width="97" height="141" rx="10" fill="#e8dfd0" filter="url(#cardShadow)"/>
-  <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#paperV2)" stroke="#8a7355" stroke-width="1.25"/>
+  <rect x="3.5" y="3.5" width="97" height="141" rx="10" fill="#e4dacb" filter="url(#cardShadow)"/>
+  <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#paperV2)" stroke="#8a7355" stroke-width="1.25" filter="url(#innerDepth)"/>
   <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#paperSheen)"/>
   <rect x="4.5" y="4.5" width="95" height="139" rx="9.5" fill="url(#fiber)"/>
-  <!-- inner rim -->
-  <rect x="8" y="8" width="88" height="132" rx="7" fill="none" stroke="#d9cbb5" stroke-width="1" opacity=".9"/>
-  <!-- sample rank/suit (red) — component replaces these -->
-  <g fill="#c62828">
-    <text x="14" y="28" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="800">A</text>
+  <rect x="8" y="8" width="88" height="132" rx="7" fill="none" stroke="#d9cbb5" stroke-width="1" opacity=".92"/>
+  <rect x="10" y="10" width="84" height="128" rx="6" fill="none" stroke="#efe6d6" stroke-width=".6" opacity=".55"/>
+  <g fill="url(#suitRed)">
+    <text x="14" y="29" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="800">A</text>
     <path d="M19.5 36.5 C13.5 29.5 6.5 39.5 13.5 48 C16.8 52.5 19.5 56 19.5 60.5 C19.5 56 22.2 52.5 25.5 48 C32.5 39.5 25.5 29.5 19.5 36.5Z"/>
-    <path d="M52 50 C39 34 24 56 37 74 C44 83 51 90 52 104 C53 90 60 83 67 74 C80 56 65 34 52 50Z" opacity=".94"/>
+    <path d="M52 48 C37 30 20 54 34 73 C42 83 49 91 52 106 C55 91 62 83 70 73 C84 54 67 30 52 48Z" opacity=".96"/>
+    <ellipse cx="52" cy="78" rx="7" ry="5.5" fill="#ffffff" opacity=".14"/>
   </g>
-  <g fill="#c62828" transform="rotate(180 52 74)">
-    <text x="14" y="28" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="800">A</text>
+  <g fill="url(#suitRed)" transform="rotate(180 52 74)">
+    <text x="14" y="29" font-family="Georgia, 'Times New Roman', Times, serif" font-size="22" font-weight="800">A</text>
     <path d="M19.5 36.5 C13.5 29.5 6.5 39.5 13.5 48 C16.8 52.5 19.5 56 19.5 60.5 C19.5 56 22.2 52.5 25.5 48 C32.5 39.5 25.5 29.5 19.5 36.5Z"/>
   </g>
 </svg>

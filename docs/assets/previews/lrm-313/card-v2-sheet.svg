@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-label="LRM-313 card v2 preview sheet">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#143528"/>
+      <stop offset="1" stop-color="#0b2218"/>
+    </linearGradient>
+    <linearGradient id="v1paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff8e8"/>
+      <stop offset="1" stop-color="#f0e4c8"/>
+    </linearGradient>
+    <linearGradient id="v2paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffcf7"/>
+      <stop offset="1" stop-color="#f0ebe0"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="960" height="640" fill="url(#bg)"/>
+  <text x="28" y="36" font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="#f3e7c5">LRM-313 Card v2 Production Sheet (Phase-2)</text>
+  <text x="28" y="58" font-family="system-ui,sans-serif" font-size="12" fill="#9bb5a4">Logic 52x74 / thumb 40x56 - SVG master 104x148 @2x - internal self-drawn</text>
+
+  <text x="28" y="92" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#e8c56a">v1 (LRM-206) vs v2 (LRM-313)</text>
+  <g transform="translate(28 104)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">v1 front</text>
+    <rect width="104" height="148" rx="10" fill="url(#v1paper)" stroke="#c9a24a" stroke-width="2" filter="url(#shadow)"/>
+    <text x="14" y="28" font-size="20" font-weight="800" fill="#c72d2d" font-family="Georgia,serif">A</text>
+    <path d="M52 50 C39 34 24 56 37 74 C44 83 51 90 52 104 C53 90 60 83 67 74 C80 56 65 34 52 50Z" fill="#c72d2d"/>
+  </g>
+  <g transform="translate(148 104)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">v2 front</text>
+    <rect width="104" height="148" rx="10" fill="url(#v2paper)" stroke="#8a7355" stroke-width="1.25" filter="url(#shadow)"/>
+    <rect x="4" y="4" width="96" height="140" rx="8" fill="none" stroke="#d9cbb5"/>
+    <text x="14" y="28" font-size="20" font-weight="800" fill="#d32f2f" font-family="Georgia,serif">A</text>
+    <path d="M52 48 C37 30 20 54 34 73 C42 83 49 91 52 106 C55 91 62 83 70 73 C84 54 67 30 52 48Z" fill="#c62828"/>
+    <ellipse cx="52" cy="78" rx="7" ry="5.5" fill="#fff" opacity=".12"/>
+  </g>
+  <g transform="translate(268 104)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">v2 big joker</text>
+    <rect width="104" height="148" rx="10" fill="url(#v2paper)" stroke="#8a7355" filter="url(#shadow)"/>
+    <rect x="10" y="12" width="6" height="124" rx="2" fill="#c62828"/>
+    <path d="M52 40c10 16 20 24 18 42-1 14-12 24-18 30-6-6-17-16-18-30-2-18 8-26 18-42z" fill="#d32222"/>
+  </g>
+  <g transform="translate(388 104)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">v2 small joker</text>
+    <rect width="104" height="148" rx="10" fill="url(#v2paper)" stroke="#8a7355" filter="url(#shadow)"/>
+    <rect x="10" y="12" width="6" height="124" rx="2" fill="#263247"/>
+    <path d="M32 88c6-24 34-24 40 0l-6 26H38z" fill="#263247"/>
+    <path d="M30 88c5-14 4-24 0-32 10 2 16 11 20 26 3-15 10-24 20-26-4 8-5 18 0 32" fill="#efc75a" stroke="#263247" stroke-width="2"/>
+  </g>
+  <g transform="translate(508 104)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">v2 back</text>
+    <rect width="104" height="148" rx="10" fill="#3d1018" stroke="#c9a24a" stroke-width="2" filter="url(#shadow)"/>
+    <circle cx="52" cy="74" r="18" fill="#140910" stroke="#e8c56a" stroke-width="2"/>
+    <path d="M52 60 L56 70 L67 71 L59 79 L61 90 L52 84 L43 90 L45 79 L37 71 L48 70 Z" fill="#f3df9a"/>
+  </g>
+
+  <text x="28" y="290" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#e8c56a">Three states</text>
+  <g transform="translate(28 302)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">default</text>
+    <rect width="80" height="114" rx="8" fill="url(#v2paper)" stroke="#8a7355" filter="url(#shadow)"/>
+    <text x="12" y="24" font-size="16" font-weight="800" fill="#d32f2f" font-family="Georgia">K</text>
+  </g>
+  <g transform="translate(120 268)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">selected (+34px)</text>
+    <rect width="80" height="114" rx="8" fill="url(#v2paper)" stroke="#f6c65b" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="12" y="24" font-size="16" font-weight="800" fill="#d32f2f" font-family="Georgia">A</text>
+  </g>
+  <g transform="translate(212 302)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">unplayable</text>
+    <g opacity="0.55">
+      <rect width="80" height="114" rx="8" fill="url(#v2paper)" stroke="#8a7355"/>
+      <text x="12" y="24" font-size="16" font-weight="800" fill="#1a1a1a" font-family="Georgia">2</text>
+    </g>
+  </g>
+  <g transform="translate(304 302)">
+    <text x="0" y="-6" font-size="11" fill="#8fa89a">played (40x56)</text>
+    <rect width="62" height="88" rx="6" fill="url(#v2paper)" stroke="#8a7355" filter="url(#shadow)"/>
+    <text x="10" y="22" font-size="14" font-weight="800" fill="#d32f2f" font-family="Georgia">Q</text>
+  </g>
+
+  <text x="28" y="470" font-family="system-ui,sans-serif" font-size="11" fill="#7f9a8c">Assets: docs/assets/cards/*.svg - mirror public/cards/ - fx-demo ?scene=cards</text>
+  <text x="28" y="488" font-family="system-ui,sans-serif" font-size="11" fill="#7f9a8c">No Tencent original art - license docs/assets/cards/LICENSE.md</text>
+</svg>
