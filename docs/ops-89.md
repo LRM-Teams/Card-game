@@ -50,6 +50,15 @@ docker logs ddz --since 2h 2>&1 | grep '\[ops\]' | grep -E 'game\.(start|settle)
 烟测一局三真人后，应能 grep 出同一 `roomId` 的  
 `room.create` → `room.join`×3 → `game.start` → … → `game.settle`（可夹杂 `player.reconnect`）。
 
+### 私房房间号/链接烟测（LRM-318）
+
+```bash
+# 仓库根
+SERVER_URL=http://82.157.184.89:8088 node apps/server/scripts/private-room-smoke.cjs
+# 覆盖：不存在房间 / #前缀归一 / 30s 内第三人同房开局 / 已开局拒绝
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep -E 'room\.(create|join)|game\.start'
+```
+
 ## Docker 重启 SOP
 
 ```bash
