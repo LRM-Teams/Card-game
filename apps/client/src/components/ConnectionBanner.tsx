@@ -10,6 +10,7 @@ export function ConnectionBanner({ status }: { status: ConnStatus }) {
   const navigate = useNavigate();
   const reconnectToast = useGameStore((s) => s.reconnectToast);
   const dismissReconnectToast = useGameStore((s) => s.dismissReconnectToast);
+  const leaveToLobby = useGameStore((s) => s.leaveToLobby);
 
   useEffect(() => {
     if (!reconnectToast) return;
@@ -19,6 +20,7 @@ export function ConnectionBanner({ status }: { status: ConnStatus }) {
 
   const backToLobby = () => {
     dismissReconnectToast();
+    leaveToLobby();
     navigate({ to: '/' });
   };
 

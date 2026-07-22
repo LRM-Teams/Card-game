@@ -54,6 +54,7 @@ export function GameTable() {
   const clearPlayFx = useGameStore((s) => s.clearPlayFx);
   const socialBubbles = useGameStore((s) => s.socialBubbles);
   const navigate = useNavigate();
+  const leaveToLobby = useGameStore((s) => s.leaveToLobby);
 
   const selectedCards = useMemo(
     () => myHand.filter((c) => selected.includes(c.id)),
@@ -239,7 +240,14 @@ export function GameTable() {
               <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />
               再来一局
             </button>
-            <button className="btn secondary" onClick={() => navigate({ to: '/' })}>
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => {
+                leaveToLobby();
+                navigate({ to: '/' });
+              }}
+            >
               返回大厅
             </button>
           </div>

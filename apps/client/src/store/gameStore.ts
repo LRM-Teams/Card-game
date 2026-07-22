@@ -16,6 +16,7 @@ import {
 import { connect, onEvent, onStatus, send, type ConnStatus } from '../net/socket';
 import { cardOf } from '../lib/cards';
 import {
+  clearPlayerSession,
   readIdentity,
   readPlayerSession,
   saveIdentity,
@@ -160,6 +161,8 @@ interface UiState {
   dismissError: () => void;
   dismissReconnectToast: () => void;
   clearPlayFx: () => void;
+  /** 离开房间/对局回大厅：清会话与牌桌状态，避免 Lobby 自动跳回 /room。 */
+  leaveToLobby: () => void;
 }
 
 export const useGameStore = create<UiState>((set, get) => ({
@@ -494,6 +497,30 @@ export const useGameStore = create<UiState>((set, get) => ({
   dismissError: () => set({ lastError: null }),
 
   dismissReconnectToast: () => set({ reconnectToast: false }),
+
+  leaveToLobby: () => {
+    if (get().matching) send({ type: 'cancel_match' });
+    clearPlayerSession();
+    autoRejoinAttempted = false;
+    set({
+      matching: false,
+      mySeat: null,
+      roomId: null,
+      myHand: [],
+      selected: [],
+      snapshot: null,
+      lastError: null,
+      hints: [],
+      hintIndex: 0,
+      hintMessage: null,
+      seatLastPlays: [null, null, null],
+      playFx: null,
+      dealKey: 0,
+      socialBubbles: [null, null, null],
+      socialCooldownUntil: 0,
+      reconnectToast: false,
+    });
+  },
 }));
 
 export function selectPhase(s: UiState): GamePhase | undefined {
