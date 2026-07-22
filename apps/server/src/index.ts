@@ -73,6 +73,9 @@ const io = new IoServer(httpServer, { cors: { origin: '*' } });
 createGame(io);
 
 httpServer.listen(PORT, () => {
+  const matchFillMs = process.env.MATCH_FILL_AFTER_MS?.trim() || '20000';
   // eslint-disable-next-line no-console
-  console.log(`[card-game server] listening on :${PORT} (Socket.IO)${CLIENT_DIST ? ' + static' : ''}`);
+  console.log(
+    `[card-game server] listening on :${PORT} (Socket.IO)${CLIENT_DIST ? ' + static' : ''} matchFillAfterMs=${matchFillMs}`,
+  );
 });

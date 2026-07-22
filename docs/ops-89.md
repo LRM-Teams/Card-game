@@ -33,8 +33,12 @@ curl -sS http://127.0.0.1:8088/health | jq .
 | `game.start` | 开局（发牌进入叫地主） |
 | `game.settle` | 结算（含 winnerSeat / scores） |
 | `player.reconnect` | 断线重连接管座位 |
+| `match.form` | 快速匹配成桌（`fillBots` / `humanCount` / `waitMs`） |
 
 字段至少含：`roomId`、`phase`、`seat`（若有）、`humanCount`。
+
+快速匹配策略（LRM-309）：队列优先凑满 3 真人立即开局（`fillBots:false`）；
+不足时等待 `MATCH_FILL_AFTER_MS`（默认 20s，建议 15–30s）再补机器人（`fillBots:true`）。
 
 ```bash
 # 登录 89
@@ -45,6 +49,10 @@ docker logs ddz --since 2h 2>&1 | grep '\[ops\]' | grep 'room-4'
 
 # 只看开局/结算
 docker logs ddz --since 2h 2>&1 | grep '\[ops\]' | grep -E 'game\.(start|settle)'
+
+# 快速匹配成桌（超时补机路径：fillBots:true）
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form'
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form' | grep '"fillBots":true'
 ```
 
 烟测一局三真人后，应能 grep 出同一 `roomId` 的  

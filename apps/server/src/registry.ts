@@ -11,7 +11,12 @@ import { GameRoom } from './game/GameRoom';
 import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
 import { IdentityStore, type GuestProfile } from './identity';
-import { MatchQueue, type MatchFormed, type MatchWaiter } from './matchQueue';
+import {
+  MatchQueue,
+  resolveMatchFillAfterMs,
+  type MatchFormed,
+  type MatchWaiter,
+} from './matchQueue';
 import { opsLog } from './observability';
 
 export interface JoinOutcome {
@@ -20,6 +25,11 @@ export interface JoinOutcome {
   result: ActionResult;
   /** create=新建私房；join=加入已有房；reconnect=断线重连 */
   kind: 'create' | 'join' | 'reconnect';
+}
+
+export interface RoomRegistryOptions {
+  /** 快速匹配不足 3 真人时等待多久再补机（毫秒）；默认 20s / MATCH_FILL_AFTER_MS */
+  matchFillAfterMs?: number;
 }
 
 export class RoomRegistry {
@@ -32,12 +42,17 @@ export class RoomRegistry {
   private matchQueue: MatchQueue;
   private onMatchFormed: ((formed: MatchFormed) => void) | null = null;
 
-  constructor() {
+  constructor(opts?: RoomRegistryOptions) {
     this.matchQueue = new MatchQueue({
       formRoom: (humans) => this.formMatchRoom(humans),
       onFormed: (formed) => this.onMatchFormed?.(formed),
-      fillAfterMs: 2000,
+      fillAfterMs: resolveMatchFillAfterMs(opts?.matchFillAfterMs),
     });
+  }
+
+  /** 当前快速匹配补机超时（毫秒）。 */
+  get matchFillAfterMs(): number {
+    return this.matchQueue.fillTimeoutMs;
   }
 
   /** transport 注入：匹配成桌后广播事件 / 绑定 socket。 */
