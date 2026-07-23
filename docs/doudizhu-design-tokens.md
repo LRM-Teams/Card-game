@@ -215,6 +215,7 @@ box-shadow:
 - LRM-246（2026-07-22，小雅）：对局页一屏视口预算 `--ddz-vp-*`；椭圆纵比 34%→28%；对局壳隐藏 footer、压缩手牌/按钮区。
 - LRM-246 follow-up（2026-07-22，小雅）：手牌 `margin-top: auto` 下沉贴底，控件上移贴紧手牌（Frank 反馈）。
 - LRM-257（2026-07-22，小雅）：结算胜负配色 token 精修（§12）；胜暖金红 / 负蓝灰；`.result-card` 全走 token。
+- LRM-314（2026-07-22，小雅）：牌桌台呢/木轨/房间背景生产级 SVG 资产包（§13）；token 映射 + 接入规格；下游 LRM-316。
 
 ## 11. 对局页一屏视口（LRM-246）
 
@@ -277,3 +278,53 @@ box-shadow:
 1. `.result-card.win` / `.result-card.lose` **全部**走 token，无散落 hex。
 2. 预览：`docs/assets/previews/lrm-257/settle-colors-sheet.svg`
 3. 演示：`/fx-demo?scene=settle`（胜）与 `settle-lose`（负）各一屏对比。
+
+## 13. 牌桌台呢/木轨/房间背景（LRM-314 · Phase-2）
+
+> 目标：在 LRM-166 token 基础上，用自绘 SVG 资产替换「纯 CSS 感」背景，达到生产级质感；**不回归** LRM-246 一屏视口与 LRM-250 手牌贴底。
+
+### 13.1 资产路径与分辨率
+
+| 资产 | 文档源 | 客户端引用 | 逻辑尺寸 | 用途 |
+|---|---|---|---|---|
+| 台呢纹理 | `docs/assets/table/felt-texture.svg` | `/table/felt-texture.svg` | 512×512 平铺 | `.table` 底层 weave + token 径向叠层 |
+| 木轨纹理 | `docs/assets/table/rail-strip.svg` | `/table/rail-strip.svg` | 64×64 平铺 | 增强 `box-shadow` 木轨；可选 `::before` overlay |
+| 房间背景 | `docs/assets/table/room-bg.svg` | `/table/room-bg.svg` | 1920×1080 cover | `body` / 对局页全屏底 |
+
+License：内部自绘，见 `docs/assets/table/LICENSE.md`。
+
+### 13.2 Token → 资产映射
+
+| CSS Token | 色值 / 尺寸 | 资产层 |
+|---|---|---|
+| `--ddz-felt-900` | `#0b2218` | felt-texture 径向外圈 + room-bg 暗角 |
+| `--ddz-felt-800` | `#14352a` | felt-texture 暗部 |
+| `--ddz-felt-700` | `#1b4a37` | felt-texture 主色底 |
+| `--ddz-felt-600` | `#2a6349` | felt-texture 高光区 |
+| `--ddz-felt-mid` | `#1f5540` | felt 径向中段 |
+| `--ddz-felt-soft` | `rgba(168,198,178,0.14)` | 台呢顶部柔光叠层（保留 CSS radial） |
+| `--ddz-rail-thickness` | `18px` | box-shadow 主轨（纹理 optional overlay） |
+| `--ddz-rail-rim` | `3px` | box-shadow 外缘 |
+| `--ddz-rail-wood-900` | `#4a2e18` | rail-strip 暗部 |
+| `--ddz-rail-wood-700` | `#6b4424` | rail-strip 主色 |
+| `--ddz-rail-wood-500` | `#8a5c34` | rail-strip 高光 |
+| `--ddz-rail-inner-line` | `rgba(255,243,196,0.10)` | 台呢内侧发丝线（CSS inset，非位图） |
+| `--ddz-room-from` | `#33221a` | room-bg 渐变起点 |
+| `--ddz-room-mid` | `#43301f` | room-bg 渐变中段 |
+| `--ddz-room-to` | `#241612` | room-bg 渐变终点 |
+
+### 13.3 接入约定（LRM-316）
+
+1. **台呢**：`url('/table/felt-texture.svg')` 平铺 + 现有 `radial-gradient` token 叠层；椭圆 `border-radius: 50% / var(--ddz-vp-ellipse-y)` 不变。
+2. **木轨**：保留 LRM-166 `box-shadow` 三层结构；`rail-strip.svg` 仅作 `mix-blend-mode: overlay` 增强，不替代厚度 token。
+3. **房间**：`room-bg.svg` 作 `background-size: cover`；可保留 `body::before` 细格纹叠层（opacity ≤0.16）。
+4. **硬约束**：不改 `--ddz-vp-*`；移动端 rail 仍走 `--ddz-rail-thickness-mobile`。
+
+详细接线：`docs/assets/table/integration-spec.md`
+
+### 13.4 验收
+
+1. 资产三件套落盘 `docs/assets/table/` + `apps/client/public/table/`。
+2. 预览：`docs/assets/previews/lrm-314/table-assets-sheet.svg`（v1 CSS vs v2 资产，含手牌区）。
+3. 1080p 出牌态一屏无纵滚（LRM-246）；手牌贴底（LRM-250）。
+4. 看图审通过后 promote **LRM-316**（小林接入）。

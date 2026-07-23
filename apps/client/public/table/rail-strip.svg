@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>DDZ wood rail strip tile (LRM-314)</title>
+  <defs>
+    <linearGradient id="woodMain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a5c34"/>
+      <stop offset="18%" stop-color="#6b4424"/>
+      <stop offset="55%" stop-color="#6b4424"/>
+      <stop offset="82%" stop-color="#4a2e18"/>
+      <stop offset="100%" stop-color="#3a2412"/>
+    </linearGradient>
+    <linearGradient id="woodGrain" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="rgba(255,243,196,0.08)"/>
+      <stop offset="35%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="68%" stop-color="rgba(255,243,196,0.05)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.12)"/>
+    </linearGradient>
+    <pattern id="grainLine" width="12" height="64" patternUnits="userSpaceOnUse">
+      <path d="M2 0 Q4 16 2 32 T2 64" stroke="rgba(0,0,0,0.14)" stroke-width="0.8" fill="none"/>
+      <path d="M8 0 Q6 20 8 40 T8 64" stroke="rgba(255,243,196,0.06)" stroke-width="0.6" fill="none"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="64" fill="url(#woodMain)"/>
+  <rect width="64" height="64" fill="url(#grainLine)" opacity="0.9"/>
+  <rect width="64" height="64" fill="url(#woodGrain)" opacity="0.65"/>
+  <rect x="0" y="0" width="64" height="3" fill="rgba(255,243,196,0.14)"/>
+  <rect x="0" y="61" width="64" height="3" fill="rgba(0,0,0,0.22)"/>
+</svg>

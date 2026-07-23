@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   createRouter,
   createRootRoute,
@@ -35,6 +36,10 @@ function RootLayout() {
   const isGame = useRouterState({
     select: (s) => s.location.pathname.startsWith('/game') || s.location.pathname.startsWith('/fx-demo'),
   });
+  useEffect(() => {
+    document.body.classList.toggle('app--game-page', isGame);
+    return () => document.body.classList.remove('app--game-page');
+  }, [isGame]);
   return (
     <div className={`app${isGame ? ' app--game' : ''}`}>
       <nav className="topnav">

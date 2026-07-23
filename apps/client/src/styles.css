@@ -162,6 +162,12 @@ body {
     linear-gradient(135deg, var(--ddz-room-from), var(--ddz-room-mid) 48%, var(--ddz-room-to));
   -webkit-font-smoothing: antialiased;
 }
+/* LRM-316：对局页房间背景资产（保留 token 渐变 fallback） */
+body.app--game-page {
+  background:
+    url('/table/room-bg.svg') center / cover no-repeat,
+    linear-gradient(135deg, var(--ddz-room-from), var(--ddz-room-mid) 48%, var(--ddz-room-to));
+}
 
 body::before {
   content: '';
@@ -958,6 +964,17 @@ body::before {
   /* 底边收紧：手牌+操作贴视口下沿（Frank：牌再往下） */
   padding: var(--ddz-vp-table-pad-y) 44px 4px;
   border-radius: 50% / var(--ddz-vp-ellipse-y);
+  /* LRM-316：台呢纹理平铺 + token 径向叠层（fallback 保留底层渐变） */
+  background:
+    radial-gradient(ellipse at 50% 28%, var(--ddz-felt-soft), transparent 56%),
+    radial-gradient(
+      ellipse at 50% 42%,
+      var(--ddz-felt-600) 0%,
+      var(--ddz-felt-mid) 42%,
+      var(--ddz-felt-700) 68%,
+      var(--ddz-felt-900) 100%
+    ),
+    url('/table/felt-texture.svg') center / 512px 512px repeat;
   box-shadow:
     0 0 0 var(--ddz-rail-thickness) var(--ddz-rail-wood-700),
     0 0 0 calc(var(--ddz-rail-thickness) + var(--ddz-rail-rim)) var(--ddz-rail-wood-500),
@@ -981,6 +998,14 @@ body::before {
 .app--game .table::before {
   inset: 12px 24px 14px;
   border-radius: 50% / var(--ddz-vp-ellipse-y);
+  /* LRM-316：木轨纹理叠层（保留 LRM-166 box-shadow 厚度 token） */
+  background:
+    url('/table/rail-strip.svg') center / 64px 64px repeat,
+    transparent;
+  -webkit-mask: radial-gradient(ellipse at 50% var(--ddz-vp-ellipse-y), #000 68%, transparent 70%);
+  mask: radial-gradient(ellipse at 50% var(--ddz-vp-ellipse-y), #000 68%, transparent 70%);
+  opacity: 0.35;
+  mix-blend-mode: overlay;
 }
 .table::after {
   content: '';
@@ -2390,6 +2415,18 @@ body::before {
       0 0 0 calc(var(--ddz-rail-thickness-mobile) + var(--ddz-rail-rim-mobile)) var(--ddz-rail-wood-500),
       inset 0 0 0 1px var(--ddz-rail-inner-line),
       0 20px 52px rgba(0, 0, 0, 0.36);
+  }
+  .app--game .table {
+    background:
+      radial-gradient(ellipse at 50% 28%, var(--ddz-felt-soft), transparent 56%),
+      radial-gradient(
+        ellipse at 50% 42%,
+        var(--ddz-felt-600) 0%,
+        var(--ddz-felt-mid) 42%,
+        var(--ddz-felt-700) 68%,
+        var(--ddz-felt-900) 100%
+      ),
+      url('/table/felt-texture.svg') center / 384px 384px repeat;
   }
   .table::before,
   .table::after {
