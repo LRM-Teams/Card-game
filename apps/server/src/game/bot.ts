@@ -7,7 +7,11 @@
 import {
   botBidByDifficulty,
   botChoosePlayByDifficulty,
+  decideBidByDifficulty,
+  decidePlayByDifficulty,
+  type BotBidDecision,
   type BotDifficulty,
+  type BotPlayDecision,
 } from '@card-game/rules';
 import type { BidChoice, Card, Hand } from '@card-game/rules';
 
@@ -21,6 +25,11 @@ export function botName(n: number): string {
 /** 机器人是否叫地主（普通档启发式）。 */
 export function botBid(hand: readonly Card[]): BidChoice {
   return botBidByDifficulty(hand, DEFAULT_DIFFICULTY);
+}
+
+/** 带理由的叫分决策（LRM-523 可观测）。 */
+export function botBidDecision(hand: readonly Card[]): BotBidDecision {
+  return decideBidByDifficulty(hand, DEFAULT_DIFFICULTY);
 }
 
 /** 地主是否明牌：大牌够强则亮（×2 代价换信息战）。 */
@@ -41,4 +50,9 @@ export function botDouble(hand: readonly Card[], isLandlord: boolean): boolean {
  */
 export function botChoosePlay(hand: readonly Card[], prev: Hand | null): Card[] | null {
   return botChoosePlayByDifficulty(hand, prev, DEFAULT_DIFFICULTY);
+}
+
+/** 带理由的出牌决策（LRM-523 可观测）。 */
+export function botPlayDecision(hand: readonly Card[], prev: Hand | null): BotPlayDecision {
+  return decidePlayByDifficulty(hand, prev, DEFAULT_DIFFICULTY);
 }
