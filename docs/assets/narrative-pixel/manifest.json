@@ -2,7 +2,7 @@
   "version": "v3.3",
   "approved": "2026-07-23",
   "issue": "LRM-417",
-  "issues": ["LRM-417", "LRM-520"],
+  "issues": ["LRM-417", "LRM-520", "LRM-522"],
   "license": "docs/assets/narrative-pixel/LICENSE.md",
   "followUp": "LRM-466",
   "totalElements": 88,
@@ -35,5 +35,15 @@
     "layers": 3,
     "sprites": 4,
     "pixel_v2_refs": 14
+  },
+  "settle_fx": {
+    "issue": "LRM-522",
+    "manifest": "settle-fx-manifest.json",
+    "wire_list": "docs/assets/pixel/wire-list-lrm-522.md",
+    "preview_1920": "docs/assets/previews/lrm-522/settle-preview-1920.png",
+    "preview_390": "docs/assets/previews/lrm-522/settle-preview-390x844.png",
+    "settle_assets": 6,
+    "fx_assets": 6,
+    "state_groups": 2
   }
 }
