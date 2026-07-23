@@ -95,3 +95,51 @@ body.app--game-page::before {
     opacity: 0.65;
   }
 }
+
+/* LRM-522 叙事结算面板 */
+.np-game .np-settle-card {
+  background:
+    url('/narrative-pixel/settle/panel_backdrop_480x360.png') center / cover no-repeat,
+    linear-gradient(180deg, rgba(58, 48, 72, 0.92), rgba(22, 24, 28, 0.95));
+  border: 2px solid rgba(232, 188, 58, 0.55);
+  max-width: 480px;
+}
+
+.np-game .np-settle-card .result-badge {
+  width: 96px;
+  height: 96px;
+}
+
+.np-settle-fx-stamps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.np-settle-fx-stamps img {
+  height: 36px;
+  width: auto;
+}
+
+.btn-np-rematch {
+  display: inline-block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.btn-np-rematch img {
+  height: 48px;
+  width: auto;
+}
+
+.btn-np-rematch:hover img {
+  content: url('/narrative-pixel/settle/btn_rematch_hover.png');
+}
+
+.btn-np-rematch:active img {
+  content: url('/narrative-pixel/settle/btn_rematch_press.png');
+}

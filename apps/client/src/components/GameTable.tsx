@@ -18,6 +18,8 @@ import { NarrativeGameScene } from './NarrativeGameScene';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
 import { PIXEL, roleBadgeSrc, roleCharacterSrc } from '../lib/pixelAssets';
+import { NP_SETTLE } from '../lib/narrativeSettleAssets';
+import { SettleFxStamps } from './SettleFxStamps';
 import { useNavigate } from '@tanstack/react-router';
 import type { ConnStatus } from '../net/socket';
 
@@ -169,14 +171,14 @@ export function GameTable() {
     const myWin =
       (r.winnerSide === 'landlord' && mySeat === r.landlordSeat) ||
       (r.winnerSide === 'farmer' && mySeat !== r.landlordSeat);
-    const resultAsset = myWin ? PIXEL.ui.victoryBadge : PIXEL.ui.defeatBadge;
+    const resultAsset = myWin ? NP_SETTLE.victory : NP_SETTLE.defeat;
     const winnerRole = r.winnerSide === 'landlord' ? 'landlord' : 'farmer';
     const winnerRoleLabel = winnerRole === 'landlord' ? '地主' : '农民';
     const winnerIdentity = roleCharacterSrc(winnerRole);
     return (
       <GameTableFrame status={status} offline={offline}>
       <div className="table settled">
-        <div className={`result-card ${myWin ? 'win' : 'lose'}`} data-fx="settle-pop">
+        <div className={`result-card ${myWin ? 'win' : 'lose'} np-settle-card`} data-fx="settle-pop">
           <SettleCoins win={myWin} />
           <img className="result-badge pixel-art" src={resultAsset} alt="" aria-hidden="true" />
           <h2 className="result-title">{myWin ? '你赢了' : '你输了'}</h2>
@@ -195,6 +197,7 @@ export function GameTable() {
               multiplier={r.multiplier}
               breakdown={r.multiplierBreakdown ?? snapshot.multiplierBreakdown}
             />
+            <SettleFxStamps breakdown={r.multiplierBreakdown ?? snapshot.multiplierBreakdown} />
           </div>
           <ul className="score-list" aria-label="本局得分">
             {r.scores.map((sc, i) => (
@@ -242,9 +245,8 @@ export function GameTable() {
 
           <div className="result-actions">
             {/* LRM-197：icon 仅刷新箭头；文案只在按钮文本，避免 SVG 内嵌「再来一局」胶囊套娃 */}
-            <button type="button" className="btn primary cta" onClick={() => start(false)}>
-              <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />
-              再来一局
+            <button type="button" className="btn-np-rematch cta" onClick={() => start(false)} aria-label="再来一局">
+              <img src={NP_SETTLE.rematch.default} alt="" className="pixel-art" />
             </button>
             <button
               type="button"
