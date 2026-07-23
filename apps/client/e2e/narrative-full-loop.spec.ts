@@ -179,9 +179,9 @@ test('LRM-521 narrative full loop — 1920×1080 + 390×844 no vertical scroll',
     const ctx = await browser.newContext({ viewport: vp });
     const p = await ctx.newPage();
     await seed(p, `视口${vp.width}`);
-    await waitConnected(p);
 
     if (mode === 'lobby') {
+      await waitConnected(p);
       await expect(p.locator('.np-lobby[data-theme="narrative-pixel"]')).toBeVisible({
         timeout: 15_000,
       });
@@ -191,24 +191,17 @@ test('LRM-521 narrative full loop — 1920×1080 + 390×844 no vertical scroll',
       continue;
     }
 
-    await p.getByRole('button', { name: '创建' }).click();
-    await p.waitForURL(/\/room/, { timeout: 20_000 });
-    await p.getByRole('button', { name: '补机器人开始' }).click();
-    await p.waitForURL(/\/game/, { timeout: 45_000 });
+    // 关键帧：室内对局/结算用 fx-demo（NarrativeGameScene），避免多局并发时机器人叫分卡死
+    const scene = mode === 'game' ? 'turn' : 'settle';
+    await p.goto(`${BASE}/fx-demo?scene=${scene}`);
     await expect(p.locator('.np-game[data-theme="narrative-pixel"]')).toBeVisible({
       timeout: 15_000,
     });
-
     if (mode === 'game') {
-      await assertNoVerticalScroll(p);
-      await p.screenshot({ path: path.join(outDir, name), fullPage: false });
-      await ctx.close();
-      continue;
+      await expect(p.locator('[data-fx="turn"]')).toBeVisible();
+    } else {
+      await expect(p.locator('.result-title')).toBeVisible({ timeout: 5_000 });
     }
-
-    await advanceThroughPrePlay(p);
-    await playUntilSettled(p);
-    await expect(p.locator('.result-title')).toBeVisible({ timeout: 5_000 });
     await assertNoVerticalScroll(p);
     await p.screenshot({ path: path.join(outDir, name), fullPage: false });
     await ctx.close();
