@@ -7,6 +7,7 @@ import { useGameStore } from './store/gameStore';
 import { audio } from './lib/audio';
 import './styles.css';
 import './narrative-lobby.css';
+import './narrative-game.css';
 
 const queryClient = new QueryClient();
 

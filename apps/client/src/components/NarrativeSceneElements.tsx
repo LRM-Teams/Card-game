@@ -1,11 +1,23 @@
 import { npElement } from '../lib/narrativePixelElements';
-import { narrativeScenePlacements } from '../lib/narrativeSceneLayout';
+import {
+  narrativeGameScenePlacements,
+  narrativeLobbyScenePlacements,
+  type ScenePlacement,
+} from '../lib/narrativeSceneLayout';
+
+type SceneVariant = 'lobby' | 'game';
+
+const PLACEMENTS: Record<SceneVariant, ScenePlacement[]> = {
+  lobby: narrativeLobbyScenePlacements,
+  game: narrativeGameScenePlacements,
+};
 
 /** 叙事像素场景元素层 — 独立精灵按布局摆放 */
-export function NarrativeSceneElements() {
+export function NarrativeSceneElements({ variant = 'lobby' }: { variant?: SceneVariant }) {
+  const placements = PLACEMENTS[variant];
   return (
-    <div className="np-scene-elements" aria-hidden>
-      {narrativeScenePlacements.map((p) => {
+    <div className="np-scene-elements" aria-hidden data-scene={variant}>
+      {placements.map((p) => {
         const src = npElement(p.category, p.sprite);
         if (!src) return null;
         return (
