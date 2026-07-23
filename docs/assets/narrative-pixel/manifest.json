@@ -1,13 +1,18 @@
 {
-  "version": "v3.1",
+  "version": "v3.2",
   "approved": "2026-07-23",
-  "issue": "LRM-417",
-  "totalElements": 87,
-  "categories": {
-    "props": 24,
-    "buildings": 4,
-    "characters": 12,
-    "tiles": 32,
-    "ui/states": 15
+  "issues": ["LRM-417", "LRM-520"],
+  "lobby": {
+    "totalElements": 87,
+    "catalog": "elements-catalog.json"
+  },
+  "indoor_game": {
+    "issue": "LRM-520",
+    "manifest": "indoor-game-manifest.json",
+    "wire_list": "docs/assets/pixel/wire-list-lrm-518.md",
+    "preview": "docs/assets/previews/lrm-520/game-indoor-preview-1920.png",
+    "layers": 3,
+    "sprites": 4,
+    "pixel_v2_refs": 14
   }
 }
