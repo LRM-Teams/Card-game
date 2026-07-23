@@ -7,7 +7,7 @@ import {
   evaluateHandPower,
 } from '../src/botStrategy';
 import { deal } from '../src/deck';
-import { identifyHand } from '../src/identify';
+import { canPlay, identifyHand } from '../src/identify';
 import { HandType } from '../src/types';
 import { cards } from './helpers';
 
@@ -88,14 +88,23 @@ describe('botChoosePlayByDifficulty（普通档）', () => {
     expect(play).toBeNull();
   });
 
-  it('decidePlay 给出可解释 kind（跟/过）', () => {
+  it('decidePlay 给出可解释 kind（跟/过）且出牌合法', () => {
     const beat = decidePlayByDifficulty(cards('8 8 8 8 5 5 3'), identifyHand(cards('4 4'))!, 'normal');
     expect(beat.kind).toBe('beat');
     expect(beat.reason).toMatch(/beat/);
     expect(beat.cards).not.toBeNull();
+    expect(canPlay(identifyHand(cards('4 4'))!, beat.cards!)).toBe(true);
 
     const pass = decidePlayByDifficulty(cards('8 8 8 8 3 3'), identifyHand(cards('K'))!, 'normal');
     expect(pass.kind).toBe('pass');
     expect(pass.cards).toBeNull();
+  });
+
+  it('中等手力（strength=1）普通档偏 pass（不全叫）', () => {
+    // 无炸/无王，大牌密度中等 → strength 多为 1
+    const hand = cards('3 4 5 6 7 8 9 10 J Q K A K Q J 10 9');
+    const s = estimateBidStrength(hand);
+    expect(s).toBeLessThanOrEqual(1);
+    if (s === 1) expect(botBidByDifficulty(hand, 'normal')).toBe('pass');
   });
 });

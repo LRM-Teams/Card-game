@@ -35,6 +35,7 @@ curl -sS http://127.0.0.1:8088/health | jq .
 | `player.disconnect` | 真人断线（座位保留，等重连） |
 | `player.reconnect` | 断线重连接管座位 |
 | `match.form` | 快速匹配成桌（`fillBots` / `humanCount` / `waitMs`） |
+| `bot.decision` | 机器人决策（`kind`: bid_claim/bid_pass/lead/beat/bomb/pass；含 `reason`/`strength`） |
 
 字段至少含：`roomId`、`phase`、`seat`（若有）、`humanCount`。
 
@@ -57,6 +58,9 @@ docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form' | grep '"f
 
 # 断线重连路径（LRM-519）
 docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep -E 'player\.(disconnect|reconnect)|room\.join'
+
+# 机器人决策类型（LRM-523：bid_claim / lead / beat / pass）
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'bot.decision'
 ```
 
 烟测一局三真人后，应能 grep 出同一 `roomId` 的  
