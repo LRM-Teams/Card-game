@@ -1,0 +1,384 @@
+/* LRM-417 叙事像素大厅 — 全屏场景 + 世界化 UI */
+
+:root {
+  --ddz-np-sky-900: #48586c;
+  --ddz-np-lamp-500: #e8a848;
+  --ddz-np-lamp-300: #ffcc6c;
+  --ddz-np-shadow: #1c2026;
+  --ddz-np-ink: #16181c;
+  --ddz-np-ochre-700: #947644;
+  --ddz-np-slate-700: #484e56;
+  --ddz-np-muted: rgba(255, 236, 196, 0.62);
+}
+
+body.app--lobby-page {
+  background: var(--ddz-np-shadow);
+}
+
+body.app--lobby-page .topnav {
+  background: rgba(22, 24, 28, 0.72);
+  border-bottom-color: rgba(232, 168, 72, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+body.app--lobby-page .foot {
+  background: rgba(22, 24, 28, 0.82);
+  border-top-color: rgba(232, 168, 72, 0.12);
+  color: rgba(255, 236, 196, 0.42);
+}
+
+body.app--lobby-page .content {
+  max-width: none;
+  padding: 0;
+}
+
+.np-lobby {
+  --np-aspect: 16 / 9;
+  position: relative;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  color: var(--ddz-cream);
+  font-family: var(--ddz-font-body);
+  image-rendering: pixelated;
+}
+
+.np-lobby__viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--np-aspect);
+  overflow: hidden;
+  border-radius: 0;
+  background: var(--ddz-np-shadow);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.np-lobby__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.np-lobby__layer--far {
+  z-index: 1;
+  transform: translateX(calc(var(--np-parallax-x, 0) * 0.3px));
+}
+
+.np-lobby__layer--mid {
+  z-index: 2;
+  transform: translateX(calc(var(--np-parallax-x, 0) * 0.6px));
+}
+
+.np-lobby__layer--full {
+  z-index: 3;
+}
+
+.np-lobby__layer--light {
+  z-index: 4;
+  mix-blend-mode: screen;
+  opacity: 0.55;
+}
+
+.np-lobby__layer--fg {
+  z-index: 5;
+  transform: translateX(calc(var(--np-parallax-x, 0) * 1.2px));
+}
+
+.np-scene-elements {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.np-scene-element {
+  position: absolute;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+
+.np-lobby__hud {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.np-lobby__hud > * {
+  pointer-events: auto;
+}
+
+.np-hotspot {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.np-hotspot__frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+}
+
+.np-hotspot__body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8%;
+  justify-content: center;
+}
+
+/* 电视 = 开始游戏 */
+.np-hotspot--tv .np-hotspot__body {
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 18%;
+}
+
+.np-btn-tv {
+  width: 88%;
+  min-height: 36px;
+  border: 2px solid rgba(255, 204, 108, 0.45);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(255, 204, 108, 0.92), rgba(196, 142, 42, 0.95));
+  color: var(--ddz-np-ink);
+  font-size: clamp(11px, 2.2vw, 15px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow:
+    0 0 12px rgba(255, 204, 108, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 100ms ease, filter 150ms ease;
+}
+
+.np-btn-tv:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.np-btn-tv:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.np-btn-tv:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 站牌 = 房间码 */
+.np-hotspot--station .np-hotspot__body {
+  padding: 22% 10% 12%;
+}
+
+.np-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.np-field span {
+  font-size: 10px;
+  color: var(--ddz-np-muted);
+  letter-spacing: 0.06em;
+}
+
+.np-field input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 2px solid rgba(148, 118, 68, 0.55);
+  border-radius: 3px;
+  background: rgba(251, 236, 196, 0.88);
+  color: var(--ddz-np-ink);
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.np-field input:focus {
+  outline: 2px solid rgba(232, 168, 72, 0.55);
+}
+
+.np-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.np-btn-wood {
+  flex: 1;
+  min-height: 30px;
+  border: 2px solid rgba(148, 118, 68, 0.5);
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(188, 152, 88, 0.9), rgba(108, 88, 52, 0.95));
+  color: var(--ddz-np-ink);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 150ms ease;
+}
+
+.np-btn-wood:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.np-btn-wood:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 登记簿 = 身份 */
+.np-hotspot--ledger .np-hotspot__body {
+  padding: 18% 8% 10%;
+  background: rgba(251, 236, 196, 0.08);
+  border-radius: 4px;
+}
+
+.np-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.np-beans {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ddz-np-lamp-300);
+}
+
+.np-hint {
+  font-size: 9px;
+  color: var(--ddz-np-muted);
+  line-height: 1.4;
+}
+
+.np-hint.warn {
+  color: #e8a070;
+}
+
+.np-avatar-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.np-avatar-pick {
+  padding: 2px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.np-avatar-pick.selected {
+  border-color: var(--ddz-np-lamp-500);
+  box-shadow: 0 0 8px rgba(232, 168, 72, 0.35);
+}
+
+/* 匹配态 — 电视雪花 */
+.np-matching {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(22, 24, 28, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.np-matching__tv {
+  width: min(240px, 40%);
+  image-rendering: pixelated;
+  animation: np-tv-flicker 1.2s steps(2) infinite;
+}
+
+@keyframes np-tv-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+.np-matching__status {
+  margin: 0;
+  font-size: clamp(14px, 2.5vw, 18px);
+  color: var(--ddz-np-lamp-300);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.np-matching__countdown {
+  margin: 0;
+  font-size: clamp(28px, 6vw, 42px);
+  font-weight: 800;
+  color: var(--ddz-np-lamp-500);
+}
+
+.np-status-bar {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(22, 24, 28, 0.65);
+  font-size: 12px;
+}
+
+.np-status-bar.warn {
+  border: 1px solid rgba(232, 120, 72, 0.45);
+  color: #e8a070;
+  cursor: pointer;
+}
+
+.np-tips {
+  margin: 10px 0 0;
+  padding: 0 12px 12px;
+  list-style: none;
+  font-size: 11px;
+  color: rgba(255, 236, 196, 0.42);
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .np-hotspot--ledger {
+    left: 4% !important;
+    top: 58% !important;
+    width: 92% !important;
+    height: 36% !important;
+  }
+
+  .np-hotspot--station {
+    left: 4% !important;
+    top: 28% !important;
+    width: 44% !important;
+  }
+
+  .np-hotspot--tv {
+    left: 52% !important;
+    top: 28% !important;
+    width: 44% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-lobby__layer--far,
+  .np-lobby__layer--mid,
+  .np-lobby__layer--fg {
+    transform: none;
+  }
+
+  .np-matching__tv {
+    animation: none;
+  }
+}

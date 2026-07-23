@@ -1,0 +1,447 @@
+{
+  "props": {
+    "sign_teahouse_neon": {
+      "path": "narrative-pixel/props/sign_teahouse_neon.png",
+      "width": 64,
+      "height": 64
+    },
+    "sign_mahjong_faded": {
+      "path": "narrative-pixel/props/sign_mahjong_faded.png",
+      "width": 64,
+      "height": 56
+    },
+    "lantern_hanging": {
+      "path": "narrative-pixel/props/lantern_hanging.png",
+      "width": 80,
+      "height": 80
+    },
+    "crate_wood": {
+      "path": "narrative-pixel/props/crate_wood.png",
+      "width": 48,
+      "height": 56
+    },
+    "trash_bag": {
+      "path": "narrative-pixel/props/trash_bag.png",
+      "width": 80,
+      "height": 64
+    },
+    "traffic_cone": {
+      "path": "narrative-pixel/props/traffic_cone.png",
+      "width": 56,
+      "height": 48
+    },
+    "card_table_outdoor": {
+      "path": "narrative-pixel/props/card_table_outdoor.png",
+      "width": 48,
+      "height": 72
+    },
+    "card_stack": {
+      "path": "narrative-pixel/props/card_stack.png",
+      "width": 72,
+      "height": 56
+    },
+    "chair_stool": {
+      "path": "narrative-pixel/props/chair_stool.png",
+      "width": 48,
+      "height": 80
+    },
+    "bottle_crate_stack": {
+      "path": "narrative-pixel/props/bottle_crate_stack.png",
+      "width": 64,
+      "height": 80
+    },
+    "bicycle_parked": {
+      "path": "narrative-pixel/props/bicycle_parked.png",
+      "width": 64,
+      "height": 64
+    },
+    "cat_sit": {
+      "path": "narrative-pixel/props/cat_sit.png",
+      "width": 64,
+      "height": 72
+    },
+    "poster_peeling": {
+      "path": "narrative-pixel/props/poster_peeling.png",
+      "width": 80,
+      "height": 80
+    },
+    "graffiti_faded": {
+      "path": "narrative-pixel/props/graffiti_faded.png",
+      "width": 80,
+      "height": 72
+    },
+    "wire_tangle": {
+      "path": "narrative-pixel/props/wire_tangle.png",
+      "width": 72,
+      "height": 72
+    },
+    "manhole": {
+      "path": "narrative-pixel/props/manhole.png",
+      "width": 48,
+      "height": 56
+    },
+    "coin_scatter": {
+      "path": "narrative-pixel/props/coin_scatter.png",
+      "width": 56,
+      "height": 80
+    },
+    "newspaper": {
+      "path": "narrative-pixel/props/newspaper.png",
+      "width": 48,
+      "height": 80
+    },
+    "hanging_laundry": {
+      "path": "narrative-pixel/props/hanging_laundry.png",
+      "width": 48,
+      "height": 56
+    },
+    "flower_box": {
+      "path": "narrative-pixel/props/flower_box.png",
+      "width": 72,
+      "height": 56
+    },
+    "pot_plant": {
+      "path": "narrative-pixel/props/pot_plant.png",
+      "width": 72,
+      "height": 80
+    },
+    "grass_tuft": {
+      "path": "narrative-pixel/props/grass_tuft.png",
+      "width": 56,
+      "height": 64
+    },
+    "moss_crack": {
+      "path": "narrative-pixel/props/moss_crack.png",
+      "width": 72,
+      "height": 80
+    },
+    "fence_wood": {
+      "path": "narrative-pixel/props/fence_wood.png",
+      "width": 72,
+      "height": 48
+    }
+  },
+  "buildings": {
+    "building_teahouse_main": {
+      "path": "narrative-pixel/buildings/building_teahouse_main.png",
+      "width": 120,
+      "height": 130
+    },
+    "building_left_apartment": {
+      "path": "narrative-pixel/buildings/building_left_apartment.png",
+      "width": 120,
+      "height": 130
+    },
+    "building_right_apartment": {
+      "path": "narrative-pixel/buildings/building_right_apartment.png",
+      "width": 200,
+      "height": 130
+    },
+    "power_pole": {
+      "path": "narrative-pixel/buildings/power_pole.png",
+      "width": 120,
+      "height": 190
+    }
+  },
+  "characters": {
+    "npc_old_man_walk": {
+      "path": "narrative-pixel/characters/npc_old_man_walk.png",
+      "width": 32,
+      "height": 48
+    },
+    "npc_card_players": {
+      "path": "narrative-pixel/characters/npc_card_players.png",
+      "width": 48,
+      "height": 80
+    },
+    "npc_player_idle": {
+      "path": "narrative-pixel/characters/npc_player_idle.png",
+      "width": 48,
+      "height": 80
+    },
+    "npc_cat_walk": {
+      "path": "narrative-pixel/characters/npc_cat_walk.png",
+      "width": 48,
+      "height": 64
+    },
+    "bush_foreground": {
+      "path": "narrative-pixel/characters/bush_foreground.png",
+      "width": 32,
+      "height": 80
+    },
+    "bush_large": {
+      "path": "narrative-pixel/characters/bush_large.png",
+      "width": 64,
+      "height": 80
+    },
+    "tree_pine": {
+      "path": "narrative-pixel/characters/tree_pine.png",
+      "width": 64,
+      "height": 48
+    },
+    "vine_wall": {
+      "path": "narrative-pixel/characters/vine_wall.png",
+      "width": 48,
+      "height": 64
+    },
+    "npc_shadow": {
+      "path": "narrative-pixel/characters/npc_shadow.png",
+      "width": 32,
+      "height": 64
+    },
+    "npc_bicycle": {
+      "path": "narrative-pixel/characters/npc_bicycle.png",
+      "width": 64,
+      "height": 48
+    },
+    "npc_scooter": {
+      "path": "narrative-pixel/characters/npc_scooter.png",
+      "width": 48,
+      "height": 80
+    },
+    "avatar_portrait": {
+      "path": "narrative-pixel/characters/avatar_portrait.png",
+      "width": 32,
+      "height": 48
+    }
+  },
+  "tiles": {
+    "wall_brick_tile_16": {
+      "path": "narrative-pixel/tiles/wall_brick_tile_16.png",
+      "width": 80,
+      "height": 72
+    },
+    "wall_plaster_tile_16": {
+      "path": "narrative-pixel/tiles/wall_plaster_tile_16.png",
+      "width": 72,
+      "height": 56
+    },
+    "ground_tile_stone_16": {
+      "path": "narrative-pixel/tiles/ground_tile_stone_16.png",
+      "width": 80,
+      "height": 72
+    },
+    "ground_tile_dirt_16": {
+      "path": "narrative-pixel/tiles/ground_tile_dirt_16.png",
+      "width": 80,
+      "height": 72
+    },
+    "ground_tile_moss_16": {
+      "path": "narrative-pixel/tiles/ground_tile_moss_16.png",
+      "width": 64,
+      "height": 80
+    },
+    "window_lit_56x72": {
+      "path": "narrative-pixel/tiles/window_lit_56x72.png",
+      "width": 48,
+      "height": 48
+    },
+    "window_dark_56x72": {
+      "path": "narrative-pixel/tiles/window_dark_56x72.png",
+      "width": 48,
+      "height": 72
+    },
+    "door_teahouse": {
+      "path": "narrative-pixel/tiles/door_teahouse.png",
+      "width": 64,
+      "height": 48
+    },
+    "balcony_rail_32": {
+      "path": "narrative-pixel/tiles/balcony_rail_32.png",
+      "width": 56,
+      "height": 80
+    },
+    "pipe_horizontal": {
+      "path": "narrative-pixel/tiles/pipe_horizontal.png",
+      "width": 72,
+      "height": 80
+    },
+    "pipe_vertical": {
+      "path": "narrative-pixel/tiles/pipe_vertical.png",
+      "width": 72,
+      "height": 48
+    },
+    "stone_step": {
+      "path": "narrative-pixel/tiles/stone_step.png",
+      "width": 56,
+      "height": 64
+    },
+    "lantern_glow": {
+      "path": "narrative-pixel/tiles/lantern_glow.png",
+      "width": 48,
+      "height": 64
+    },
+    "light_lamp_pool": {
+      "path": "narrative-pixel/tiles/light_lamp_pool.png",
+      "width": 80,
+      "height": 80
+    },
+    "chimney_smoke": {
+      "path": "narrative-pixel/tiles/chimney_smoke.png",
+      "width": 64,
+      "height": 56
+    },
+    "dust_particle": {
+      "path": "narrative-pixel/tiles/dust_particle.png",
+      "width": 56,
+      "height": 64
+    },
+    "bird_silhouette": {
+      "path": "narrative-pixel/tiles/bird_silhouette.png",
+      "width": 48,
+      "height": 72
+    },
+    "distant_car": {
+      "path": "narrative-pixel/tiles/distant_car.png",
+      "width": 64,
+      "height": 80
+    },
+    "rope_clothesline": {
+      "path": "narrative-pixel/tiles/rope_clothesline.png",
+      "width": 48,
+      "height": 48
+    },
+    "ac_unit": {
+      "path": "narrative-pixel/tiles/ac_unit.png",
+      "width": 64,
+      "height": 56
+    },
+    "fence_post": {
+      "path": "narrative-pixel/tiles/fence_post.png",
+      "width": 56,
+      "height": 56
+    },
+    "puddle_reflection": {
+      "path": "narrative-pixel/tiles/puddle_reflection.png",
+      "width": 56,
+      "height": 56
+    },
+    "beer_bottle": {
+      "path": "narrative-pixel/tiles/beer_bottle.png",
+      "width": 64,
+      "height": 72
+    },
+    "tea_cup": {
+      "path": "narrative-pixel/tiles/tea_cup.png",
+      "width": 48,
+      "height": 80
+    },
+    "wood_plank": {
+      "path": "narrative-pixel/tiles/wood_plank.png",
+      "width": 56,
+      "height": 72
+    },
+    "road_cone_alt": {
+      "path": "narrative-pixel/tiles/road_cone_alt.png",
+      "width": 48,
+      "height": 48
+    },
+    "brick_damage": {
+      "path": "narrative-pixel/tiles/brick_damage.png",
+      "width": 64,
+      "height": 56
+    },
+    "moss_wall": {
+      "path": "narrative-pixel/tiles/moss_wall.png",
+      "width": 80,
+      "height": 56
+    },
+    "crack_tile": {
+      "path": "narrative-pixel/tiles/crack_tile.png",
+      "width": 48,
+      "height": 48
+    },
+    "weed_corner": {
+      "path": "narrative-pixel/tiles/weed_corner.png",
+      "width": 64,
+      "height": 64
+    },
+    "leaf_particle": {
+      "path": "narrative-pixel/tiles/leaf_particle.png",
+      "width": 80,
+      "height": 72
+    },
+    "sign_small": {
+      "path": "narrative-pixel/tiles/sign_small.png",
+      "width": 72,
+      "height": 80
+    }
+  },
+  "ui/states": {
+    "tv_screen_off": {
+      "path": "narrative-pixel/ui/states/tv_screen_off.png",
+      "width": 80,
+      "height": 60
+    },
+    "tv_screen_default": {
+      "path": "narrative-pixel/ui/states/tv_screen_default.png",
+      "width": 100,
+      "height": 100
+    },
+    "tv_screen_hover": {
+      "path": "narrative-pixel/ui/states/tv_screen_hover.png",
+      "width": 80,
+      "height": 60
+    },
+    "tv_screen_loading": {
+      "path": "narrative-pixel/ui/states/tv_screen_loading.png",
+      "width": 100,
+      "height": 80
+    },
+    "tv_screen_error": {
+      "path": "narrative-pixel/ui/states/tv_screen_error.png",
+      "width": 120,
+      "height": 100
+    },
+    "station_board_empty": {
+      "path": "narrative-pixel/ui/states/station_board_empty.png",
+      "width": 120,
+      "height": 100
+    },
+    "ledger_book_open": {
+      "path": "narrative-pixel/ui/states/ledger_book_open.png",
+      "width": 120,
+      "height": 60
+    },
+    "btn_wood_default": {
+      "path": "narrative-pixel/ui/states/btn_wood_default.png",
+      "width": 80,
+      "height": 100
+    },
+    "btn_wood_hover": {
+      "path": "narrative-pixel/ui/states/btn_wood_hover.png",
+      "width": 100,
+      "height": 80
+    },
+    "btn_wood_press": {
+      "path": "narrative-pixel/ui/states/btn_wood_press.png",
+      "width": 120,
+      "height": 100
+    },
+    "avatar_frame_default": {
+      "path": "narrative-pixel/ui/states/avatar_frame_default.png",
+      "width": 100,
+      "height": 80
+    },
+    "avatar_frame_selected": {
+      "path": "narrative-pixel/ui/states/avatar_frame_selected.png",
+      "width": 100,
+      "height": 100
+    },
+    "tooltip_wood": {
+      "path": "narrative-pixel/ui/states/tooltip_wood.png",
+      "width": 100,
+      "height": 80
+    },
+    "spinner_frame_1": {
+      "path": "narrative-pixel/ui/states/spinner_frame_1.png",
+      "width": 80,
+      "height": 80
+    },
+    "spinner_frame_2": {
+      "path": "narrative-pixel/ui/states/spinner_frame_2.png",
+      "width": 80,
+      "height": 60
+    }
+  }
+}
