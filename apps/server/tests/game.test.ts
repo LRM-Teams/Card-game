@@ -166,8 +166,52 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     const registry = new RoomRegistry();
     const res = registry.join(mkHuman('A'), 'socket-a', 'missing-room');
     expect(res.result.ok).toBe(false);
-    if (!res.result.ok) expect(res.result.code).toBe('not_in_room');
+    if (!res.result.ok) expect(res.result.code).toBe('room_not_found');
     expect(registry.get('missing-room')).toBeUndefined();
+  });
+
+  it('房间号带 # / 空白时规范化后仍可重连', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    registry.disconnect(a.room.roomId, 0, 'socket-a');
+    const re = registry.join(mkHuman('A', 'g-a'), 'socket-a2', ` #${a.room.roomId} `);
+    expect(re.result.ok).toBe(true);
+    expect(re.kind).toBe('reconnect');
+    expect(re.seat).toBe(0);
+  });
+
+  it('对局已开始时新 guest 不能加入（game_already_started）', async () => {
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    expect(a.room.phase).not.toBe('waiting');
+    const res = registry.join(mkHuman('D', 'g-d'), 'socket-d', a.room.roomId);
+    expect(res.result.ok).toBe(false);
+    if (!res.result.ok) expect(res.result.code).toBe('game_already_started');
+  });
+
+  it('重连路径写出 [ops] player.reconnect', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(' '));
+    });
+    const registry = new RoomRegistry();
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    await a.room.start();
+    registry.disconnect(a.room.roomId, 0, 'socket-a');
+    registry.join(mkHuman('A', 'g-a'), 'socket-a2', a.room.roomId);
+    const disconnectLine = logs.find((l) => l.includes('[ops]') && l.includes('player.disconnect'));
+    const reconnectLine = logs.find((l) => l.includes('[ops]') && l.includes('player.reconnect'));
+    expect(disconnectLine).toBeTruthy();
+    expect(reconnectLine).toBeTruthy();
+    spy.mockRestore();
   });
 
   it('满房开局后同 guest 可用原 roomId 重连原座位并拿回私有手牌', async () => {

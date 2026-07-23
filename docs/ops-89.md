@@ -32,6 +32,7 @@ curl -sS http://127.0.0.1:8088/health | jq .
 | `room.join` | 真人入座 |
 | `game.start` | 开局（发牌进入叫地主） |
 | `game.settle` | 结算（含 winnerSeat / scores） |
+| `player.disconnect` | 真人断线（座位保留，等重连） |
 | `player.reconnect` | 断线重连接管座位 |
 | `match.form` | 快速匹配成桌（`fillBots` / `humanCount` / `waitMs`） |
 
@@ -53,10 +54,19 @@ docker logs ddz --since 2h 2>&1 | grep '\[ops\]' | grep -E 'game\.(start|settle)
 # 快速匹配成桌（超时补机路径：fillBots:true）
 docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form'
 docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form' | grep '"fillBots":true'
+
+# 断线重连路径（LRM-519）
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep -E 'player\.(disconnect|reconnect)|room\.join'
 ```
 
 烟测一局三真人后，应能 grep 出同一 `roomId` 的  
-`room.create` → `room.join`×3 → `game.start` → … → `game.settle`（可夹杂 `player.reconnect`）。
+`room.create` → `room.join`×3 → `game.start` → … → `game.settle`（可夹杂 `player.disconnect` / `player.reconnect`）。
+
+断线重连烟测：
+
+```bash
+SERVER_URL=http://127.0.0.1:3000 node apps/server/scripts/reconnect-smoke.cjs
+```
 
 ## Docker 重启 SOP
 
@@ -121,6 +131,7 @@ ckpt 切换（无需改代码，重启推理进程即可）：
 | health 无 `commit`/`bundle` | 确认已滚含 LRM-275 的 tip；容器环境变量 `GIT_COMMIT`；`CLIENT_DIST` 指向含 `assets/index-*.js` 的 dist |
 | Socket 连不上 | 浏览器 Network 看 `/socket.io`；nginx 须透传 `Upgrade`/`Connection`（`deploy/nginx-8088.conf`） |
 | 对局卡住 / 疑似断线 | `docker logs ddz --since 30m \| grep '\[ops\]'`，按 `roomId` 查是否有 `player.reconnect` / 是否缺 `game.settle` |
+| 重连回归烟测 | `SERVER_URL=http://127.0.0.1:3000 node apps/server/scripts/reconnect-smoke.cjs`（覆盖重连手牌一致、`room_not_found`、`game_already_started`） |
 | 版本对不上 | 对比频道回帖 tip 与 `curl …/health` 的 `commit`、`bundle`；不一致则重滚 |
 | DouZero 探活失败 | 训模冻结期正常；确认不卡局即可。解冻后查 8765 进程与 `DOUZERO_*_CKPT` |
 

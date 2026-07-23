@@ -31,7 +31,9 @@ export type Role = 'landlord' | 'farmer' | undefined;
  */
 export type ErrorCode =
   | 'not_in_room' // 玩家不在任何房间里
+  | 'room_not_found' // 指定房间号不存在（进房失败）
   | 'room_full' // 房间已满（3/3）
+  | 'game_already_started' // 对局已开始，不能加入新座位
   | 'invalid_action_for_phase' // 当前阶段不接受该动作
   | 'not_your_turn' // 还没轮到你
   | 'illegal_play' // 出牌不合法（不是有效牌型 / 压不过上家 / 手里没这些牌）

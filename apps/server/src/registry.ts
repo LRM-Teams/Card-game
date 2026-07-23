@@ -7,6 +7,7 @@
  * - match：走 MatchQueue，满员或超时后成桌并自动开局。
  */
 import type { Seat } from '@card-game/rules';
+import { GamePhase } from '@card-game/rules';
 import { GameRoom } from './game/GameRoom';
 import { createConfiguredDouZeroAdapter } from './game/douzeroAdapter';
 import type { ActionResult } from './game/types';
@@ -19,6 +20,13 @@ import {
   type MatchWaiter,
 } from './matchQueue';
 import { opsLog } from './observability';
+
+/** 房间号规范化：去空白、去前导 #（好友房链接复制常见）。 */
+export function normalizeRoomId(roomId?: string): string | undefined {
+  if (roomId == null) return undefined;
+  const trimmed = roomId.trim().replace(/^#+/, '');
+  return trimmed.length > 0 ? trimmed : undefined;
+}
 
 export interface JoinOutcome {
   room: GameRoom;
@@ -82,12 +90,13 @@ export class RoomRegistry {
     socketId: string,
     roomId?: string,
   ): JoinOutcome {
-    let room = roomId ? this.rooms.get(roomId) : undefined;
-    if (roomId && !room) {
+    const normalizedRoomId = normalizeRoomId(roomId);
+    let room = normalizedRoomId ? this.rooms.get(normalizedRoomId) : undefined;
+    if (normalizedRoomId && !room) {
       return {
-        room: new GameRoom(roomId, this.aiAdapter),
+        room: new GameRoom(normalizedRoomId, this.aiAdapter),
         seat: -1 as Seat,
-        result: { ok: false, code: 'not_in_room', message: '房间不存在，请检查房间号' },
+        result: { ok: false, code: 'room_not_found', message: '房间不存在，请检查房间号' },
         kind: 'join',
       };
     }
@@ -126,6 +135,15 @@ export class RoomRegistry {
 
     const seat = room.firstEmptySeat();
     if (seat === null) {
+      // 满员：对局中优先提示「已开局」，等待态提示「已满」
+      if (room.phase !== GamePhase.WAITING) {
+        return {
+          room,
+          seat: -1 as Seat,
+          result: { ok: false, code: 'game_already_started', message: '对局已开始，不能加入' },
+          kind,
+        };
+      }
       return {
         room,
         seat: -1 as Seat,
@@ -232,8 +250,19 @@ export class RoomRegistry {
     const sockets = this.seatSockets.get(roomId);
     if (sockets?.get(seat) === socketId) sockets.delete(seat);
     const room = this.rooms.get(roomId);
-    if (!room) return { ok: false, code: 'not_in_room', message: '房间不存在' };
-    return { ok: true, events: room.markDisconnected(seat) };
+    if (!room) return { ok: false, code: 'room_not_found', message: '房间不存在' };
+    const events = room.markDisconnected(seat);
+    if (events.length > 0) {
+      opsLog({
+        event: 'player.disconnect',
+        roomId,
+        phase: room.phase,
+        seat,
+        humanCount: room.humanCount,
+        playerCount: room.playerCount,
+      });
+    }
+    return { ok: true, events };
   }
 
   /** 已对哪个 GameResult 结算过豆子（防 drain 重复加减）。 */
