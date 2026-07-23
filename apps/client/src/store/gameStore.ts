@@ -84,14 +84,19 @@ function tryAutoRejoin(): void {
   useGameStore.setState({ myDisplayName: session.displayName });
 }
 
+/** 重连 join 防抖：socket 抖动时避免重复 join 打爆服务端。 */
+let reconnectRejoinPending = false;
+
 /** 断线后 socket 恢复：重新 join 绑定座位并拉回 snapshot（LRM-256/276）。 */
 function tryReconnectRejoin(): void {
   if (!shouldAutoRejoinPath()) return;
+  if (reconnectRejoinPending) return;
   const st = useGameStore.getState();
   if (st.mySeat == null && !st.roomId) return;
   const session = readPlayerSession();
   if (!session?.roomId) return;
   const id = readIdentity();
+  reconnectRejoinPending = true;
   send({
     type: 'join',
     displayName: session.displayName ?? id.displayName,
@@ -225,6 +230,7 @@ export const useGameStore = create<UiState>((set, get) => ({
           set({ matching: false, matchHumans: 0, matchFillDeadlineAt: null });
           break;
         case 'you_joined': {
+          reconnectRejoinPending = false;
           const prev = readIdentity();
           const next: GuestIdentity = {
             ...prev,
@@ -347,6 +353,7 @@ export const useGameStore = create<UiState>((set, get) => ({
           break;
         }
         case 'error':
+          reconnectRejoinPending = false;
           set({
             lastError: { code: e.code, message: e.message, at: Date.now() },
             matching: false,
@@ -361,12 +368,15 @@ export const useGameStore = create<UiState>((set, get) => ({
   },
 
   join: (identity, roomId) => {
+    // 重连中禁止手动重复 join（AC：防呆）；等 socket 恢复后走 tryReconnectRejoin
+    if (get().status === 'reconnecting') return;
     saveIdentity(identity);
     savePlayerSession(identity.displayName, roomId, {
       guestId: identity.guestId,
       avatarId: identity.avatarId,
     });
     autoRejoinAttempted = true;
+    reconnectRejoinPending = false;
     set({
       myDisplayName: identity.displayName,
       guestId: identity.guestId,
@@ -524,6 +534,7 @@ export const useGameStore = create<UiState>((set, get) => ({
     if (get().matching) send({ type: 'cancel_match' });
     clearPlayerSession();
     autoRejoinAttempted = false;
+    reconnectRejoinPending = false;
     set({
       matching: false,
       matchHumans: 0,

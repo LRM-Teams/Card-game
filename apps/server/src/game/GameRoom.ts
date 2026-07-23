@@ -204,7 +204,9 @@ export class GameRoom {
     avatarId: string;
     beans: number;
   }): ActionResult {
-    if (this.phase !== GamePhase.WAITING) return err('invalid_action_for_phase', '对局已开始，不能加入');
+    if (this.phase !== GamePhase.WAITING) {
+      return err('game_already_started', '对局已开始，不能加入');
+    }
     const idx = this.players.findIndex((p) => p === null);
     if (idx === -1) return err('room_full', '房间已满（3/3）');
     const seat = idx as Seat;

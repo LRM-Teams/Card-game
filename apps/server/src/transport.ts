@@ -280,7 +280,7 @@ export function createGame(io: IoServer): RoomRegistry {
       }
       const room = registry.get(binding.roomId);
       if (!room) {
-        fail(socket, 'not_in_room', '房间不存在');
+        fail(socket, 'room_not_found', '房间不存在');
         return;
       }
 

@@ -68,7 +68,7 @@ export function Lobby() {
   const deepLinkDone = useRef(false);
 
   const trimmedNick = normalizeDisplayName(identity.displayName);
-  const trimmedRoomCode = roomCode.trim();
+  const trimmedRoomCode = roomCode.trim().replace(/^#+/, '');
   const canAct = isValidDisplayName(trimmedNick) && status === 'connected' && !matching;
   const canJoinRoom = canAct && trimmedRoomCode.length > 0;
   const showIdentityGuide = guideActive && !seenIdentity && !matching;
