@@ -1,8 +1,9 @@
 {
-  "version": "v3.1",
+  "version": "v3.2",
   "approved": "2026-07-23",
   "issue": "LRM-417",
   "license": "docs/assets/narrative-pixel/LICENSE.md",
+  "followUp": "LRM-466",
   "totalElements": 88,
   "categories": {
     "props": 24,
@@ -17,11 +18,12 @@
     "spec": "docs/doudizhu-narrative-pixel-spec.md"
   },
   "indoorGameLine": {
-    "crossRefIssue": "LRM-408",
-    "manifest": "docs/assets/previews/lrm-417/scene-asset-manifest.md",
+    "crossRefIssue": "LRM-408 v2",
+    "manifest": "docs/assets/pixel/manifest.json",
     "wiredClientPath": "apps/client/public/pixel/",
     "wiredIssue": "LRM-416",
     "pixelUiSpec": "docs/doudizhu-pixel-ui-spec.md",
+    "clientWire": "apps/client/src/lib/pixelAssets.ts",
     "note": "室内对局质感由 408 v2 资产覆盖；大厅保持 Narrative Pixel 室外叙事，形成室外→室内链"
   }
 }

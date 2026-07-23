@@ -87,6 +87,20 @@ def make_sprite(name: str, category: str) -> Image.Image:
                 draw.rectangle([14 + i * 8, 20, 18 + i * 8, h - 22], fill=(*PALETTE["cream"], 120))
         if "default" in name or "hover" in name:
             draw.rectangle([w // 4, h // 2, w * 3 // 4, h // 2 + 12], fill=(*PALETTE["lamp2"], 255))
+        if "error" in name:
+            draw.rectangle([14, 14, w - 15, h - 18], fill=(*PALETTE["rust"], 220))
+            for i in range(5):
+                draw.rectangle([16 + i * 10, 18 + (i % 2) * 6, 22 + i * 10, 24 + (i % 2) * 6], fill=(*PALETTE["cream"], 140))
+    elif "error_stamp" in name:
+        w, h = 48, 24
+        img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        draw.rectangle([1, 1, w - 2, h - 2], outline=(*PALETTE["rust"], 255), width=2)
+        draw.rectangle([3, 3, w - 4, h - 4], fill=(*PALETTE["rust"], 200))
+        draw.rectangle([5, 5, w - 6, h - 6], outline=(*PALETTE["lamp2"], 180), width=1)
+        draw.line([(14, 8), (22, 16)], fill=(*PALETTE["cream"], 255), width=2)
+        draw.line([(22, 8), (14, 16)], fill=(*PALETTE["cream"], 255), width=2)
+        return img
     elif "station" in name or "ledger" in name or "btn" in name:
         draw.rectangle([2, 2, w - 3, h - 3], fill=(*PALETTE["ochre"], 255))
         draw.rectangle([6, 6, w - 7, h - 7], fill=(*PALETTE["cream"], 230))
@@ -166,6 +180,7 @@ CATALOG: dict[str, list[str]] = {
         "tv_screen_off", "tv_screen_default", "tv_screen_hover", "tv_screen_loading", "tv_screen_error",
         "station_board_empty", "ledger_book_open", "btn_wood_default", "btn_wood_hover", "btn_wood_press",
         "avatar_frame_default", "avatar_frame_selected", "tooltip_wood", "spinner_frame_1", "spinner_frame_2",
+        "ui_error_stamp",
     ],
 }
 
