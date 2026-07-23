@@ -1,13 +1,28 @@
 /**
- * 快速匹配队列（LRM-173）。
+ * 快速匹配队列（LRM-173 / LRM-309）。
  * - 入队后发 matching；满 3 真人立即成桌并自动开局（fillBots=false）
  * - 超时仍不足 3 人：成桌 + AI 补位 + 自动开局（fillBots=true）
+ * - 超时默认 20s（MATCH_FILL_AFTER_MS，建议 15–30s），真人优先配对
  * - cancel_match 出队
  */
 import type { Seat } from '@card-game/rules';
 import type { GuestProfile } from './identity';
 import type { GameRoom } from './game/GameRoom';
 import type { ActionResult } from './game/types';
+import { opsLog } from './observability';
+
+/** 默认等待真人凑桌时长（毫秒）；可用 MATCH_FILL_AFTER_MS 覆盖。 */
+export const DEFAULT_MATCH_FILL_AFTER_MS = 20_000;
+
+export function resolveMatchFillAfterMs(override?: number): number {
+  if (override != null && Number.isFinite(override) && override >= 0) return override;
+  const raw = process.env.MATCH_FILL_AFTER_MS?.trim();
+  if (raw) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return DEFAULT_MATCH_FILL_AFTER_MS;
+}
 
 export interface MatchWaiter {
   socketId: string;
@@ -21,6 +36,8 @@ export interface MatchFormed {
   seats: Array<{ socketId: string; seat: Seat; result: ActionResult }>;
   /** 开局事件（start 之后）。 */
   startResult: ActionResult;
+  /** 成桌时是否补了机器人。 */
+  fillBots: boolean;
 }
 
 type FormRoomFn = (humans: MatchWaiter[]) => {
@@ -43,7 +60,12 @@ export class MatchQueue {
   }) {
     this.formRoom = opts.formRoom;
     this.onFormed = opts.onFormed;
-    this.fillAfterMs = opts.fillAfterMs ?? 2000;
+    this.fillAfterMs = resolveMatchFillAfterMs(opts.fillAfterMs);
+  }
+
+  /** 当前配置的补机超时（毫秒）。 */
+  get fillTimeoutMs(): number {
+    return this.fillAfterMs;
   }
 
   size(): number {
@@ -97,9 +119,21 @@ export class MatchQueue {
     this.clearTimer();
     const batch = this.queue.splice(0, 3);
     if (batch.length === 0) return;
+    const fill = fillBots || batch.length < 3;
+    const oldest = batch.reduce((min, w) => Math.min(min, w.enqueuedAt), batch[0]!.enqueuedAt);
     const { room, seats } = this.formRoom(batch);
-    const startResult = await room.start(fillBots || batch.length < 3);
-    this.onFormed({ room, seats, startResult });
+    const startResult = await room.start(fill);
+    opsLog({
+      event: 'match.form',
+      roomId: room.roomId,
+      phase: room.phase,
+      humanCount: batch.length,
+      playerCount: room.playerCount,
+      fillBots: fill,
+      waitMs: Date.now() - oldest,
+      queueRemaining: this.queue.length,
+    });
+    this.onFormed({ room, seats, startResult, fillBots: fill });
     if (this.queue.length > 0) this.armTimer();
   }
 }

@@ -3,6 +3,7 @@ import { identifyHand, RANK } from '@card-game/rules';
 import type { Card, Seat } from '@card-game/rules';
 import { botBid, botChoosePlay, botDouble, botReveal } from '../src/game/bot';
 import { GameRoom } from '../src/game/GameRoom';
+import type { MatchFormed } from '../src/matchQueue';
 import { RoomRegistry } from '../src/registry';
 import { IdentityStore } from '../src/identity';
 
@@ -221,20 +222,87 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
 
   it('快速匹配：1 人超时后 AI 补位并自动开局', async () => {
     vi.useFakeTimers();
-    const registry = new RoomRegistry();
+    const registry = new RoomRegistry({ matchFillAfterMs: 2000 });
     let formed = false;
     registry.setMatchFormedHandler((f) => {
       formed = true;
       expect(f.seats).toHaveLength(1);
       expect(f.startResult.ok).toBe(true);
+      expect(f.fillBots).toBe(true);
       expect(f.room.playerCount).toBe(3);
       expect(f.room.humanCount).toBe(1);
       expect(f.room.phase).not.toBe('waiting');
     });
     registry.enqueueMatch(mkHuman('Solo', 'g-solo'), 'sock-solo');
-    await vi.advanceTimersByTimeAsync(2100);
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(formed).toBe(false);
+    await vi.advanceTimersByTimeAsync(2);
     expect(formed).toBe(true);
     vi.useRealTimers();
+  });
+
+  it('快速匹配：3 真人立即同房开局（不补机）', async () => {
+    vi.useFakeTimers();
+    const registry = new RoomRegistry({ matchFillAfterMs: 20_000 });
+    let formed: MatchFormed | null = null;
+    registry.setMatchFormedHandler((f) => {
+      formed = f;
+    });
+    registry.enqueueMatch(mkHuman('甲', 'g-a'), 'sock-a');
+    registry.enqueueMatch(mkHuman('乙', 'g-b'), 'sock-b');
+    expect(formed).toBeNull();
+    registry.enqueueMatch(mkHuman('丙', 'g-c'), 'sock-c');
+    // flush 是 async，推进 microtask
+    await vi.advanceTimersByTimeAsync(0);
+    expect(formed).not.toBeNull();
+    expect(formed!.fillBots).toBe(false);
+    expect(formed!.seats).toHaveLength(3);
+    expect(formed!.startResult.ok).toBe(true);
+    expect(formed!.room.humanCount).toBe(3);
+    expect(formed!.room.playerCount).toBe(3);
+    expect(formed!.room.players.every((p) => p && !p.isBot)).toBe(true);
+    expect(formed!.room.phase).not.toBe('waiting');
+    vi.useRealTimers();
+  });
+
+  it('快速匹配：2 真人超时补 1 机开局', async () => {
+    vi.useFakeTimers();
+    const registry = new RoomRegistry({ matchFillAfterMs: 15_000 });
+    let formed: MatchFormed | null = null;
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(' '));
+    });
+    registry.setMatchFormedHandler((f) => {
+      formed = f;
+    });
+    registry.enqueueMatch(mkHuman('甲', 'g-a2'), 'sock-a2');
+    registry.enqueueMatch(mkHuman('乙', 'g-b2'), 'sock-b2');
+    await vi.advanceTimersByTimeAsync(14_999);
+    expect(formed).toBeNull();
+    await vi.advanceTimersByTimeAsync(2);
+    expect(formed).not.toBeNull();
+    expect(formed!.fillBots).toBe(true);
+    expect(formed!.seats).toHaveLength(2);
+    expect(formed!.startResult.ok).toBe(true);
+    expect(formed!.room.humanCount).toBe(2);
+    expect(formed!.room.playerCount).toBe(3);
+    expect(formed!.room.players.filter((p) => p?.isBot)).toHaveLength(1);
+    expect(formed!.room.phase).not.toBe('waiting');
+    const matchFormLine = logs.find((l) => l.includes('[ops]') && l.includes('match.form'));
+    expect(matchFormLine).toBeTruthy();
+    expect(matchFormLine).toContain('"fillBots":true');
+    expect(matchFormLine).toContain('"humanCount":2');
+    spy.mockRestore();
+    vi.useRealTimers();
+  });
+
+
+  it('快速匹配：默认超时 20s（MATCH_FILL_AFTER_MS 可覆盖）', () => {
+    const registry = new RoomRegistry();
+    expect(registry.matchFillAfterMs).toBe(20_000);
+    const custom = new RoomRegistry({ matchFillAfterMs: 30_000 });
+    expect(custom.matchFillAfterMs).toBe(30_000);
   });
 
   it('IdentityStore：同 guestId 改昵称/头像，豆子连续', () => {

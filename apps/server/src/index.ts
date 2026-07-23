@@ -74,8 +74,11 @@ const io = new IoServer(httpServer, { cors: { origin: '*' } });
 createGame(io);
 
 httpServer.listen(PORT, () => {
+  const matchFillMs = process.env.MATCH_FILL_AFTER_MS?.trim() || '20000';
   // eslint-disable-next-line no-console
-  console.log(`[card-game server] listening on :${PORT} (Socket.IO)${CLIENT_DIST ? ' + static' : ''}`);
+  console.log(
+    `[card-game server] listening on :${PORT} (Socket.IO)${CLIENT_DIST ? ' + static' : ''} matchFillAfterMs=${matchFillMs}`,
+  );
   // LRM-310：启动探活 8765；失败只打日志，不阻断开服（fallback 规则机器人）
   void logInferProbeOnBoot();
 });
