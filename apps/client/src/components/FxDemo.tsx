@@ -16,6 +16,7 @@ import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { CardView, OpponentBackFan } from './CardView';
 import { FX_DEMO_SCENES, MOTION, type FxDemoScene } from '../lib/motionSpec';
 import { PIXEL } from '../lib/pixelAssets';
+import { NarrativeGameFrame } from './NarrativeGameFrame';
 
 function demoCard(id: string, rank: number, suit: Suit | undefined): Card {
   const display =
@@ -177,6 +178,7 @@ export function FxDemo() {
   );
 
   return (
+    <NarrativeGameFrame>
     <div className="fx-demo" data-scene={scene}>
       <header className="fx-demo-bar">
         <h1>UI / 动效演示</h1>
@@ -548,5 +550,6 @@ export function FxDemo() {
         </div>
       )}
     </div>
+    </NarrativeGameFrame>
   );
 }

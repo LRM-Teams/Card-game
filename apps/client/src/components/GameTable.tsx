@@ -14,6 +14,7 @@ import { SocialPanel } from './SocialPanel';
 import { SocialBubble } from './SocialBubble';
 import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { ConnectionBanner } from './ConnectionBanner';
+import { NarrativeGameFrame } from './NarrativeGameFrame';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
 import { PIXEL, roleBadgeSrc, roleCharacterSrc } from '../lib/pixelAssets';
@@ -572,7 +573,9 @@ function GameTableFrame({
   return (
     <>
       <ConnectionBanner status={status} />
-      <div className={offline ? 'table-offline-wrap' : undefined}>{children}</div>
+      <NarrativeGameFrame>
+        <div className={offline ? 'table-offline-wrap' : undefined}>{children}</div>
+      </NarrativeGameFrame>
     </>
   );
 }
