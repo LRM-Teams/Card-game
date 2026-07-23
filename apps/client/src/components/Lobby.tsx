@@ -274,7 +274,7 @@ export function Lobby() {
             </GuideSpot>
 
             <div
-              className="np-hotspot np-hotspot--station"
+              className={`np-hotspot np-hotspot--station${stampError ? ' np-hotspot--error' : ''}`}
               style={hotspotStyle(narrativePixelHotspots.stationBoard)}
               aria-label="房间站牌"
               role={stampError ? 'alert' : undefined}
@@ -340,7 +340,7 @@ export function Lobby() {
               onDismiss={() => mark('seenStart')}
             >
               <div
-                className="np-hotspot np-hotspot--tv"
+                className={`np-hotspot np-hotspot--tv${disconnected ? ' np-hotspot--error' : ''}`}
                 style={hotspotStyle(narrativePixelHotspots.tvStart)}
                 aria-label="开始游戏"
                 role={disconnected ? 'alert' : undefined}

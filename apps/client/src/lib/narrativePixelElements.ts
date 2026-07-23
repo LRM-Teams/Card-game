@@ -1,5 +1,6 @@
-/** LRM-417 叙事像素独立元素 — 由 elements-catalog.json 驱动 */
+/** LRM-417/466 叙事像素独立元素 — 由 elements-catalog.json 驱动 */
 import catalog from './narrative-pixel-elements-catalog.json';
+import type { ConnStatus } from '../net/socket';
 
 export const NP_BASE = '/narrative-pixel';
 
@@ -96,4 +97,27 @@ export function readNpDemoError(): NpDemoError | null {
     /* ignore */
   }
   return null;
+}
+
+/** 叙事像素错误文案上限（规格 §9） */
+export function shortenNpLabel(text: string, max = 12): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1)}…`;
+}
+
+const CONN_ERROR_LABEL: Partial<Record<ConnStatus, string>> = {
+  disconnected: '未连上服务器',
+  reconnect_failed: '重连失败',
+};
+
+export function npConnErrorLabel(status: ConnStatus): string | null {
+  return CONN_ERROR_LABEL[status] ?? null;
+}
+
+export function npTvScreenSrc(status: ConnStatus, matching: boolean): string {
+  if (matching) return npUiStates.tvLoading();
+  if (status === 'disconnected' || status === 'reconnect_failed') return npUiStates.tvError();
+  if (status === 'connecting' || status === 'reconnecting') return npUiStates.tvLoading();
+  return npUiStates.tvDefault();
 }

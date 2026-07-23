@@ -442,6 +442,11 @@
       "path": "narrative-pixel/ui/states/spinner_frame_2.png",
       "width": 80,
       "height": 60
+    },
+    "ui_error_stamp": {
+      "path": "narrative-pixel/ui/states/ui_error_stamp.png",
+      "width": 48,
+      "height": 24
     }
   }
 }

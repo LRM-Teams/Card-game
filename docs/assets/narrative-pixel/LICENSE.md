@@ -1,30 +1,37 @@
-# Narrative Pixel 资产许可说明
+# 叙事像素资产许可说明（LRM-417 / LRM-466）
 
-**项目**：斗地主网络对战（LRM-Teams / Card-game）  
-**资产包**：`apps/client/public/narrative-pixel/`  
-**规范**：`docs/doudizhu-narrative-pixel-spec.md`（LRM-417 Narrative Pixel v3）
+本目录及 `apps/client/public/narrative-pixel/` 下全部图像均为 **团队原创可商用素材**，供斗地主客户端叙事像素大厅与场景装饰使用。
 
-## 版权与使用范围
+## 来源
 
-- 本目录下叙事像素精灵、场景层与 UI 状态帧为 **LRM-Teams 斗地主项目专用** 美术资产。
-- 仅限本仓库客户端/预览/CI 举证使用；**禁止**脱离本项目单独商用或再分发。
-- 资产由项目内工具链生成或设计交付（见 `docs/assets/narrative-pixel/generate_narrative_assets.py` 与各 issue 举证）。
+| 类别 | 路径 | 生成方式 |
+|------|------|----------|
+| 室外场景精灵 | `props/`、`buildings/`、`characters/`、`tiles/` | `docs/assets/narrative-pixel/generate_narrative_assets.py`（PIL 程序化占位 / 小雅手绘迭代） |
+| UI 状态帧 | `ui/states/` | 同上；含 `tv_screen_error`、`ui_error_stamp`（U10）等 |
+| 场景分层 | `scene/`、`lighting/` | 1920×1080 分层输出 |
+| 元素目录 | `elements-catalog.json` | 与 `apps/client/src/lib/narrative-pixel-elements-catalog.json` 同步 |
 
-## 第三方与参考
+## 版权声明
 
-- 画风为原创 Narrative Pixel（老街茶馆室外叙事），不对标、不复制任何竞品美术。
-- 字体与 UI 文案遵循项目 `docs/doudizhu-design-tokens.md` §15 `--ddz-np-*`。
+- **不含**任何腾讯 / 欢乐斗地主 / Eastward 等第三方游戏的美术资产、截图或再采样。
+- 素材由 LRM-Teams 项目组自行创作，可随仓库商用与二次替换。
+- 对标竞品仅参考信息层级与反馈强度，不复制具体图案。
 
-## 室内线交叉引用（LRM-408 v2）
+## 双线资产关系
 
-室外大厅资产以本目录 + `docs/assets/narrative-pixel/manifest.json` 为单一事实来源。  
-**对局室内线**（台呢、牌面、木轨、角色等）由 **LRM-408 v2** 双线清单维护：
+| 线 | 场景 | 本目录 | 关联 |
+|----|------|--------|------|
+| A 室外·大厅 | 老街茶馆叙事背景 | 本目录 `narrative-pixel/`（87+ 项） | LRM-417 叙事像素规格 |
+| B 室内·对局 | 牌桌台呢 / 牌面 / HUD | **不在此目录** | 见 [LRM-408 v2 Modern Pixel](../pixel/manifest.json) 与 `apps/client/public/pixel/` |
 
-- 清单：`docs/assets/previews/lrm-417/scene-asset-manifest.md`（86 项 · 室外+室内）
-- 室内 Modern Pixel 组件参考：`docs/doudizhu-pixel-ui-spec.md`
-- 已接线室内资产（工程门已过）：`apps/client/public/pixel/`（LRM-416）
-- 408 v2 终态替换时保持 **路径/ID 可热替换**，客户端通过 `pixelAssets.ts` / `narrativePixelElements.ts` 消费
+室内线（台呢、牌背、按钮、结算徽章等）由 **LRM-408 v2** 交付，客户端经 `apps/client/src/lib/pixelAssets.ts` 接线；本目录仅覆盖室外叙事线与大厅世界化 UI。
 
-## 联系人
+## 文件索引
 
-视觉资产问题 @小雅；客户端接线 @小林。
+```
+ui/states/tv_screen_error.png   连接/服务失败时电视雪花错误帧
+ui/states/ui_error_stamp.png    红章错误态（U10，叠在站牌）
+scene/layer-*-1920x1080.png     远景/中景/前景/灯光分层
+elements-catalog.json           87+ 项元素路径与尺寸
+manifest.json                   版本与室内线交叉引用
+```
