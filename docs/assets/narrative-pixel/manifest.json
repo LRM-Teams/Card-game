@@ -1,7 +1,8 @@
 {
-  "version": "v3.2",
+  "version": "v3.3",
   "approved": "2026-07-23",
   "issue": "LRM-417",
+  "issues": ["LRM-417", "LRM-520"],
   "license": "docs/assets/narrative-pixel/LICENSE.md",
   "followUp": "LRM-466",
   "totalElements": 88,
@@ -25,5 +26,14 @@
     "pixelUiSpec": "docs/doudizhu-pixel-ui-spec.md",
     "clientWire": "apps/client/src/lib/pixelAssets.ts",
     "note": "室内对局质感由 408 v2 资产覆盖；大厅保持 Narrative Pixel 室外叙事，形成室外→室内链"
+  },
+  "indoor_game": {
+    "issue": "LRM-520",
+    "manifest": "indoor-game-manifest.json",
+    "wire_list": "docs/assets/pixel/wire-list-lrm-518.md",
+    "preview": "docs/assets/previews/lrm-520/game-indoor-preview-1920.png",
+    "layers": 3,
+    "sprites": 4,
+    "pixel_v2_refs": 14
   }
 }
