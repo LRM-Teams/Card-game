@@ -55,6 +55,12 @@
   --ddz-room-from: #33221a;
   --ddz-room-mid: #43301f;
   --ddz-room-to: #241612;
+  /* LRM-408/416：像素风资产 URL（配色仍走上方 --ddz-* token） */
+  --ddz-pixel-room-bg: url('/pixel/backgrounds/room_bg.png');
+  --ddz-pixel-felt: url('/pixel/tiles/felt_texture.png');
+  --ddz-pixel-rail: url('/pixel/tiles/rail_texture.png');
+  --ddz-pixel-btn-primary: url('/pixel/ui/btn_primary.png');
+  --ddz-pixel-felt-tile: 64px;
   /* 桌沿木色 rail */
   --ddz-rail-thickness: 18px;
   --ddz-rail-rim: 3px;
@@ -162,10 +168,10 @@ body {
     linear-gradient(135deg, var(--ddz-room-from), var(--ddz-room-mid) 48%, var(--ddz-room-to));
   -webkit-font-smoothing: antialiased;
 }
-/* LRM-316：对局页房间背景资产（保留 token 渐变 fallback） */
+/* LRM-316/416：对局页房间背景（像素资产 + token 渐变 fallback） */
 body.app--game-page {
   background:
-    url('/table/room-bg.svg') center / cover no-repeat,
+    var(--ddz-pixel-room-bg) center / cover no-repeat,
     linear-gradient(135deg, var(--ddz-room-from), var(--ddz-room-mid) 48%, var(--ddz-room-to));
 }
 
@@ -806,18 +812,18 @@ body::before {
   cursor: not-allowed;
   box-shadow: none;
 }
-/* L0：全屏唯一金色填充主按钮 */
+/* L0：全屏唯一金色填充主按钮（LRM-416 像素底图 + token 文字色） */
 .btn.primary {
   border-color: transparent;
-  background: linear-gradient(
-    180deg,
-    var(--ddz-btn-primary-from),
-    var(--ddz-btn-primary-mid) 46%,
-    var(--ddz-btn-primary-to) 88%,
-    var(--ddz-gold-600)
-  );
   color: var(--ddz-btn-primary-text);
+  background-color: var(--ddz-gold-600);
+  background-image: var(--ddz-pixel-btn-primary);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   box-shadow: var(--ddz-btn-primary-shadow);
+}
+.btn.primary:hover:not(:disabled) {
+  filter: brightness(1.05);
 }
 .btn.cta {
   min-height: var(--ddz-button-h-cta);
@@ -1118,7 +1124,7 @@ body::before {
   /* 底边收紧：手牌+操作贴视口下沿（Frank：牌再往下） */
   padding: var(--ddz-vp-table-pad-y) 44px 4px;
   border-radius: 50% / var(--ddz-vp-ellipse-y);
-  /* LRM-316：台呢纹理平铺 + token 径向叠层（fallback 保留底层渐变） */
+  /* LRM-316/416：台呢像素纹理平铺 + token 径向叠层 */
   background:
     radial-gradient(ellipse at 50% 28%, var(--ddz-felt-soft), transparent 56%),
     radial-gradient(
@@ -1128,7 +1134,7 @@ body::before {
       var(--ddz-felt-700) 68%,
       var(--ddz-felt-900) 100%
     ),
-    url('/table/felt-texture.svg') center / 512px 512px repeat;
+    var(--ddz-pixel-felt) center / var(--ddz-pixel-felt-tile) var(--ddz-pixel-felt-tile) repeat;
   box-shadow:
     0 0 0 var(--ddz-rail-thickness) var(--ddz-rail-wood-700),
     0 0 0 calc(var(--ddz-rail-thickness) + var(--ddz-rail-rim)) var(--ddz-rail-wood-500),
@@ -1152,9 +1158,9 @@ body::before {
 .app--game .table::before {
   inset: 12px 24px 14px;
   border-radius: 50% / var(--ddz-vp-ellipse-y);
-  /* LRM-316：木轨纹理叠层（保留 LRM-166 box-shadow 厚度 token） */
+  /* LRM-316/416：木轨像素纹理叠层 */
   background:
-    url('/table/rail-strip.svg') center / 64px 64px repeat,
+    var(--ddz-pixel-rail) center / var(--ddz-pixel-felt-tile) var(--ddz-pixel-felt-tile) repeat,
     transparent;
   -webkit-mask: radial-gradient(ellipse at 50% var(--ddz-vp-ellipse-y), #000 68%, transparent 70%);
   mask: radial-gradient(ellipse at 50% var(--ddz-vp-ellipse-y), #000 68%, transparent 70%);
@@ -1828,6 +1834,14 @@ body::before {
   object-fit: cover;
   z-index: 0;
   pointer-events: none;
+}
+/* LRM-416：像素资产 crisp 缩放 */
+.pixel-art,
+.card-joker-art,
+.card-front-art,
+.card-back-art {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 .card.is-face-down {
   border-color: rgba(90, 20, 30, 0.55);
@@ -2605,7 +2619,7 @@ body::before {
         var(--ddz-felt-700) 68%,
         var(--ddz-felt-900) 100%
       ),
-      url('/table/felt-texture.svg') center / 384px 384px repeat;
+      var(--ddz-pixel-felt) center / var(--ddz-pixel-felt-tile) var(--ddz-pixel-felt-tile) repeat;
   }
   .table::before,
   .table::after {

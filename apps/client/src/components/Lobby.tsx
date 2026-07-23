@@ -13,6 +13,7 @@ import {
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
 import { GuideSpot } from './GuideSpot';
+import { PIXEL } from '../lib/pixelAssets';
 
 function readRoomQuery(): string {
   try {
@@ -115,11 +116,11 @@ export function Lobby() {
     <div className="panel lobby">
       <div className="lobby-hero" aria-hidden={false}>
         <img
-          className="lobby-hero__art"
-          src="/lobby/hero-illustration.svg"
+          className="lobby-hero__art pixel-art"
+          src={PIXEL.backgrounds.lobbyHero}
           alt="斗地主大厅主视觉插画"
-          width={720}
-          height={320}
+          width={360}
+          height={160}
           decoding="async"
         />
         <div className="lobby-hero__copy">

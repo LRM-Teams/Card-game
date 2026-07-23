@@ -15,6 +15,7 @@ import { PlayerAvatar } from './PlayerAvatar';
 import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { CardView, OpponentBackFan } from './CardView';
 import { FX_DEMO_SCENES, MOTION, type FxDemoScene } from '../lib/motionSpec';
+import { PIXEL } from '../lib/pixelAssets';
 
 function demoCard(id: string, rank: number, suit: Suit | undefined): Card {
   const display =
@@ -398,7 +399,7 @@ export function FxDemo() {
         <div className="table settled fx-demo-table" data-fx="settle">
           <div className="result-card win" data-fx="settle-pop">
             <SettleCoins win />
-            <img className="result-badge" src="/states/victory-badge.svg" alt="" aria-hidden="true" />
+            <img className="result-badge pixel-art" src={PIXEL.ui.victoryBadge} alt="" aria-hidden="true" />
             <h2 className="result-title">你赢了</h2>
             <p className="result-meta">农民胜 · 单注 8</p>
             <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
@@ -422,7 +423,7 @@ export function FxDemo() {
       {scene === 'settle-lose' && (
         <div className="table settled fx-demo-table" data-fx="settle">
           <div className="result-card lose" data-fx="settle-pop">
-            <img className="result-badge" src="/states/defeat-badge.svg" alt="" aria-hidden="true" />
+            <img className="result-badge pixel-art" src={PIXEL.ui.defeatBadge} alt="" aria-hidden="true" />
             <h2 className="result-title">你输了</h2>
             <p className="result-meta">地主胜 · 单注 8</p>
             <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
@@ -490,7 +491,7 @@ export function FxDemo() {
                 <PlayerAvatar kind="player" />
                 <img
                   className="double-badge-corner"
-                  src="/states/double-badge.svg"
+                  src={PIXEL.ui.doubleBadge}
                   alt=""
                   aria-hidden="true"
                 />
