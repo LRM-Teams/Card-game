@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { RANK, type Card } from '@card-game/rules';
 import { SUIT_SYMBOL, cardColor } from '../lib/cards';
+import { PIXEL } from '../lib/pixelAssets';
 
 interface Props {
   card?: Card;
@@ -17,7 +18,7 @@ interface Props {
   style?: CSSProperties;
 }
 
-/** LRM-207/315：v2 纸面 SVG + 组件角标；大小王/牌背全图资产。 */
+/** LRM-207/315/416：像素牌面模板 + 组件角标；大小王/牌背全图资产。 */
 export function CardView({
   card,
   selected,
@@ -39,7 +40,7 @@ export function CardView({
         aria-label="牌背"
         style={style}
       >
-        <img className="card-back-art" src="/cards/card-back.svg" alt="" aria-hidden="true" />
+        <img className="card-back-art pixel-art" src={PIXEL.ui.cardBack} alt="" aria-hidden="true" />
       </button>
     );
   }
@@ -49,9 +50,9 @@ export function CardView({
   const isJoker = !card.suit;
   const jokerAsset =
     card.rank === RANK.BIG_JOKER
-      ? '/cards/joker-big.svg'
+      ? PIXEL.ui.jokerBig
       : card.rank === RANK.SMALL_JOKER
-        ? '/cards/joker-small.svg'
+        ? PIXEL.ui.jokerSmall
         : null;
 
   return (
@@ -65,10 +66,10 @@ export function CardView({
       style={style}
     >
       {jokerAsset ? (
-        <img className="card-joker-art" src={jokerAsset} alt="" aria-hidden="true" />
+        <img className="card-joker-art pixel-art" src={jokerAsset} alt="" aria-hidden="true" />
       ) : (
         <>
-          <img className="card-front-art" src="/cards/card-paper.svg" alt="" aria-hidden="true" />
+          <img className="card-front-art pixel-art" src={PIXEL.ui.cardFront} alt="" aria-hidden="true" />
           <span className="card-corner top">
             <span className="card-corner-rank">{card.display}</span>
             {symbol ? <span className="card-corner-suit">{symbol}</span> : null}

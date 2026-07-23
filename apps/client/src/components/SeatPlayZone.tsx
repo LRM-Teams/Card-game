@@ -2,6 +2,7 @@ import type { PlayRecord } from '@card-game/rules';
 import { HandType } from '@card-game/rules';
 import { HAND_TYPE_LABEL } from '../lib/cards';
 import { handTypeFxClass } from '../lib/playFx';
+import { PIXEL } from '../lib/pixelAssets';
 import { CardView } from './CardView';
 
 type Props = {
@@ -35,8 +36,8 @@ export function SeatPlayZone({ record, fxActive, align = 'center' }: Props) {
         >
           {isBombLike && (
             <img
-              className="play-type-fx-badge"
-              src="/states/bomb.svg"
+              className="play-type-fx-badge pixel-art"
+              src={PIXEL.effects.bomb}
               alt=""
               width={36}
               height={28}
