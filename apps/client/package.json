@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 5173",
     "typecheck": "tsc --noEmit",
-    "fx:record": "playwright test e2e/lrm168-fx.spec.ts"
+    "fx:record": "playwright test e2e/lrm168-fx.spec.ts",
+    "test:e2e:loop": "E2E_LIVE=1 playwright test e2e/narrative-full-loop.spec.ts"
   },
   "dependencies": {
     "@card-game/rules": "workspace:*",

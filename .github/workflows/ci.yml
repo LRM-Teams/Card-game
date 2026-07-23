@@ -42,6 +42,15 @@ jobs:
       - name: Build client (same-origin)
         run: VITE_SERVER_URL="" pnpm --filter @card-game/client build
 
+      - name: Install Playwright Chromium
+        run: pnpm --filter @card-game/client exec playwright install chromium --with-deps
+
+      - name: E2E narrative full loop
+        run: pnpm --filter @card-game/client exec playwright test e2e/narrative-full-loop.spec.ts
+        env:
+          CI: true
+          E2E_BASE_URL: http://127.0.0.1:3099
+
       - name: Start server and dual health check
         run: |
           set -euo pipefail
