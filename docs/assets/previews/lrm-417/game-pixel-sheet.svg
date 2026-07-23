@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="LRM-417 game page pixel layout">
+  <rect width="960" height="540" fill="#241612"/>
+  <text x="24" y="32" fill="#e8bc3a" font-family="Segoe UI, sans-serif" font-size="18" font-weight="700">LRM-417 Game · Modern Pixel (LRM-246 safe)</text>
+  <rect x="16" y="48" width="928" height="36" fill="#0b2218" stroke="#6b4424" stroke-width="2"/>
+  <text x="32" y="70" fill="#fff3c4" font-size="11" font-family="Segoe UI">topnav 44 · mult x2</text>
+  <!-- table -->
+  <ellipse cx="480" cy="280" rx="380" ry="170" fill="#1b4a37" stroke="#6b4424" stroke-width="14"/>
+  <ellipse cx="480" cy="280" rx="366" ry="156" fill="none" stroke="#8a5c34" stroke-width="3"/>
+  <text x="400" y="200" fill="#fff3c4" font-size="10" font-family="Segoe UI">felt_texture 64 + rail</text>
+  <!-- opponents -->
+  <rect x="380" y="120" width="200" height="48" fill="#0b2218" stroke="#6b4424" stroke-width="2"/>
+  <circle cx="400" cy="144" r="12" fill="#d63031"/>
+  <text x="420" y="148" fill="#fff3c4" font-size="10" font-family="Segoe UI">landlord badge</text>
+  <!-- play zone -->
+  <rect x="340" y="230" width="280" height="72" fill="rgba(0,0,0,0.2)" stroke="#6b4424" stroke-width="1"/>
+  <!-- hand -->
+  <g transform="translate(200,360)">
+    <rect width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="24" y="-4" width="40" height="56" fill="#fbfbf6" stroke="#e8bc3a" stroke-width="2"/>
+    <rect x="48" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="72" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="96" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="120" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="144" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="168" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="192" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="216" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="240" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="264" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="288" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="312" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="336" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+    <rect x="360" y="0" width="40" height="56" fill="#fbfbf6" stroke="#6b4424"/>
+  </g>
+  <rect x="360" y="440" width="240" height="44" fill="#e8bc3a" stroke="#c49218" stroke-width="2"/>
+  <text x="450" y="468" fill="#1c1c1c" font-size="13" font-weight="700" font-family="Segoe UI">úL</text>
+  <text x="24" y="520" fill="#7ef0a8" font-size="11" font-family="Segoe UI">100dvh · hand dock · single gold CTA · card single-layer</text>
+</svg>

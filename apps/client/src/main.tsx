@@ -6,6 +6,7 @@ import { router } from './router';
 import { useGameStore } from './store/gameStore';
 import { audio } from './lib/audio';
 import './styles.css';
+import './narrative-lobby.css';
 
 const queryClient = new QueryClient();
 

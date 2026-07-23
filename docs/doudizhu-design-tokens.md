@@ -216,6 +216,8 @@ box-shadow:
 - LRM-246 follow-up（2026-07-22，小雅）：手牌 `margin-top: auto` 下沉贴底，控件上移贴紧手牌（Frank 反馈）。
 - LRM-257（2026-07-22，小雅）：结算胜负配色 token 精修（§12）；胜暖金红 / 负蓝灰；`.result-card` 全走 token。
 - LRM-314（2026-07-22，小雅）：牌桌台呢/木轨/房间背景生产级 SVG 资产包（§13）；token 映射 + 接入规格；下游 LRM-316。
+- LRM-417（2026-07-23，小雅）：Modern Pixel 全站 UI 规范（大厅+对局）§14 + wire-list LRM-416。
+- LRM-417 v2（2026-07-23，小雅）：Narrative Pixel 叙事像素规范 §15 + 86 项清单 + 双线概念场景。
 
 ## 11. 对局页一屏视口（LRM-246）
 
@@ -328,3 +330,71 @@ License：内部自绘，见 `docs/assets/table/LICENSE.md`。
 2. 预览：`docs/assets/previews/lrm-314/table-assets-sheet.svg`（v1 CSS vs v2 资产，含手牌区）。
 3. 1080p 出牌态一屏无纵滚（LRM-246）；手牌贴底（LRM-250）。
 4. 看图审通过后 promote **LRM-316**（小林接入）。
+
+## 14. Modern Pixel 全站 UI（LRM-417）
+
+> 父资产 LRM-408 · 接线 LRM-416 · 规格 `docs/doudizhu-pixel-ui-spec.md`
+
+### 14.1 渲染与圆角
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--ddz-px-render` | `pixelated` | `image-rendering` 作用于 `.pixel` / `.pixel-bg` |
+| `--ddz-px-radius-sm` | `4px` | 面板、标签、小按钮 |
+| `--ddz-px-radius-md` | `8px` | 主面板、输入框 |
+| `--ddz-px-panel-border` | `2px solid var(--ddz-rail-wood-700)` | 木框硬边，替代大圆角阴影 |
+| `--ddz-px-hero-h` | `160px` | 大厅 hero 高度 |
+| `--ddz-px-btn-slice` | `8` | `btn_primary.png` 九宫格切片 |
+
+### 14.2 资产路径前缀
+
+| 用途 | CSS 引用 |
+|---|---|
+| 全局底图 | `url('/pixel/backgrounds/room_bg.png')` |
+| 大厅 hero | `url('/pixel/backgrounds/lobby_hero.png')` |
+| 台呢/木轨 | `url('/pixel/tiles/felt_texture.png')` / `rail_texture.png` |
+| 主按钮 | `url('/pixel/ui/btn_primary.png')` border-image |
+| 角标/牌面 | `url('/pixel/ui/...')` 见 wire-list |
+
+### 14.3 验收
+
+1. 预览：`docs/assets/previews/lrm-417/*.svg`
+2. 大厅 + 对局风格统一；遵守 LRM-246/250 与 LRM-406 单图层牌面
+3. 89 可玩验收依赖 LRM-416 合入
+
+## 15. Narrative Pixel 叙事像素（LRM-417 v2）
+
+> 规格 `docs/doudizhu-narrative-pixel-spec.md` · 86 项 `docs/assets/previews/lrm-417/scene-asset-manifest.md`
+
+### 15.1 环境色（`--ddz-np-*`）
+
+| Token | Hex | 用途 |
+|---|---|---|
+| `--ddz-np-sky-900` | `#48586c` | 天空深 |
+| `--ddz-np-sky-700` | `#627080` | 天空中 |
+| `--ddz-np-olive-700` | `#52623e` | 植被/地面 |
+| `--ddz-np-ochre-700` | `#947644` | 木/土 |
+| `--ddz-np-rust-700` | `#94483a` | 砖/瓦 |
+| `--ddz-np-slate-700` | `#484e56` | 建筑 |
+| `--ddz-np-lamp-500` | `#e8a848` | 灯笼/窗光 |
+| `--ddz-np-lamp-300` | `#ffcc6c` | 光晕高光 |
+| `--ddz-np-shadow` | `#1c2026` | 投影/暗角 |
+| `--ddz-np-ink` | `#16181c` | 轮廓线 |
+| `--ddz-np-felt-700` | `#264e3a` | 室内台呢（对齐 v2） |
+| `--ddz-np-gold-500` | `#c49e3a` | 唯一主 CTA |
+
+### 15.2 渲染
+
+| Token | 值 |
+|---|---|
+| `--ddz-np-render` | `pixelated` |
+| `--ddz-np-tile` | `16px` |
+| `--ddz-np-scene-w` | `1920px` |
+| `--ddz-np-scene-h` | `1080px` |
+
+### 15.3 资产路径
+
+```
+docs/assets/narrative-pixel/     # 源
+apps/client/public/narrative-pixel/  # 接线（LRM-408 v2）
+```

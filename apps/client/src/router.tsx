@@ -33,13 +33,18 @@ function ConnBadge() {
 
 function RootLayout() {
   const leaveToLobby = useGameStore((s) => s.leaveToLobby);
-  const isGame = useRouterState({
-    select: (s) => s.location.pathname.startsWith('/game') || s.location.pathname.startsWith('/fx-demo'),
-  });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isGame =
+    pathname.startsWith('/game') || pathname.startsWith('/fx-demo');
+  const isLobby = pathname === '/';
   useEffect(() => {
     document.body.classList.toggle('app--game-page', isGame);
-    return () => document.body.classList.remove('app--game-page');
-  }, [isGame]);
+    document.body.classList.toggle('app--lobby-page', isLobby);
+    return () => {
+      document.body.classList.remove('app--game-page');
+      document.body.classList.remove('app--lobby-page');
+    };
+  }, [isGame, isLobby]);
   return (
     <div className={`app${isGame ? ' app--game' : ''}`}>
       <nav className="topnav">
