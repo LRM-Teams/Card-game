@@ -230,8 +230,8 @@ export function Lobby() {
 
           <section className="lobby-secondary" aria-label="房间入口">
             <div className="lobby-secondary__head">
-              <span className="lobby-secondary__label">私房</span>
-              <span className="lobby-secondary__mute">次入口</span>
+              <span className="lobby-secondary__label">邀请进房</span>
+              <span className="lobby-secondary__mute">房间号 / 链接</span>
             </div>
             <label className="field lobby-field lobby-field--compact">
               <span>房间码</span>
@@ -265,7 +265,7 @@ export function Lobby() {
 
       <ul className="tips lobby-tips">
         <li>开始游戏：自动匹配；满 3 真人立即开，不足时倒计时后 AI 补位。</li>
-        <li>私房：创建房间后分享房间号或链接（?room=），满 3 真人自动开局；也可房主手动开始。</li>
+        <li>邀请进房：创建房间后点「邀请好友」分享房间号或链接；好友打开链接自动加入同房。</li>
         <li>无微信/QQ 登录；游客身份本地持久化（允许重名）。</li>
       </ul>
     </div>
