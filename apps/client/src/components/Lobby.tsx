@@ -11,6 +11,7 @@ import {
   saveIdentity,
   type GuestIdentity,
 } from '../lib/session';
+import { parseRoomIdFromText } from '../lib/invite';
 import { PlayerAvatar } from './PlayerAvatar';
 import { GuideSpot } from './GuideSpot';
 
@@ -228,18 +229,30 @@ export function Lobby() {
             </div>
           </GuideSpot>
 
-          <section className="lobby-secondary" aria-label="房间入口">
+          <section className="lobby-secondary" aria-label="好友邀请进房">
             <div className="lobby-secondary__head">
-              <span className="lobby-secondary__label">私房</span>
+              <span className="lobby-secondary__label">好友邀请进房</span>
               <span className="lobby-secondary__mute">次入口</span>
             </div>
             <label className="field lobby-field lobby-field--compact">
-              <span>房间码</span>
+              <span>房间号 / 邀请链接</span>
               <input
                 type="text"
-                placeholder="输入房间号加入好友同桌"
+                placeholder="输入房间号或粘贴邀请链接"
                 value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.trim())}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const parsed = parseRoomIdFromText(raw);
+                  setRoomCode(parsed ?? raw.trim());
+                }}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData.getData('text');
+                  const parsed = parseRoomIdFromText(pasted);
+                  if (parsed) {
+                    e.preventDefault();
+                    setRoomCode(parsed);
+                  }
+                }}
                 onKeyDown={(e) =>
                   e.key === 'Enter' && canJoinRoom && enterPrivateRoom(trimmedRoomCode)
                 }
@@ -265,7 +278,7 @@ export function Lobby() {
 
       <ul className="tips lobby-tips">
         <li>开始游戏：自动匹配；满 3 真人立即开，不足时倒计时后 AI 补位。</li>
-        <li>私房：创建房间后分享房间号或链接（?room=），满 3 真人自动开局；也可房主手动开始。</li>
+        <li>好友邀请：创建房间后点「邀请好友」分享房间号或链接；好友在大厅粘贴链接/输入房间号即可同房。</li>
         <li>无微信/QQ 登录；游客身份本地持久化（允许重名）。</li>
       </ul>
     </div>

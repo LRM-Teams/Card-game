@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { Icon } from '@iconify/react';
+import accountMultiplePlus from '@iconify-icons/mdi/account-multiple-plus';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
-import { copyText } from '../lib/clipboard';
 import {
   DISPLAY_NAME_MAX,
   isValidDisplayName,
@@ -10,6 +11,7 @@ import {
   readIdentity,
   saveIdentity,
 } from '../lib/session';
+import { InviteModal, type InviteCopyKind } from './InviteModal';
 import { PlayerAvatar } from './PlayerAvatar';
 import { PlayerKindBadge } from './PlayerKindBadge';
 
@@ -29,7 +31,8 @@ export function Room() {
   const dismissError = useGameStore((s) => s.dismissError);
   const start = useGameStore((s) => s.start);
   const updateDisplayName = useGameStore((s) => s.updateDisplayName);
-  const [copied, setCopied] = useState<'id' | 'link' | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [copied, setCopied] = useState<InviteCopyKind>(null);
   const [nickDraft, setNickDraft] = useState(() => readIdentity().displayName);
 
   const phase = snapshot?.phase;
@@ -46,22 +49,6 @@ export function Room() {
   const hostSeat = snapshot?.hostSeat ?? null;
   const isHost = mySeat != null && mySeat === hostSeat;
   const fullHouse = humans >= 3;
-  const shareLink = roomId ? `${window.location.origin}/?room=${encodeURIComponent(roomId)}` : '';
-
-  const copyRoomId = async () => {
-    if (!roomId) return;
-    const ok = await copyText(roomId);
-    setCopied(ok ? 'id' : null);
-    if (ok) window.setTimeout(() => setCopied(null), 1200);
-  };
-
-  const copyShareLink = async () => {
-    if (!shareLink) return;
-    const ok = await copyText(shareLink);
-    setCopied(ok ? 'link' : null);
-    if (ok) window.setTimeout(() => setCopied(null), 1200);
-  };
-
   // 房主：凑齐 3 真人 → 纯人对战（fillBots=false）；不足 → 补机器人开始（fillBots=true）
   const handleStart = () => start(!fullHouse);
 
@@ -81,16 +68,27 @@ export function Room() {
       <p className="subtitle">3 人桌 · 真人对战 · 当前 {humans}/3 真人</p>
 
       {roomId && (
-        <div className="room-code-card">
-          <span className="room-code-label">房间号</span>
-          <code>{roomId}</code>
-          <button className="btn" type="button" onClick={copyRoomId}>
-            {copied === 'id' ? '已复制' : '复制房间号'}
+        <div className="room-invite-bar">
+          <button
+            className="btn invite-trigger"
+            type="button"
+            onClick={() => setInviteOpen(true)}
+            aria-haspopup="dialog"
+          >
+            <Icon icon={accountMultiplePlus} className="invite-trigger__icon" aria-hidden />
+            邀请好友
           </button>
-          <button className="btn" type="button" onClick={copyShareLink}>
-            {copied === 'link' ? '已复制' : '复制链接'}
-          </button>
+          <p className="room-invite-bar__hint">分享房间号或链接，好友打开即可加入</p>
         </div>
+      )}
+
+      {inviteOpen && roomId && (
+        <InviteModal
+          roomId={roomId}
+          copied={copied}
+          onCopied={setCopied}
+          onClose={() => setInviteOpen(false)}
+        />
       )}
 
       {lastError && (
