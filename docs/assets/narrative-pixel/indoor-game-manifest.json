@@ -1,0 +1,73 @@
+{
+  "version": "v1",
+  "issue": "LRM-520",
+  "layers": {
+    "layer-wall-1920x1080.png": {
+      "path": "narrative-pixel/indoor/layer-wall-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    "layer-lamp-glow-1920x1080.png": {
+      "path": "narrative-pixel/indoor/layer-lamp-glow-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    "layer-vignette-indoor-1920x1080.png": {
+      "path": "narrative-pixel/indoor/layer-vignette-indoor-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ]
+    }
+  },
+  "sprites": {
+    "seat_landlord_marker.png": {
+      "path": "narrative-pixel/indoor/seat_landlord_marker.png",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "seat_farmer_marker.png": {
+      "path": "narrative-pixel/indoor/seat_farmer_marker.png",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "tea_steam_16.png": {
+      "path": "narrative-pixel/indoor/tea_steam_16.png",
+      "size": [
+        16,
+        32
+      ]
+    },
+    "shelf_props_128.png": {
+      "path": "narrative-pixel/indoor/shelf_props_128.png",
+      "size": [
+        128,
+        64
+      ]
+    }
+  },
+  "pixel_v2_refs": {
+    "felt_texture": "/pixel/tiles/felt_texture.png",
+    "rail_texture": "/pixel/tiles/rail_texture.png",
+    "card_front_template": "/pixel/ui/card_front_template.png",
+    "card_back": "/pixel/ui/card_back.png",
+    "badge_landlord": "/pixel/ui/badge_landlord.png",
+    "badge_farmer": "/pixel/ui/badge_farmer.png",
+    "btn_primary_normal": "/pixel/ui/btn_primary.png",
+    "btn_primary_pressed": "/pixel/ui/btn_primary.png",
+    "btn_primary_disabled": "/pixel/ui/btn_primary.png",
+    "landlord_character": "/pixel/characters/landlord_character.png",
+    "farmer_character": "/pixel/characters/farmer_character.png",
+    "bomb": "/pixel/effects/bomb.png",
+    "victory_badge": "/pixel/ui/victory_badge.png",
+    "defeat_badge": "/pixel/ui/defeat_badge.png"
+  }
+}
