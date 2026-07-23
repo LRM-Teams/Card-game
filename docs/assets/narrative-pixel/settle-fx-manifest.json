@@ -1,0 +1,108 @@
+{
+  "version": "v1",
+  "issue": "LRM-522",
+  "settle": {
+    "panel_backdrop_480x360": {
+      "path": "narrative-pixel/settle/panel_backdrop_480x360.png",
+      "size": [
+        480,
+        360
+      ]
+    },
+    "victory_illustration_128": {
+      "path": "narrative-pixel/settle/victory_illustration_128.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "defeat_illustration_128": {
+      "path": "narrative-pixel/settle/defeat_illustration_128.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "btn_rematch_default": {
+      "path": "narrative-pixel/settle/btn_rematch_default.png",
+      "size": [
+        200,
+        48
+      ]
+    },
+    "btn_rematch_hover": {
+      "path": "narrative-pixel/settle/btn_rematch_hover.png",
+      "size": [
+        200,
+        48
+      ]
+    },
+    "btn_rematch_press": {
+      "path": "narrative-pixel/settle/btn_rematch_press.png",
+      "size": [
+        200,
+        48
+      ]
+    }
+  },
+  "fx": {
+    "badge_double_default": {
+      "path": "narrative-pixel/fx/badge_double_default.png",
+      "size": [
+        60,
+        60
+      ]
+    },
+    "badge_double_active": {
+      "path": "narrative-pixel/fx/badge_double_active.png",
+      "size": [
+        60,
+        60
+      ]
+    },
+    "badge_double_dim": {
+      "path": "narrative-pixel/fx/badge_double_dim.png",
+      "size": [
+        60,
+        60
+      ]
+    },
+    "stamp_spring_96x48": {
+      "path": "narrative-pixel/fx/stamp_spring_96x48.png",
+      "size": [
+        96,
+        48
+      ]
+    },
+    "stamp_bomb_96x48": {
+      "path": "narrative-pixel/fx/stamp_bomb_96x48.png",
+      "size": [
+        96,
+        48
+      ]
+    },
+    "overlay_bomb_flash_128": {
+      "path": "narrative-pixel/fx/overlay_bomb_flash_128.png",
+      "size": [
+        128,
+        128
+      ]
+    }
+  },
+  "states": {
+    "btn_rematch": {
+      "path": "narrative-pixel/settle/btn_rematch_default.png",
+      "size": [
+        200,
+        48
+      ]
+    },
+    "badge_double": {
+      "path": "narrative-pixel/fx/badge_double_default.png",
+      "size": [
+        60,
+        60
+      ]
+    }
+  }
+}
