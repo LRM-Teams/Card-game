@@ -118,17 +118,10 @@ def main() -> None:
     out = ROOT / "docs/assets/narrative-pixel/indoor-game-manifest.json"
     out.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # preview 1920 composite
-    PREVIEW.mkdir(parents=True, exist_ok=True)
-    comp = Image.new("RGBA", (1920, 1080), (*C["ink"], 255))
-    comp.alpha_composite(layers["layer-wall-1920x1080.png"])
-    # table ellipse
-    d = ImageDraw.Draw(comp)
-    d.ellipse([360, 280, 1560, 820], fill=(*C["felt"], 255), outline=(*C["wood"], 255), width=16)
-    d.ellipse([380, 300, 1540, 800], fill=(*C["felt2"], 255))
-    comp.alpha_composite(layers["layer-lamp-glow-1920x1080.png"])
-    comp.alpha_composite(layers["layer-vignette-indoor-1920x1080.png"])
-    comp.convert("RGB").save(PREVIEW / "game-indoor-preview-1920.png")
+    # preview: real PNG composite (indoor layers + pixel v2 HUD)
+    from compose_indoor_game_preview import main as compose_preview
+
+    compose_preview()
     print(f"[OK] indoor assets + preview -> {PREVIEW}")
 
 
