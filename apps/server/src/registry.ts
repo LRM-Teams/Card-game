@@ -15,6 +15,7 @@ import {
   MatchQueue,
   resolveMatchFillAfterMs,
   type MatchFormed,
+  type MatchQueueStatus,
   type MatchWaiter,
 } from './matchQueue';
 import { opsLog } from './observability';
@@ -41,11 +42,13 @@ export class RoomRegistry {
   readonly identities = new IdentityStore();
   private matchQueue: MatchQueue;
   private onMatchFormed: ((formed: MatchFormed) => void) | null = null;
+  private onMatchQueueUpdate: (() => void) | null = null;
 
   constructor(opts?: RoomRegistryOptions) {
     this.matchQueue = new MatchQueue({
       formRoom: (humans) => this.formMatchRoom(humans),
       onFormed: (formed) => this.onMatchFormed?.(formed),
+      onQueueUpdate: () => this.onMatchQueueUpdate?.(),
       fillAfterMs: resolveMatchFillAfterMs(opts?.matchFillAfterMs),
     });
   }
@@ -58,6 +61,19 @@ export class RoomRegistry {
   /** transport 注入：匹配成桌后广播事件 / 绑定 socket。 */
   setMatchFormedHandler(handler: (formed: MatchFormed) => void): void {
     this.onMatchFormed = handler;
+  }
+
+  /** transport 注入：队列人数 / 倒计时变更时广播 matching。 */
+  setMatchQueueUpdateHandler(handler: () => void): void {
+    this.onMatchQueueUpdate = handler;
+  }
+
+  getMatchQueueStatus(): MatchQueueStatus | null {
+    return this.matchQueue.getQueueStatus();
+  }
+
+  getMatchingSocketIds(): string[] {
+    return this.matchQueue.waiterSocketIds();
   }
 
   /** 真人加入；返回落座的房间/座位/事件流。失败时 seat=-1、result 为错误。 */

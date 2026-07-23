@@ -38,6 +38,28 @@ export function createGame(io: IoServer): RoomRegistry {
     socket.emit('event', ev);
   };
 
+  const matchingEvent = (status: { humans: number; fillDeadlineAt: number }): ServerEvent => ({
+    type: 'matching',
+    humans: status.humans,
+    fillDeadlineAt: status.fillDeadlineAt,
+  });
+
+  const emitMatching = (socket: Socket): void => {
+    const status = registry.getMatchQueueStatus();
+    if (!status) return;
+    socket.emit('event', matchingEvent(status));
+  };
+
+  const broadcastMatchQueue = (): void => {
+    const status = registry.getMatchQueueStatus();
+    if (!status) return;
+    const ev = matchingEvent(status);
+    for (const socketId of registry.getMatchingSocketIds()) {
+      const sock = io.sockets.sockets.get(socketId);
+      if (sock) sock.emit('event', ev);
+    }
+  };
+
   const resolveIdentity = (
     action: Extract<ClientAction, { type: 'join' } | { type: 'match' }>,
   ) => {
@@ -190,6 +212,7 @@ export function createGame(io: IoServer): RoomRegistry {
   };
 
   registry.setMatchFormedHandler(deliverMatch);
+  registry.setMatchQueueUpdateHandler(broadcastMatchQueue);
 
   io.on('connection', (socket) => {
     socket.on('action', async (action: ClientAction) => {
@@ -199,7 +222,7 @@ export function createGame(io: IoServer): RoomRegistry {
           return;
         }
         if (registry.isMatching(socket.id)) {
-          socket.emit('event', { type: 'matching' } satisfies ServerEvent);
+          emitMatching(socket);
           return;
         }
         const resolved = resolveIdentity(action);
@@ -208,7 +231,7 @@ export function createGame(io: IoServer): RoomRegistry {
           return;
         }
         registry.enqueueMatch(resolved.profile, socket.id);
-        socket.emit('event', { type: 'matching' } satisfies ServerEvent);
+        emitMatching(socket);
         return;
       }
 

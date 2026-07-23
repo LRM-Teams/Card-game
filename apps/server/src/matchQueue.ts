@@ -30,6 +30,12 @@ export interface MatchWaiter {
   enqueuedAt: number;
 }
 
+/** 匹配队列对外可见状态（LRM-317 客户端等待态）。 */
+export interface MatchQueueStatus {
+  humans: number;
+  fillDeadlineAt: number;
+}
+
 export interface MatchFormed {
   room: GameRoom;
   /** 每位入桌玩家的落座结果（含 you_joined + snapshot 等）。 */
@@ -48,18 +54,23 @@ type FormRoomFn = (humans: MatchWaiter[]) => {
 export class MatchQueue {
   private queue: MatchWaiter[] = [];
   private timer: ReturnType<typeof setTimeout> | null = null;
+  /** 当前补机倒计时起点（首人入队时 armTimer）。 */
+  private timerStartedAt: number | null = null;
   /** 超时后用 AI 补位开局（毫秒）。 */
   private readonly fillAfterMs: number;
   private readonly formRoom: FormRoomFn;
   private readonly onFormed: (formed: MatchFormed) => void;
+  private readonly onQueueUpdate: (() => void) | null;
 
   constructor(opts: {
     formRoom: FormRoomFn;
     onFormed: (formed: MatchFormed) => void;
+    onQueueUpdate?: () => void;
     fillAfterMs?: number;
   }) {
     this.formRoom = opts.formRoom;
     this.onFormed = opts.onFormed;
+    this.onQueueUpdate = opts.onQueueUpdate ?? null;
     this.fillAfterMs = resolveMatchFillAfterMs(opts.fillAfterMs);
   }
 
@@ -76,6 +87,25 @@ export class MatchQueue {
     return this.queue.some((w) => w.socketId === socketId);
   }
 
+  /** 队列内所有等待 socket（用于广播 matching 状态）。 */
+  waiterSocketIds(): string[] {
+    return this.queue.map((w) => w.socketId);
+  }
+
+  /** 当前队列可见状态；空队列返回 null。 */
+  getQueueStatus(): MatchQueueStatus | null {
+    if (this.queue.length === 0) return null;
+    const started = this.timerStartedAt ?? this.queue[0]!.enqueuedAt;
+    return {
+      humans: this.queue.length,
+      fillDeadlineAt: started + this.fillAfterMs,
+    };
+  }
+
+  private notifyQueueUpdate(): void {
+    if (this.queue.length > 0) this.onQueueUpdate?.();
+  }
+
   enqueue(waiter: MatchWaiter): void {
     if (this.queue.some((w) => w.socketId === waiter.socketId)) return;
     // 同 guest 重复入队：踢掉旧的
@@ -85,6 +115,7 @@ export class MatchQueue {
     if (this.queue.length >= 3) {
       void this.flush(false);
     }
+    this.notifyQueueUpdate();
   }
 
   /** 取消匹配；返回是否曾在队列中。 */
@@ -92,7 +123,9 @@ export class MatchQueue {
     const before = this.queue.length;
     this.queue = this.queue.filter((w) => w.socketId !== socketId);
     if (this.queue.length === 0) this.clearTimer();
-    return this.queue.length < before;
+    const cancelled = this.queue.length < before;
+    if (cancelled) this.notifyQueueUpdate();
+    return cancelled;
   }
 
   /** socket 断开时出队。 */
@@ -102,8 +135,10 @@ export class MatchQueue {
 
   private armTimer(): void {
     if (this.timer) return;
+    this.timerStartedAt = Date.now();
     this.timer = setTimeout(() => {
       this.timer = null;
+      this.timerStartedAt = null;
       if (this.queue.length > 0) void this.flush(true);
     }, this.fillAfterMs);
   }
@@ -113,6 +148,7 @@ export class MatchQueue {
       clearTimeout(this.timer);
       this.timer = null;
     }
+    this.timerStartedAt = null;
   }
 
   private async flush(fillBots: boolean): Promise<void> {

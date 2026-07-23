@@ -122,6 +122,10 @@ interface UiState {
   guestId: string | null;
   beans: number;
   matching: boolean;
+  /** 匹配队列真人数量（1–3）；仅 matching=true 时有效。 */
+  matchHumans: number;
+  /** 补机截止 Unix ms；与服务端 MATCH_FILL_AFTER_MS 对齐。 */
+  matchFillDeadlineAt: number | null;
   mySeat: number | null;
   roomId: string | null;
   myHand: Card[];
@@ -171,6 +175,8 @@ export const useGameStore = create<UiState>((set, get) => ({
   guestId: null,
   beans: 1000,
   matching: false,
+  matchHumans: 0,
+  matchFillDeadlineAt: null,
   mySeat: null,
   roomId: null,
   myHand: [],
@@ -208,10 +214,15 @@ export const useGameStore = create<UiState>((set, get) => ({
     onEvent((e) => {
       switch (e.type) {
         case 'matching':
-          set({ matching: true, lastError: null });
+          set({
+            matching: true,
+            lastError: null,
+            matchHumans: e.humans,
+            matchFillDeadlineAt: e.fillDeadlineAt,
+          });
           break;
         case 'match_cancelled':
-          set({ matching: false });
+          set({ matching: false, matchHumans: 0, matchFillDeadlineAt: null });
           break;
         case 'you_joined': {
           const prev = readIdentity();
@@ -232,6 +243,8 @@ export const useGameStore = create<UiState>((set, get) => ({
             guestId: e.guestId,
             beans: e.beans,
             matching: false,
+            matchHumans: 0,
+            matchFillDeadlineAt: null,
           });
           break;
         }
@@ -334,7 +347,12 @@ export const useGameStore = create<UiState>((set, get) => ({
           break;
         }
         case 'error':
-          set({ lastError: { code: e.code, message: e.message, at: Date.now() }, matching: false });
+          set({
+            lastError: { code: e.code, message: e.message, at: Date.now() },
+            matching: false,
+            matchHumans: 0,
+            matchFillDeadlineAt: null,
+          });
           break;
         default:
           break;
@@ -354,6 +372,8 @@ export const useGameStore = create<UiState>((set, get) => ({
       guestId: identity.guestId,
       beans: identity.beans,
       matching: false,
+      matchHumans: 0,
+      matchFillDeadlineAt: null,
       mySeat: null,
       roomId: null,
       myHand: [],
@@ -387,6 +407,8 @@ export const useGameStore = create<UiState>((set, get) => ({
       guestId: identity.guestId,
       beans: identity.beans,
       matching: true,
+      matchHumans: 1,
+      matchFillDeadlineAt: null,
       mySeat: null,
       roomId: null,
       myHand: [],
@@ -504,6 +526,8 @@ export const useGameStore = create<UiState>((set, get) => ({
     autoRejoinAttempted = false;
     set({
       matching: false,
+      matchHumans: 0,
+      matchFillDeadlineAt: null,
       mySeat: null,
       roomId: null,
       myHand: [],

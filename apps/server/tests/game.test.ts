@@ -305,6 +305,30 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     expect(custom.matchFillAfterMs).toBe(30_000);
   });
 
+  it('快速匹配：队列状态 humans / fillDeadlineAt（LRM-317）', () => {
+    vi.useFakeTimers();
+    const now = Date.now();
+    vi.setSystemTime(now);
+    const registry = new RoomRegistry({ matchFillAfterMs: 15_000 });
+    const updates: number[] = [];
+    registry.setMatchQueueUpdateHandler(() => {
+      const s = registry.getMatchQueueStatus();
+      if (s) updates.push(s.humans);
+    });
+    expect(registry.getMatchQueueStatus()).toBeNull();
+    registry.enqueueMatch(mkHuman('甲', 'g-q-a'), 'sock-q-a');
+    const s1 = registry.getMatchQueueStatus();
+    expect(s1?.humans).toBe(1);
+    expect(s1?.fillDeadlineAt).toBe(now + 15_000);
+    registry.enqueueMatch(mkHuman('乙', 'g-q-b'), 'sock-q-b');
+    expect(registry.getMatchQueueStatus()?.humans).toBe(2);
+    expect(updates).toEqual([1, 2]);
+    registry.cancelMatch('sock-q-a');
+    expect(registry.getMatchQueueStatus()?.humans).toBe(1);
+    expect(updates).toEqual([1, 2, 1]);
+    vi.useRealTimers();
+  });
+
   it('IdentityStore：同 guestId 改昵称/头像，豆子连续', () => {
     const store = new IdentityStore();
     const a = store.resolve({ displayName: '甲甲', guestId: 'g1', avatarId: 'av-2' });
