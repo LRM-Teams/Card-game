@@ -346,7 +346,7 @@ export function FxDemo() {
       {scene === 'cards' && (
         <div className="table fx-demo-table" data-fx="cards" data-scene="cards">
           <p className="fx-demo-caption">
-            LRM-207 牌面资产接入 · 纸面 token + 大小王 SVG + 对手牌背 + 不可出态
+            LRM-315 牌面 v2 接入 · 纸面 SVG + 大小王/牌背 + 选中/不可出/出牌区三态
           </p>
           <div className="fx-demo-seats" style={{ alignItems: 'flex-start', gap: 32 }}>
             <div>

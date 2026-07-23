@@ -17,7 +17,7 @@ interface Props {
   style?: CSSProperties;
 }
 
-/** LRM-207：纸面 token + 大小王/牌背 SVG 资产，不再用纯 CSS 色块占位。 */
+/** LRM-207/315：v2 纸面 SVG + 组件角标；大小王/牌背全图资产。 */
 export function CardView({
   card,
   selected,
@@ -68,6 +68,7 @@ export function CardView({
         <img className="card-joker-art" src={jokerAsset} alt="" aria-hidden="true" />
       ) : (
         <>
+          <img className="card-front-art" src="/cards/card-paper.svg" alt="" aria-hidden="true" />
           <span className="card-corner top">
             <span className="card-corner-rank">{card.display}</span>
             {symbol ? <span className="card-corner-suit">{symbol}</span> : null}

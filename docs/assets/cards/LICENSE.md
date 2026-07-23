@@ -4,6 +4,7 @@
 - 许可：团队内部可商用；可修改、可再分发于本项目
 - 边界：仅对标「欢乐斗地主」纸质感/信息层级体验，**不包含**腾讯原图、商标或可识别抄袭元素
 - 文件：
+  - `apps/client/public/cards/card-paper.svg`（v2 纸面母版，无点数/花色）
   - `apps/client/public/cards/card-front-template.svg`
   - `apps/client/public/cards/card-back.svg`
   - `apps/client/public/cards/joker-big.svg`
