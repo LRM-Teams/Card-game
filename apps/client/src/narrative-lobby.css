@@ -327,6 +327,55 @@ body.app--lobby-page .content {
   color: var(--ddz-np-lamp-500);
 }
 
+.np-lobby--disconnected .np-lobby__viewport {
+  filter: grayscale(0.15) brightness(0.92);
+}
+
+.np-tv-error-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #e87848;
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+  max-width: 100%;
+}
+
+.np-error-stamp-wrap {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.np-hotspot--station[role='alert'] {
+  cursor: pointer;
+}
+
+.np-error-stamp {
+  width: 48px;
+  height: 24px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+.np-error-stamp__label {
+  margin: 0;
+  max-width: 72px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: #c43c3c;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
 .np-status-bar {
   margin: 8px 0 0;
   padding: 8px 12px;

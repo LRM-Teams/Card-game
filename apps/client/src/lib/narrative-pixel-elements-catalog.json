@@ -393,6 +393,11 @@
       "width": 120,
       "height": 100
     },
+    "ui_error_stamp": {
+      "path": "narrative-pixel/ui/states/ui_error_stamp.png",
+      "width": 48,
+      "height": 24
+    },
     "station_board_empty": {
       "path": "narrative-pixel/ui/states/station_board_empty.png",
       "width": 120,

@@ -64,6 +64,7 @@ export const npUiStates = {
   tvHover: () => npElement('ui/states', 'tv_screen_hover'),
   tvLoading: () => npElement('ui/states', 'tv_screen_loading'),
   tvError: () => npElement('ui/states', 'tv_screen_error'),
+  errorStamp: () => npElement('ui/states', 'ui_error_stamp'),
   stationBoard: () => npElement('ui/states', 'station_board_empty'),
   ledger: () => npElement('ui/states', 'ledger_book_open'),
   btnWoodDefault: () => npElement('ui/states', 'btn_wood_default'),
@@ -78,3 +79,21 @@ export const npElementCounts = Object.fromEntries(
 ) as Record<string, number>;
 
 export const npTotalElements = Object.values(npElementCounts).reduce((a, b) => a + b, 0);
+
+/** LRM-466：错误文案 ≤12 字（规格 §9） */
+export function npErrorLabel(text: string, fallback: string): string {
+  const s = (text || fallback).trim();
+  return s.length > 12 ? s.slice(0, 12) : s;
+}
+
+export type NpDemoError = 'disconnect' | 'api' | 'asset' | 'connecting';
+
+export function readNpDemoError(): NpDemoError | null {
+  try {
+    const v = new URLSearchParams(window.location.search).get('npDemo');
+    if (v === 'disconnect' || v === 'api' || v === 'asset' || v === 'connecting') return v;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}

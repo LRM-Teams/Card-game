@@ -16,7 +16,7 @@ import {
   narrativePixelHotspots,
   narrativePixelScene,
 } from '../lib/narrativePixelAssets';
-import { npTotalElements, npUiStates } from '../lib/narrativePixelElements';
+import { npTotalElements, npUiStates, npErrorLabel, readNpDemoError } from '../lib/narrativePixelElements';
 import { PlayerAvatar } from './PlayerAvatar';
 import { GuideSpot } from './GuideSpot';
 
@@ -62,6 +62,8 @@ export function Lobby() {
   const [identity, setIdentity] = useState<GuestIdentity>(() => readIdentity());
   const [roomCode, setRoomCode] = useState(readRoomQuery);
   const [secondsLeft, setSecondsLeft] = useState(0);
+  const [assetFailed, setAssetFailed] = useState(false);
+  const npDemo = readNpDemoError();
   const deepLinkPending = useRef(Boolean(readRoomQuery()));
   const deepLinkDone = useRef(false);
 
@@ -139,8 +141,27 @@ export function Lobby() {
     navigate({ to: '/room' });
   };
 
+  const connecting = npDemo === 'connecting' || status === 'connecting';
+  const disconnected = npDemo === 'disconnect' || (status !== 'connected' && !connecting);
+  const apiError = npDemo === 'api' || (!!lastError && !disconnected);
+  const showAssetError = npDemo === 'asset' || assetFailed;
+  const stampError = apiError || showAssetError;
+  const stampLabel = apiError
+    ? npErrorLabel(lastError?.message ?? '', '操作失败')
+    : npErrorLabel('', '资源加载失败');
+  const connLabel = connecting ? '连接中…' : '未连接';
+  const tvFrame = connecting
+    ? npUiStates.tvLoading()
+    : disconnected
+      ? npUiStates.tvError()
+      : npUiStates.tvDefault();
+  const onSceneAssetError = () => setAssetFailed(true);
+
   return (
-    <div className="np-lobby" data-theme="narrative-pixel">
+    <div
+      className={`np-lobby${disconnected ? ' np-lobby--disconnected' : ''}${stampError ? ' np-lobby--stamp-error' : ''}`}
+      data-theme="narrative-pixel"
+    >
       <div className="np-lobby__viewport" ref={viewportRef}>
         <img
           className="np-lobby__layer np-lobby__layer--far"
@@ -148,6 +169,7 @@ export function Lobby() {
           alt=""
           aria-hidden
           draggable={false}
+          onError={onSceneAssetError}
         />
         <img
           className="np-lobby__layer np-lobby__layer--mid"
@@ -155,6 +177,7 @@ export function Lobby() {
           alt=""
           aria-hidden
           draggable={false}
+          onError={onSceneAssetError}
         />
         <NarrativeSceneElements />
         <img
@@ -254,6 +277,8 @@ export function Lobby() {
               className="np-hotspot np-hotspot--station"
               style={hotspotStyle(narrativePixelHotspots.stationBoard)}
               aria-label="房间站牌"
+              role={stampError ? 'alert' : undefined}
+              onClick={stampError ? () => dismissError() : undefined}
             >
               <img
                 className="np-hotspot__frame"
@@ -261,6 +286,17 @@ export function Lobby() {
                 alt=""
                 aria-hidden
               />
+              {stampError && (
+                <div className="np-error-stamp-wrap" aria-live="polite">
+                  <img
+                    className="np-error-stamp"
+                    src={npUiStates.errorStamp()}
+                    alt=""
+                    aria-hidden
+                  />
+                  <p className="np-error-stamp__label">{stampLabel}</p>
+                </div>
+              )}
               <div className="np-hotspot__body">
                 <label className="np-field">
                   <span>房间码</span>
@@ -307,14 +343,15 @@ export function Lobby() {
                 className="np-hotspot np-hotspot--tv"
                 style={hotspotStyle(narrativePixelHotspots.tvStart)}
                 aria-label="开始游戏"
+                role={disconnected ? 'alert' : undefined}
               >
-                <img
-                  className="np-hotspot__frame"
-                  src={npUiStates.tvDefault()}
-                  alt=""
-                  aria-hidden
-                />
+                <img className="np-hotspot__frame" src={tvFrame} alt="" aria-hidden />
                 <div className="np-hotspot__body">
+                  {disconnected && (
+                    <p className="np-tv-error-label" aria-live="polite">
+                      {connLabel}
+                    </p>
+                  )}
                   <button
                     className="np-btn-tv"
                     type="button"
@@ -329,20 +366,6 @@ export function Lobby() {
           </div>
         )}
       </div>
-
-      {status !== 'connected' && (
-        <div className="np-status-bar warn">
-          {status === 'connecting'
-            ? '正在连接服务器…'
-            : '未连接到服务器，请先启动 apps/server (:3000)'}
-        </div>
-      )}
-
-      {lastError && (
-        <div className="np-status-bar warn" onClick={dismissError} role="alert">
-          失败：{lastError.message}（{lastError.code}）— 点击关闭
-        </div>
-      )}
 
       <ul className="np-tips">
         <li>开始游戏：自动匹配；满 3 真人立即开，不足时倒计时后 AI 补位。</li>
