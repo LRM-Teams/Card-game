@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
-import { copyText } from '../lib/clipboard';
+import { shortRoomLabel } from '../lib/invite';
+import { InviteSheet } from './InviteSheet';
 import {
   DISPLAY_NAME_MAX,
   isValidDisplayName,
@@ -29,7 +30,7 @@ export function Room() {
   const dismissError = useGameStore((s) => s.dismissError);
   const start = useGameStore((s) => s.start);
   const updateDisplayName = useGameStore((s) => s.updateDisplayName);
-  const [copied, setCopied] = useState<'id' | 'link' | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [nickDraft, setNickDraft] = useState(() => readIdentity().displayName);
 
   const phase = snapshot?.phase;
@@ -46,22 +47,6 @@ export function Room() {
   const hostSeat = snapshot?.hostSeat ?? null;
   const isHost = mySeat != null && mySeat === hostSeat;
   const fullHouse = humans >= 3;
-  const shareLink = roomId ? `${window.location.origin}/?room=${encodeURIComponent(roomId)}` : '';
-
-  const copyRoomId = async () => {
-    if (!roomId) return;
-    const ok = await copyText(roomId);
-    setCopied(ok ? 'id' : null);
-    if (ok) window.setTimeout(() => setCopied(null), 1200);
-  };
-
-  const copyShareLink = async () => {
-    if (!shareLink) return;
-    const ok = await copyText(shareLink);
-    setCopied(ok ? 'link' : null);
-    if (ok) window.setTimeout(() => setCopied(null), 1200);
-  };
-
   // 房主：凑齐 3 真人 → 纯人对战（fillBots=false）；不足 → 补机器人开始（fillBots=true）
   const handleStart = () => start(!fullHouse);
 
@@ -81,17 +66,23 @@ export function Room() {
       <p className="subtitle">3 人桌 · 真人对战 · 当前 {humans}/3 真人</p>
 
       {roomId && (
-        <div className="room-code-card">
-          <span className="room-code-label">房间号</span>
-          <code>{roomId}</code>
-          <button className="btn" type="button" onClick={copyRoomId}>
-            {copied === 'id' ? '已复制' : '复制房间号'}
-          </button>
-          <button className="btn" type="button" onClick={copyShareLink}>
-            {copied === 'link' ? '已复制' : '复制链接'}
+        <div className="room-invite-bar">
+          <div className="room-invite-bar__meta">
+            <span className="room-invite-bar__label">房间 {shortRoomLabel(roomId)}</span>
+            <span className="room-invite-bar__humans">{humans}/3 真人</span>
+          </div>
+          <button
+            type="button"
+            className="btn primary room-invite-bar__cta"
+            data-testid="room-invite-open"
+            onClick={() => setInviteOpen(true)}
+          >
+            邀请好友
           </button>
         </div>
       )}
+
+      {roomId && <InviteSheet roomId={roomId} open={inviteOpen} onClose={() => setInviteOpen(false)} />}
 
       {lastError && (
         <div className="hint warn lobby-error" onClick={dismissError}>
