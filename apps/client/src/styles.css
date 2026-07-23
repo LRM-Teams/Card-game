@@ -1601,11 +1601,20 @@ body::before {
 .hand {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
   gap: 0;
 }
+.last-cards,
+.bottom-row {
+  flex-wrap: wrap;
+}
 .hand {
+  flex-wrap: nowrap;
   position: relative;
+  --hand-count: 17;
+  --hand-fit-gap: calc(
+    (100% - (var(--ddz-card-w) * var(--hand-count))) /
+      max(var(--hand-count) - 1, 1)
+  );
   padding: 36px 8px 14px;
   min-height: 188px;
   max-width: 100%;
@@ -1638,9 +1647,10 @@ body::before {
 .hand .card {
   --card-offset: 0;
   --card-lift: 0px;
+  flex: 0 0 auto;
   transform: translateY(var(--card-lift));
   transform-origin: 50% 100%;
-  margin-left: clamp(-20px, -17px, -14px);
+  margin-left: clamp(-24px, var(--hand-fit-gap), -8px);
   transition: transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out;
 }
 .hand .card:hover:not(:disabled) {
@@ -1915,6 +1925,19 @@ body::before {
   max-width: 148px;
   min-height: 44px;
   pointer-events: none;
+  position: relative;
+}
+.opponent-back-more {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  font-size: 10px;
+  line-height: 1;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  color: rgba(255, 250, 240, 0.88);
+  pointer-events: none;
 }
 .opponent-back-fan .card {
   margin-left: -18px;
@@ -2020,11 +2043,12 @@ body::before {
 }
 .seat-open-hand {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 0;
   margin-top: 4px;
   max-width: 148px;
+  overflow: hidden;
 }
 .seat-open-hand .card {
   width: calc(var(--ddz-card-small-w) * 0.72);
