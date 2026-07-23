@@ -177,12 +177,14 @@ def main() -> None:
         catalog_out[category] = {}
         for name in names:
             sprite = make_sprite(name, category)
-            rel = f"narrative-pixel/{category}/{name}.png"
-            for base in (PUBLIC, DOCS):
-                out = base / rel
-                out.parent.mkdir(parents=True, exist_ok=True)
-                sprite.save(out)
-            catalog_out[category][name] = {
+        rel = f"narrative-pixel/{category}/{name}.png"
+        out_public = PUBLIC / rel
+        out_public.parent.mkdir(parents=True, exist_ok=True)
+        sprite.save(out_public)
+        out_docs = DOCS / category / f"{name}.png"
+        out_docs.parent.mkdir(parents=True, exist_ok=True)
+        sprite.save(out_docs)
+        catalog_out[category][name] = {
                 "path": rel,
                 "width": sprite.width,
                 "height": sprite.height,
@@ -197,10 +199,12 @@ def main() -> None:
         if kind == "lighting":
             fname = "layer-lighting-1920x1080.png"
         rel = f"narrative-pixel/{sub}/{fname}"
-        for base in (PUBLIC, DOCS):
-            out = base / rel
-            out.parent.mkdir(parents=True, exist_ok=True)
-            layer.save(out)
+        out_public = PUBLIC / rel
+        out_public.parent.mkdir(parents=True, exist_ok=True)
+        layer.save(out_public)
+        out_docs = DOCS / sub / fname
+        out_docs.parent.mkdir(parents=True, exist_ok=True)
+        layer.save(out_docs)
 
     full = Image.new("RGBA", (1920, 1080), (0, 0, 0, 255))
     for kind in ("far", "mid", "fg"):
@@ -209,7 +213,9 @@ def main() -> None:
         p = PUBLIC / f"narrative-pixel/{sub}/{fname}"
         full.alpha_composite(Image.open(p))
     for base in (PUBLIC, DOCS):
-        full.save(base / "narrative-pixel/scene/scene-full-1920x1080.png")
+        target = base / ("narrative-pixel/scene/scene-full-1920x1080.png" if base == PUBLIC else "scene/scene-full-1920x1080.png")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        full.save(target)
 
     cat_json = json.dumps(catalog_out, indent=2, ensure_ascii=False)
     for path in (
