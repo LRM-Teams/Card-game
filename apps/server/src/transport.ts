@@ -245,6 +245,11 @@ export function createGame(io: IoServer): RoomRegistry {
       }
 
       if (action.type === 'join') {
+        // 同一 socket 已在房内时拒绝重复 join（重连走新连接；防呆双发）
+        if (bindings.has(socket.id)) {
+          fail(socket, 'already_in_room', '已在房间内，无需重复加入');
+          return;
+        }
         if (registry.isMatching(socket.id)) registry.cancelMatch(socket.id);
         const resolved = resolveIdentity(action);
         if (!resolved.ok) {

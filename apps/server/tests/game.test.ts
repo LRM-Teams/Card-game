@@ -207,8 +207,10 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     await a.room.start();
     registry.disconnect(a.room.roomId, 0, 'socket-a');
     registry.join(mkHuman('A', 'g-a'), 'socket-a2', a.room.roomId);
-    const line = logs.find((l) => l.includes('[ops]') && l.includes('player.reconnect'));
-    expect(line).toBeTruthy();
+    const disconnectLine = logs.find((l) => l.includes('[ops]') && l.includes('player.disconnect'));
+    const reconnectLine = logs.find((l) => l.includes('[ops]') && l.includes('player.reconnect'));
+    expect(disconnectLine).toBeTruthy();
+    expect(reconnectLine).toBeTruthy();
     spy.mockRestore();
   });
 

@@ -368,8 +368,9 @@ export const useGameStore = create<UiState>((set, get) => ({
   },
 
   join: (identity, roomId) => {
-    // 重连中禁止手动重复 join（AC：防呆）；等 socket 恢复后走 tryReconnectRejoin
-    if (get().status === 'reconnecting') return;
+    // 重连窗口内禁止手动重复 join（AC：防呆）；等 socket 恢复后走 tryReconnectRejoin
+    const conn = get().status;
+    if (conn === 'reconnecting' || conn === 'reconnect_failed') return;
     saveIdentity(identity);
     savePlayerSession(identity.displayName, roomId, {
       guestId: identity.guestId,

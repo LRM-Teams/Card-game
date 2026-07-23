@@ -32,6 +32,7 @@ curl -sS http://127.0.0.1:8088/health | jq .
 | `room.join` | 真人入座 |
 | `game.start` | 开局（发牌进入叫地主） |
 | `game.settle` | 结算（含 winnerSeat / scores） |
+| `player.disconnect` | 真人断线（座位保留，等重连） |
 | `player.reconnect` | 断线重连接管座位 |
 | `match.form` | 快速匹配成桌（`fillBots` / `humanCount` / `waitMs`） |
 
@@ -53,10 +54,19 @@ docker logs ddz --since 2h 2>&1 | grep '\[ops\]' | grep -E 'game\.(start|settle)
 # 快速匹配成桌（超时补机路径：fillBots:true）
 docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form'
 docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep 'match.form' | grep '"fillBots":true'
+
+# 断线重连路径（LRM-519）
+docker logs ddz --since 30m 2>&1 | grep '\[ops\]' | grep -E 'player\.(disconnect|reconnect)|room\.join'
 ```
 
 烟测一局三真人后，应能 grep 出同一 `roomId` 的  
-`room.create` → `room.join`×3 → `game.start` → … → `game.settle`（可夹杂 `player.reconnect`）。
+`room.create` → `room.join`×3 → `game.start` → … → `game.settle`（可夹杂 `player.disconnect` / `player.reconnect`）。
+
+断线重连烟测：
+
+```bash
+SERVER_URL=http://127.0.0.1:3000 node apps/server/scripts/reconnect-smoke.cjs
+```
 
 ## Docker 重启 SOP
 

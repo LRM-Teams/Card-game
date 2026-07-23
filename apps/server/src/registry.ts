@@ -251,7 +251,18 @@ export class RoomRegistry {
     if (sockets?.get(seat) === socketId) sockets.delete(seat);
     const room = this.rooms.get(roomId);
     if (!room) return { ok: false, code: 'room_not_found', message: '房间不存在' };
-    return { ok: true, events: room.markDisconnected(seat) };
+    const events = room.markDisconnected(seat);
+    if (events.length > 0) {
+      opsLog({
+        event: 'player.disconnect',
+        roomId,
+        phase: room.phase,
+        seat,
+        humanCount: room.humanCount,
+        playerCount: room.playerCount,
+      });
+    }
+    return { ok: true, events };
   }
 
   /** 已对哪个 GameResult 结算过豆子（防 drain 重复加减）。 */
