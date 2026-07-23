@@ -1610,7 +1610,7 @@ body::before {
   min-height: 188px;
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   align-items: flex-end;
   perspective: 1200px;
   scrollbar-width: thin;
@@ -1674,6 +1674,16 @@ body::before {
   gap: var(--ddz-space-1);
   margin-top: var(--ddz-space-2);
   font-size: var(--ddz-text-xs);
+  overflow: hidden;
+}
+.bottom-row .card {
+  overflow: hidden;
+}
+.bottom-row .card.is-small {
+  margin-left: -8px;
+}
+.bottom-row .card.is-small:first-child {
+  margin-left: 0;
 }
 .turn-line {
   display: flex;
@@ -1761,17 +1771,15 @@ body::before {
   border-radius: var(--ddz-radius-card);
   background: transparent;
   color: var(--ddz-suit-ink);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
+  display: block;
   cursor: pointer;
   transition: transform 100ms ease, box-shadow 100ms ease, border-color 100ms ease, filter 120ms ease, opacity 120ms ease;
   box-shadow: none;
   padding: 0;
   font-family: Georgia, 'Times New Roman', Times, 'Microsoft YaHei', serif;
   overflow: hidden;
+  contain: layout paint;
+  isolation: isolate;
 }
 .card:first-child {
   margin-left: 0;
@@ -1812,12 +1820,14 @@ body::before {
 .card-joker-art,
 .card-front-art,
 .card-back-art {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
-  position: relative;
   z-index: 0;
+  pointer-events: none;
 }
 .card.is-face-down {
   border-color: rgba(90, 20, 30, 0.55);
@@ -1829,8 +1839,12 @@ body::before {
   filter: saturate(0.55);
 }
 .card-suit-center {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: clamp(18px, 40%, 28px);
   line-height: 1;
   font-weight: 700;
@@ -2013,9 +2027,10 @@ body::before {
   max-width: 148px;
 }
 .seat-open-hand .card {
-  transform: scale(0.72);
-  transform-origin: top center;
-  margin: -4px -10px 0 0;
+  width: calc(var(--ddz-card-small-w) * 0.72);
+  height: calc(var(--ddz-card-small-h) * 0.72);
+  margin: -2px -8px 0 0;
+  transform: none;
 }
 .seat-open-more {
   align-self: center;
@@ -2318,15 +2333,25 @@ body::before {
   margin-left: -10px;
   pointer-events: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
 }
 .result-reveal-cards .card:first-child {
   margin-left: 0;
 }
 .result-reveal-cards .card-corner-rank {
-  font-size: 9px;
+  font-size: 8px;
 }
-.result-reveal-cards .card-suit-center {
-  font-size: 12px;
+.result-reveal-cards .card-corner-suit {
+  font-size: 7px;
+  margin-top: 0;
+}
+.result-reveal-cards .card-corner.top {
+  top: 2px;
+  left: 3px;
+}
+.result-reveal-cards .card-corner.bottom {
+  right: 3px;
+  bottom: 2px;
 }
 .result-card.lose .result-reveal {
   border-color: var(--ddz-settle-lose-reveal-border);
@@ -2710,7 +2735,7 @@ body::before {
     min-height: 96px;
     padding: 18px 2px 10px;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
