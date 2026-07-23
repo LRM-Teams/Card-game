@@ -1,0 +1,274 @@
+{
+  "sheets": [
+    {
+      "file": "backgrounds_lobby_hero_360x160.png",
+      "category": "backgrounds",
+      "animation": "lobby_hero",
+      "tile_size": {
+        "width": 360,
+        "height": 160
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "lobby_hero"
+      ]
+    },
+    {
+      "file": "backgrounds_room_bg_320x180.png",
+      "category": "backgrounds",
+      "animation": "room_bg",
+      "tile_size": {
+        "width": 320,
+        "height": 180
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "room_bg"
+      ]
+    },
+    {
+      "file": "characters_farmer_character_72x72.png",
+      "category": "characters",
+      "animation": "farmer_character",
+      "tile_size": {
+        "width": 72,
+        "height": 72
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "farmer_character"
+      ]
+    },
+    {
+      "file": "characters_landlord_character_96x96.png",
+      "category": "characters",
+      "animation": "landlord_character",
+      "tile_size": {
+        "width": 96,
+        "height": 96
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "landlord_character"
+      ]
+    },
+    {
+      "file": "effects_bomb_80x60.png",
+      "category": "effects",
+      "animation": "bomb",
+      "tile_size": {
+        "width": 80,
+        "height": 60
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "bomb"
+      ]
+    },
+    {
+      "file": "effects_spring_80x60.png",
+      "category": "effects",
+      "animation": "spring",
+      "tile_size": {
+        "width": 80,
+        "height": 60
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "spring"
+      ]
+    },
+    {
+      "file": "tiles_felt_texture_64x64.png",
+      "category": "tiles",
+      "animation": "felt_texture",
+      "tile_size": {
+        "width": 64,
+        "height": 64
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "felt_texture"
+      ]
+    },
+    {
+      "file": "tiles_rail_texture_64x64.png",
+      "category": "tiles",
+      "animation": "rail_texture",
+      "tile_size": {
+        "width": 64,
+        "height": 64
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "rail_texture"
+      ]
+    },
+    {
+      "file": "ui_badge_farmer_24x24.png",
+      "category": "ui",
+      "animation": "badge_farmer",
+      "tile_size": {
+        "width": 24,
+        "height": 24
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "badge_farmer"
+      ]
+    },
+    {
+      "file": "ui_badge_landlord_28x28.png",
+      "category": "ui",
+      "animation": "badge_landlord",
+      "tile_size": {
+        "width": 28,
+        "height": 28
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "badge_landlord"
+      ]
+    },
+    {
+      "file": "ui_btn_primary_120x40.png",
+      "category": "ui",
+      "animation": "btn_primary",
+      "tile_size": {
+        "width": 120,
+        "height": 40
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "btn_primary"
+      ]
+    },
+    {
+      "file": "ui_card_back_52x74.png",
+      "category": "ui",
+      "animation": "card_back",
+      "tile_size": {
+        "width": 52,
+        "height": 74
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "card_back"
+      ]
+    },
+    {
+      "file": "ui_card_front_template_52x74.png",
+      "category": "ui",
+      "animation": "card_front_template",
+      "tile_size": {
+        "width": 52,
+        "height": 74
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "card_front_template"
+      ]
+    },
+    {
+      "file": "ui_joker_big_52x74.png",
+      "category": "ui",
+      "animation": "joker_big",
+      "tile_size": {
+        "width": 52,
+        "height": 74
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "joker_big"
+      ]
+    },
+    {
+      "file": "ui_joker_small_52x74.png",
+      "category": "ui",
+      "animation": "joker_small",
+      "tile_size": {
+        "width": 52,
+        "height": 74
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "joker_small"
+      ]
+    },
+    {
+      "file": "ui_defeat_badge_90x70.png",
+      "category": "ui",
+      "animation": "defeat_badge",
+      "tile_size": {
+        "width": 90,
+        "height": 70
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "defeat_badge"
+      ]
+    },
+    {
+      "file": "ui_victory_badge_90x70.png",
+      "category": "ui",
+      "animation": "victory_badge",
+      "tile_size": {
+        "width": 90,
+        "height": 70
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "victory_badge"
+      ]
+    },
+    {
+      "file": "ui_double_badge_60x60.png",
+      "category": "ui",
+      "animation": "double_badge",
+      "tile_size": {
+        "width": 60,
+        "height": 60
+      },
+      "columns": 1,
+      "rows": 1,
+      "frame_count": 1,
+      "frames": [
+        "double_badge"
+      ]
+    }
+  ]
+}

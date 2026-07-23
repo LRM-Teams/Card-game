@@ -16,6 +16,7 @@ import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { ConnectionBanner } from './ConnectionBanner';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
+import { PIXEL, roleBadgeSrc, roleCharacterSrc } from '../lib/pixelAssets';
 import { useNavigate } from '@tanstack/react-router';
 import type { ConnStatus } from '../net/socket';
 
@@ -161,23 +162,20 @@ export function GameTable() {
     const myWin =
       (r.winnerSide === 'landlord' && mySeat === r.landlordSeat) ||
       (r.winnerSide === 'farmer' && mySeat !== r.landlordSeat);
-    const resultAsset = myWin ? '/states/victory-badge.svg' : '/states/defeat-badge.svg';
+    const resultAsset = myWin ? PIXEL.ui.victoryBadge : PIXEL.ui.defeatBadge;
     const winnerRole = r.winnerSide === 'landlord' ? 'landlord' : 'farmer';
     const winnerRoleLabel = winnerRole === 'landlord' ? '地主' : '农民';
-    const winnerIdentity =
-      winnerRole === 'landlord'
-        ? '/identity/landlord-character.svg'
-        : '/identity/farmer-character.svg';
+    const winnerIdentity = roleCharacterSrc(winnerRole);
     return (
       <GameTableFrame status={status} offline={offline}>
       <div className="table settled">
         <div className={`result-card ${myWin ? 'win' : 'lose'}`} data-fx="settle-pop">
           <SettleCoins win={myWin} />
-          <img className="result-badge" src={resultAsset} alt="" aria-hidden="true" />
+          <img className="result-badge pixel-art" src={resultAsset} alt="" aria-hidden="true" />
           <h2 className="result-title">{myWin ? '你赢了' : '你输了'}</h2>
           <div className="result-identity">
             <img
-              className="result-identity-img"
+              className="result-identity-img pixel-art"
               src={winnerIdentity}
               alt=""
               aria-hidden="true"
@@ -378,7 +376,7 @@ export function GameTable() {
         {me?.role === 'farmer' && <RoleBadge role="farmer" />}
         {me?.doubled && (
           <span className="badge double-self" aria-label="已加倍" title="已加倍">
-            <img src="/states/double-badge.svg" alt="" aria-hidden="true" />
+            <img className="pixel-art" src={PIXEL.ui.doubleBadge} alt="" aria-hidden="true" />
           </span>
         )}
       </div>
@@ -657,16 +655,16 @@ function SeatBadge({
           <PlayerKindBadge isBot={p.isBot} />
           {role && (
             <img
-              className="role-badge-corner"
-              src={`/badges/${role}.svg`}
+              className="role-badge-corner pixel-art"
+              src={roleBadgeSrc(role)}
               alt=""
               aria-hidden="true"
             />
           )}
           {p.doubled && (
             <img
-              className="double-badge-corner"
-              src="/states/double-badge.svg"
+              className="double-badge-corner pixel-art"
+              src={PIXEL.ui.doubleBadge}
               alt=""
               aria-hidden="true"
             />
@@ -710,7 +708,7 @@ function RoleBadge({ role }: { role: 'landlord' | 'farmer' }) {
       aria-label={label}
       title={label}
     >
-      <img src={`/badges/${role}.svg`} alt="" aria-hidden="true" />
+      <img className="pixel-art" src={roleBadgeSrc(role)} alt="" aria-hidden="true" />
     </span>
   );
 }
