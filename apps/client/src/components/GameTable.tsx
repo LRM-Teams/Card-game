@@ -14,6 +14,7 @@ import { SocialPanel } from './SocialPanel';
 import { SocialBubble } from './SocialBubble';
 import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { ConnectionBanner } from './ConnectionBanner';
+import { NarrativeGameScene } from './NarrativeGameScene';
 import { relativeSeats } from '../lib/playFx';
 import { MOTION } from '../lib/motionSpec';
 import { PIXEL, roleBadgeSrc, roleCharacterSrc } from '../lib/pixelAssets';
@@ -100,7 +101,9 @@ export function GameTable() {
       return (
         <>
           <ConnectionBanner status={status} />
-          <TableShell message="无法恢复对局" sub="请返回大厅重新匹配或加入房间。" />
+          <NarrativeGameScene>
+            <TableShell message="无法恢复对局" sub="请返回大厅重新匹配或加入房间。" />
+          </NarrativeGameScene>
         </>
       );
     }
@@ -108,24 +111,28 @@ export function GameTable() {
       return (
         <>
           {status === 'reconnecting' && <ConnectionBanner status={status} />}
-          <TableShell
-            message={
-              status === 'connecting'
-                ? '正在连接服务器…'
-                : status === 'reconnecting'
-                  ? '连接已断开，正在重连…'
-                  : '未连接服务器'
-            }
-            sub="连接恢复后将自动同步牌桌；也可返回大厅重新匹配。"
-          />
+          <NarrativeGameScene>
+            <TableShell
+              message={
+                status === 'connecting'
+                  ? '正在连接服务器…'
+                  : status === 'reconnecting'
+                    ? '连接已断开，正在重连…'
+                    : '未连接服务器'
+              }
+              sub="连接恢复后将自动同步牌桌；也可返回大厅重新匹配。"
+            />
+          </NarrativeGameScene>
         </>
       );
     }
     return (
-      <TableShell
-        message="正在恢复对局…"
-        sub="强刷后会自动重回房间；若长时间无响应请返回大厅。"
-      />
+      <NarrativeGameScene>
+        <TableShell
+          message="正在恢复对局…"
+          sub="强刷后会自动重回房间；若长时间无响应请返回大厅。"
+        />
+      </NarrativeGameScene>
     );
   }
 
@@ -572,7 +579,9 @@ function GameTableFrame({
   return (
     <>
       <ConnectionBanner status={status} />
-      <div className={offline ? 'table-offline-wrap' : undefined}>{children}</div>
+      <div className={offline ? 'table-offline-wrap' : undefined}>
+        <NarrativeGameScene>{children}</NarrativeGameScene>
+      </div>
     </>
   );
 }

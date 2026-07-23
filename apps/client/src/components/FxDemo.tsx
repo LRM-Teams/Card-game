@@ -16,6 +16,7 @@ import { MultiplierBreakdownView } from './MultiplierBreakdownView';
 import { CardView, OpponentBackFan } from './CardView';
 import { FX_DEMO_SCENES, MOTION, type FxDemoScene } from '../lib/motionSpec';
 import { PIXEL } from '../lib/pixelAssets';
+import { NarrativeGameScene } from './NarrativeGameScene';
 
 function demoCard(id: string, rank: number, suit: Suit | undefined): Card {
   const display =
@@ -195,6 +196,7 @@ export function FxDemo() {
         </div>
       </header>
 
+      <NarrativeGameScene>
       {scene === 'deal' && (
         <div className="table fx-demo-table" data-fx="deal">
           <p className="fx-demo-caption">发牌散开 · {MOTION.dealMs}ms · stagger {MOTION.dealStaggerMs}ms</p>
@@ -547,6 +549,7 @@ export function FxDemo() {
           </div>
         </div>
       )}
+      </NarrativeGameScene>
     </div>
   );
 }

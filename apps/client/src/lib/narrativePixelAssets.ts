@@ -35,3 +35,11 @@ export const narrativePixelHotspots = {
 } as const;
 
 export type NarrativePixelHotspot = keyof typeof narrativePixelHotspots;
+
+/** 室内·对局页场景图层（LRM-518） */
+export const narrativePixelGameScene = {
+  layers: {
+    wall: `${NP_BASE}/scene/layer-indoor-wall-1920x1080.png`,
+    lighting: `${NP_BASE}/lighting/layer-indoor-lighting-1920x1080.png`,
+  },
+} as const;

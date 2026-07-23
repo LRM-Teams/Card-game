@@ -1,0 +1,97 @@
+/* LRM-518 叙事像素室内对局场景 */
+
+body.app--game-page {
+  background: var(--ddz-np-shadow, #16181c);
+}
+
+body.app--game-page::before {
+  display: none;
+}
+
+.app--game .content {
+  padding: 0;
+  align-items: stretch;
+}
+
+.np-game {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  image-rendering: pixelated;
+}
+
+.np-game__viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  background: var(--ddz-np-shadow, #16181c);
+}
+
+.np-game__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.np-game__layer--wall {
+  z-index: 0;
+}
+
+.np-game__layer--light {
+  z-index: 2;
+  mix-blend-mode: screen;
+  opacity: 0.72;
+}
+
+.np-game .np-scene-elements {
+  z-index: 1;
+}
+
+.np-game__playfield {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: stretch;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.np-game__playfield > * {
+  pointer-events: auto;
+}
+
+.table-offline-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-offline-wrap .np-game {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 680px) {
+  .np-game__layer--light {
+    opacity: 0.58;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-game__layer--light {
+    opacity: 0.65;
+  }
+}
