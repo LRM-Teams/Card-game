@@ -1,273 +1,393 @@
 {
-  "sheets": [
+  "version": 2,
+  "style": "Modern Pixel",
+  "asset_count": 44,
+  "assets": [
     {
-      "file": "backgrounds_lobby_hero_360x160.png",
-      "category": "backgrounds",
-      "animation": "lobby_hero",
-      "tile_size": {
-        "width": 360,
-        "height": 160
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "lobby_hero"
-      ]
-    },
-    {
-      "file": "backgrounds_room_bg_320x180.png",
-      "category": "backgrounds",
-      "animation": "room_bg",
-      "tile_size": {
-        "width": 320,
-        "height": 180
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "room_bg"
-      ]
-    },
-    {
-      "file": "characters_farmer_character_72x72.png",
-      "category": "characters",
-      "animation": "farmer_character",
-      "tile_size": {
-        "width": 72,
-        "height": 72
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "farmer_character"
-      ]
-    },
-    {
-      "file": "characters_landlord_character_96x96.png",
-      "category": "characters",
-      "animation": "landlord_character",
-      "tile_size": {
-        "width": 96,
-        "height": 96
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "landlord_character"
-      ]
-    },
-    {
-      "file": "effects_bomb_80x60.png",
-      "category": "effects",
-      "animation": "bomb",
-      "tile_size": {
-        "width": 80,
-        "height": 60
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "bomb"
-      ]
-    },
-    {
-      "file": "effects_spring_80x60.png",
-      "category": "effects",
-      "animation": "spring",
-      "tile_size": {
-        "width": 80,
-        "height": 60
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "spring"
-      ]
-    },
-    {
-      "file": "tiles_felt_texture_64x64.png",
       "category": "tiles",
-      "animation": "felt_texture",
-      "tile_size": {
-        "width": 64,
-        "height": 64
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "felt_texture"
+      "name": "felt_texture",
+      "file": "tiles/felt_texture.png",
+      "size": [
+        64,
+        64
       ]
     },
     {
-      "file": "tiles_rail_texture_64x64.png",
       "category": "tiles",
-      "animation": "rail_texture",
-      "tile_size": {
-        "width": 64,
-        "height": 64
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "rail_texture"
+      "name": "rail_texture",
+      "file": "tiles/rail_texture.png",
+      "size": [
+        64,
+        64
       ]
     },
     {
-      "file": "ui_badge_farmer_24x24.png",
-      "category": "ui",
-      "animation": "badge_farmer",
-      "tile_size": {
-        "width": 24,
-        "height": 24
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "badge_farmer"
+      "category": "backgrounds",
+      "name": "room_bg",
+      "file": "backgrounds/room_bg.png",
+      "size": [
+        320,
+        180
       ]
     },
     {
-      "file": "ui_badge_landlord_28x28.png",
-      "category": "ui",
-      "animation": "badge_landlord",
-      "tile_size": {
-        "width": 28,
-        "height": 28
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "badge_landlord"
+      "category": "backgrounds",
+      "name": "lobby_hero",
+      "file": "backgrounds/lobby_hero.png",
+      "size": [
+        360,
+        160
       ]
     },
     {
-      "file": "ui_btn_primary_120x40.png",
-      "category": "ui",
-      "animation": "btn_primary",
-      "tile_size": {
-        "width": 120,
-        "height": 40
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "btn_primary"
+      "category": "backgrounds",
+      "name": "table_vignette",
+      "file": "backgrounds/table_vignette.png",
+      "size": [
+        128,
+        72
       ]
     },
     {
-      "file": "ui_card_back_52x74.png",
-      "category": "ui",
-      "animation": "card_back",
-      "tile_size": {
-        "width": 52,
-        "height": 74
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "card_back"
+      "category": "backgrounds",
+      "name": "room_corner_ornament",
+      "file": "backgrounds/room_corner_ornament.png",
+      "size": [
+        32,
+        32
       ]
     },
     {
-      "file": "ui_card_front_template_52x74.png",
       "category": "ui",
-      "animation": "card_front_template",
-      "tile_size": {
-        "width": 52,
-        "height": 74
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "card_front_template"
+      "name": "card_front_template",
+      "file": "ui/card_front_template.png",
+      "size": [
+        104,
+        148
       ]
     },
     {
-      "file": "ui_joker_big_52x74.png",
       "category": "ui",
-      "animation": "joker_big",
-      "tile_size": {
-        "width": 52,
-        "height": 74
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "joker_big"
+      "name": "card_back",
+      "file": "ui/card_back.png",
+      "size": [
+        104,
+        148
       ]
     },
     {
-      "file": "ui_joker_small_52x74.png",
       "category": "ui",
-      "animation": "joker_small",
-      "tile_size": {
-        "width": 52,
-        "height": 74
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "joker_small"
+      "name": "joker_small",
+      "file": "ui/joker_small.png",
+      "size": [
+        104,
+        148
       ]
     },
     {
-      "file": "ui_defeat_badge_90x70.png",
       "category": "ui",
-      "animation": "defeat_badge",
-      "tile_size": {
-        "width": 90,
-        "height": 70
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "defeat_badge"
+      "name": "joker_big",
+      "file": "ui/joker_big.png",
+      "size": [
+        104,
+        148
       ]
     },
     {
-      "file": "ui_victory_badge_90x70.png",
       "category": "ui",
-      "animation": "victory_badge",
-      "tile_size": {
-        "width": 90,
-        "height": 70
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "victory_badge"
+      "name": "card_small_front",
+      "file": "ui/card_small_front.png",
+      "size": [
+        40,
+        56
       ]
     },
     {
-      "file": "ui_double_badge_60x60.png",
       "category": "ui",
-      "animation": "double_badge",
-      "tile_size": {
-        "width": 60,
-        "height": 60
-      },
-      "columns": 1,
-      "rows": 1,
-      "frame_count": 1,
-      "frames": [
-        "double_badge"
+      "name": "card_small_back",
+      "file": "ui/card_small_back.png",
+      "size": [
+        40,
+        56
+      ]
+    },
+    {
+      "category": "characters",
+      "name": "landlord_character",
+      "file": "characters/landlord_character.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "category": "characters",
+      "name": "farmer_character",
+      "file": "characters/farmer_character.png",
+      "size": [
+        128,
+        128
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "badge_landlord",
+      "file": "ui/badge_landlord.png",
+      "size": [
+        28,
+        28
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "badge_farmer",
+      "file": "ui/badge_farmer.png",
+      "size": [
+        24,
+        24
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "avatar_frame_landlord",
+      "file": "ui/avatar_frame_landlord.png",
+      "size": [
+        64,
+        64
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "avatar_frame_farmer",
+      "file": "ui/avatar_frame_farmer.png",
+      "size": [
+        64,
+        64
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "avatar_frame_default",
+      "file": "ui/avatar_frame_default.png",
+      "size": [
+        64,
+        64
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "seat_turn_ring",
+      "file": "ui/seat_turn_ring.png",
+      "size": [
+        56,
+        56
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "seat_idle_ring",
+      "file": "ui/seat_idle_ring.png",
+      "size": [
+        56,
+        56
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_primary_normal",
+      "file": "ui/btn_primary_normal.png",
+      "size": [
+        120,
+        40
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_primary_pressed",
+      "file": "ui/btn_primary_pressed.png",
+      "size": [
+        120,
+        40
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_primary_disabled",
+      "file": "ui/btn_primary_disabled.png",
+      "size": [
+        120,
+        40
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_secondary_normal",
+      "file": "ui/btn_secondary_normal.png",
+      "size": [
+        96,
+        36
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_secondary_pressed",
+      "file": "ui/btn_secondary_pressed.png",
+      "size": [
+        96,
+        36
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_secondary_disabled",
+      "file": "ui/btn_secondary_disabled.png",
+      "size": [
+        96,
+        36
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_pass_normal",
+      "file": "ui/btn_pass_normal.png",
+      "size": [
+        72,
+        36
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "btn_pass_pressed",
+      "file": "ui/btn_pass_pressed.png",
+      "size": [
+        72,
+        36
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "double_badge",
+      "file": "ui/double_badge.png",
+      "size": [
+        60,
+        60
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "timer_ring",
+      "file": "ui/timer_ring.png",
+      "size": [
+        48,
+        48
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "timer_ring_critical",
+      "file": "ui/timer_ring_critical.png",
+      "size": [
+        48,
+        48
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "mult_hud_bg",
+      "file": "ui/mult_hud_bg.png",
+      "size": [
+        80,
+        24
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "phase_label_bg",
+      "file": "ui/phase_label_bg.png",
+      "size": [
+        80,
+        24
+      ]
+    },
+    {
+      "category": "effects",
+      "name": "bomb",
+      "file": "effects/bomb.png",
+      "size": [
+        96,
+        96
+      ]
+    },
+    {
+      "category": "effects",
+      "name": "spring",
+      "file": "effects/spring.png",
+      "size": [
+        96,
+        72
+      ]
+    },
+    {
+      "category": "effects",
+      "name": "rocket",
+      "file": "effects/rocket.png",
+      "size": [
+        96,
+        96
+      ]
+    },
+    {
+      "category": "effects",
+      "name": "bomb_flash",
+      "file": "effects/bomb_flash.png",
+      "size": [
+        64,
+        64
+      ]
+    },
+    {
+      "category": "effects",
+      "name": "turn_pulse",
+      "file": "effects/turn_pulse.png",
+      "size": [
+        64,
+        64
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "victory_badge",
+      "file": "ui/victory_badge.png",
+      "size": [
+        120,
+        120
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "defeat_badge",
+      "file": "ui/defeat_badge.png",
+      "size": [
+        120,
+        120
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "settle_coin",
+      "file": "ui/settle_coin.png",
+      "size": [
+        24,
+        24
+      ]
+    },
+    {
+      "category": "ui",
+      "name": "settle_panel_win",
+      "file": "ui/settle_panel_win.png",
+      "size": [
+        200,
+        120
       ]
     }
   ]

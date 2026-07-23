@@ -1,7 +1,9 @@
-# LRM-408 Modern Pixel assets
+# LRM-408 Modern Pixel assets v2
 
 - Style: Modern Pixel (A) — cel-shaded, `--ddz-*` palette
-- Project: `doudizhu_pixel_64x64_20260723`
-- 18 assets validated (`asset_validator.py` pass after quantize)
-- Preview: `docs/assets/previews/lrm-408/pixel-preview-sheet.png`
+- **44 PNG**（42 项 + 别名/副本）
+- `asset_validator.py` 量化后 **PASS**（尺寸 warning 为 per-asset override）
+- Preview: `pixel-preview-sheet-v2.png`
+- Seamless proof: `felt-seamless-2x2.png`
 - Client mirror: `apps/client/public/pixel/`
+- Generator: `docs/assets/pixel/generate_assets_v2.py`

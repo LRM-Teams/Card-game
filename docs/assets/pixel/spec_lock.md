@@ -1,4 +1,4 @@
-# Execution Lock — 斗地主 Modern Pixel
+# Execution Lock — v2 Production
 
 ## canvas
 - base_size: 64x64
@@ -6,117 +6,158 @@
 - format: RGBA PNG
 
 ## palette
-- name: ddz-gold-green
+- name: doudizhu-gold-green-v2
 - colors:
-  - #0b2218
-  - #14352a
-  - #1b4a37
-  - #2a6349
-  - #e8bc3a
-  - #c49218
-  - #d63031
-  - #a82020
-  - #fbfbf6
-  - #1c1c1c
-  - #6b4424
-  - #8a5c34
-  - #43301f
+  - #0B2218
+  - #14352A
+  - #1B4A37
+  - #1F5540
+  - #2A6349
+  - #1C1C1C
+  - #2E8B57
+  - #344052
+  - #232C38
+  - #3A5A78
+  - #6496C8
+  - #5A2218
+  - #6E1A1F
+  - #3D1018
+  - #1C0C14
+  - #6B4424
+  - #8A5C34
+  - #4A2E18
+  - #8A3424
+  - #8A2218
+  - #33221A
+  - #43301F
   - #241612
-  - #fff3c4
-  - #4a90d9
+  - #A82020
+  - #7A0F10
+  - #D63031
+  - #B8C4D4
+  - #C48A14
+  - #C49218
+  - #960000
+  - #E0B83A
+  - #E8BC3A
+  - #F0D06A
+  - #F3DF9A
+  - #FBFBF6
+  - #FFF3C4
+  - #FFFCF7
+  - #F3EEE3
+  - #E8DFD0
+  - #C9B89A
+  - #8A7355
+  - #FFE08A
+  - #B48250
 
 ## style
 - sub_style: cel-shaded
-- outline_color: #0b2218
+- outline_color: #1C1C1C
 - shading: 3-tone
 - dithering: none
 - light_direction: top-left
 
 ## per_sprite_budget
-- max_colors: 16
+- max_colors: 31
 
 ## assets
-- characters:
-  - name: landlord_character
-    size: 96x96
-    colors: all
-    animations: none
-  - name: farmer_character
-    size: 72x72
-    colors: all
-    animations: none
 - tiles:
   - name: felt_texture
     size: 64x64
-    colors: [#0b2218, #14352a, #1b4a37, #2a6349]
-    animations: none
   - name: rail_texture
     size: 64x64
-    colors: [#4a2e18, #6b4424, #8a5c34, #fff3c4]
-    animations: none
-- ui:
-  - name: card_front_template
-    size: 52x74
-    colors: [#fbfbf6, #1c1c1c, #d63031, #0b2218]
-    animations: none
-  - name: card_back
-    size: 52x74
-    colors: [#a82020, #d63031, #e8bc3a, #c49218]
-    animations: none
-  - name: joker_small
-    size: 52x74
-    colors: all
-    animations: none
-  - name: joker_big
-    size: 52x74
-    colors: all
-    animations: none
-  - name: badge_landlord
-    size: 28x28
-    colors: [#e8bc3a, #d63031, #c49218, #0b2218]
-    animations: none
-  - name: badge_farmer
-    size: 24x24
-    colors: [#2a6349, #1b4a37, #e8bc3a, #0b2218]
-    animations: none
-  - name: double_badge
-    size: 60x60
-    colors: all
-    animations: none
-  - name: victory_badge
-    size: 90x70
-    colors: all
-    animations: none
-  - name: defeat_badge
-    size: 90x70
-    colors: all
-    animations: none
-  - name: btn_primary
-    size: 120x40
-    colors: [#e8bc3a, #c49218, #fff3c4, #0b2218]
-    animations: none
-- effects:
-  - name: bomb
-    size: 80x60
-    colors: all
-    animations: none
-  - name: spring
-    size: 80x60
-    colors: all
-    animations: none
 - backgrounds:
   - name: room_bg
     size: 320x180
-    colors: [#43301f, #241612, #0b2218]
-    animations: none
   - name: lobby_hero
     size: 360x160
-    colors: all
-    animations: none
+  - name: table_vignette
+    size: 128x72
+  - name: room_corner_ornament
+    size: 32x32
+- ui:
+  - name: card_front_template
+    size: 104x148
+  - name: card_back
+    size: 104x148
+  - name: joker_small
+    size: 104x148
+  - name: joker_big
+    size: 104x148
+  - name: card_small_front
+    size: 40x56
+  - name: card_small_back
+    size: 40x56
+  - name: badge_landlord
+    size: 28x28
+  - name: badge_farmer
+    size: 24x24
+  - name: btn_primary
+    size: 120x40
+  - name: btn_primary_normal
+    size: 120x40
+  - name: btn_primary_pressed
+    size: 120x40
+  - name: btn_primary_disabled
+    size: 120x40
+  - name: btn_secondary_normal
+    size: 96x36
+  - name: btn_secondary_pressed
+    size: 96x36
+  - name: btn_secondary_disabled
+    size: 96x36
+  - name: btn_pass_normal
+    size: 72x36
+  - name: btn_pass_pressed
+    size: 72x36
+  - name: double_badge
+    size: 60x60
+  - name: timer_ring
+    size: 48x48
+  - name: timer_ring_critical
+    size: 48x48
+  - name: mult_hud_bg
+    size: 80x24
+  - name: phase_label_bg
+    size: 80x24
+  - name: victory_badge
+    size: 120x120
+  - name: defeat_badge
+    size: 120x120
+  - name: settle_coin
+    size: 24x24
+  - name: settle_panel_win
+    size: 200x120
+  - name: avatar_frame_landlord
+    size: 64x64
+  - name: avatar_frame_farmer
+    size: 64x64
+  - name: avatar_frame_default
+    size: 64x64
+  - name: seat_turn_ring
+    size: 56x56
+  - name: seat_idle_ring
+    size: 56x56
+- characters:
+  - name: landlord_character
+    size: 128x128
+  - name: farmer_character
+    size: 128x128
+- effects:
+  - name: bomb
+    size: 96x96
+  - name: spring
+    size: 96x72
+  - name: rocket
+    size: 96x96
+  - name: bomb_flash
+    size: 64x64
+  - name: turn_pulse
+    size: 64x64
 
 ## forbidden
 - Anti-aliasing
-- Gradient fills
 - Partial opacity (1-254 alpha)
 - Colors outside declared palette
-- Sub-pixel rendering
