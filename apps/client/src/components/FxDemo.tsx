@@ -17,6 +17,8 @@ import { CardView, OpponentBackFan } from './CardView';
 import { FX_DEMO_SCENES, MOTION, type FxDemoScene } from '../lib/motionSpec';
 import { PIXEL } from '../lib/pixelAssets';
 import { NarrativeGameScene } from './NarrativeGameScene';
+import { SettleFxStamps } from './SettleFxStamps';
+import { NP_SETTLE } from '../lib/narrativeSettleAssets';
 
 function demoCard(id: string, rank: number, suit: Suit | undefined): Card {
   const display =
@@ -64,7 +66,7 @@ const DEMO_BREAKDOWN: MultiplierBreakdown = {
   doubleCount: 2,
   doubleSeats: [0, 1] as Seat[],
   bombCount: 1,
-  spring: false,
+  spring: true,
   current: 8,
 };
 
@@ -399,20 +401,20 @@ export function FxDemo() {
 
       {scene === 'settle' && (
         <div className="table settled fx-demo-table" data-fx="settle">
-          <div className="result-card win" data-fx="settle-pop">
+          <div className="result-card win np-settle-card" data-fx="settle-pop">
             <SettleCoins win />
-            <img className="result-badge pixel-art" src={PIXEL.ui.victoryBadge} alt="" aria-hidden="true" />
+            <img className="result-badge pixel-art" src={NP_SETTLE.victory} alt="" aria-hidden="true" />
             <h2 className="result-title">你赢了</h2>
             <p className="result-meta">农民胜 · 单注 8</p>
+            <SettleFxStamps breakdown={DEMO_BREAKDOWN} />
             <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
             <ul className="score-list" aria-label="本局得分">
               <li><span>你</span><span className="score-val plus">+16</span></li>
               <li><span>对手</span><span className="score-val minus">-8</span></li>
             </ul>
             <div className="result-actions">
-              <button type="button" className="btn primary cta">
-                <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />
-                再来一局
+              <button type="button" className="btn-np-rematch cta" aria-label="再来一局">
+                <img src={NP_SETTLE.rematch.default} alt="" className="pixel-art" />
               </button>
               <button type="button" className="btn secondary">
                 返回大厅
@@ -424,19 +426,19 @@ export function FxDemo() {
 
       {scene === 'settle-lose' && (
         <div className="table settled fx-demo-table" data-fx="settle">
-          <div className="result-card lose" data-fx="settle-pop">
-            <img className="result-badge pixel-art" src={PIXEL.ui.defeatBadge} alt="" aria-hidden="true" />
+          <div className="result-card lose np-settle-card" data-fx="settle-pop">
+            <img className="result-badge pixel-art" src={NP_SETTLE.defeat} alt="" aria-hidden="true" />
             <h2 className="result-title">你输了</h2>
             <p className="result-meta">地主胜 · 单注 8</p>
+            <SettleFxStamps breakdown={DEMO_BREAKDOWN} />
             <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
             <ul className="score-list" aria-label="本局得分">
               <li><span>你</span><span className="score-val minus">-16</span></li>
               <li><span>对手</span><span className="score-val plus">+8</span></li>
             </ul>
             <div className="result-actions">
-              <button type="button" className="btn primary cta">
-                <img src="/badges/restart.svg" alt="" className="btn-icon" width={18} height={18} />
-                再来一局
+              <button type="button" className="btn-np-rematch cta" aria-label="再来一局">
+                <img src={NP_SETTLE.rematch.default} alt="" className="pixel-art" />
               </button>
               <button type="button" className="btn secondary">
                 返回大厅
