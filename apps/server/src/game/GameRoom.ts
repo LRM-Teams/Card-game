@@ -50,11 +50,12 @@ import type {
   SocialKind,
   SocialPhraseId,
 } from '@card-game/rules';
-import { botBid, botDouble, botName, botReveal } from './bot';
+import { botBidDecision, botDouble, botName, botPlayDecision, botReveal } from './bot';
 import { botThinkDelayMs, sleep } from './botTiming';
 import { choosePlayWithDouZero, rankPlaySuggestions } from './douzeroAdapter';
 import type { BotPlayHistoryEntry, DouZeroBotAdapter } from './douzeroAdapter';
 import type { ActionResult, BidState, LastPlay, PlayerState, RoomEvent } from './types';
+import { opsLog } from '../observability';
 
 const SEATS: readonly Seat[] = [0, 1, 2];
 const MAX_REDEALS = 5;
@@ -735,7 +736,17 @@ export class GameRoom {
       const seat = this.bid.order[this.bid.index]!;
       const p = this.players[seat];
       if (!p || !p.isBot) return [];
-      return this.iBid(seat, botBid(p.hand));
+      const decision = botBidDecision(p.hand);
+      opsLog({
+        event: 'bot.decision',
+        roomId: this.roomId,
+        phase: this.phase,
+        seat,
+        kind: decision.kind,
+        reason: decision.reason,
+        strength: decision.strength,
+      });
+      return this.iBid(seat, decision.choice);
     }
     if (this.phase === GamePhase.REVEALING && this.landlordSeat !== null) {
       const seat = this.landlordSeat;
@@ -755,6 +766,7 @@ export class GameRoom {
       const p = this.players[seat];
       if (!p || !p.isBot) return [];
       const prev = this.lastPlay ? this.lastPlay.hand : null;
+      // DouZero 可选；不可用/失败时 choosePlayWithDouZero 已 fallback 规则普通档
       const cards = await choosePlayWithDouZero(
         {
           seat,
@@ -771,6 +783,26 @@ export class GameRoom {
         },
         this.aiAdapter,
       );
+      // 可观测：用规则侧决策标注 kind（DouZero 命中时仍记 beat/lead/pass 语义近似）
+      const explained = botPlayDecision(p.hand, prev);
+      const kind =
+        cards && cards.length > 0
+          ? explained.kind === 'pass'
+            ? prev
+              ? 'beat'
+              : 'lead'
+            : explained.kind
+          : 'pass';
+      opsLog({
+        event: 'bot.decision',
+        roomId: this.roomId,
+        phase: this.phase,
+        seat,
+        kind,
+        reason: explained.reason,
+        via: this.aiAdapter ? 'douzero_or_fallback' : 'rule_bot',
+        cardCount: cards?.length ?? 0,
+      });
       if (cards && cards.length > 0) return this.iPlay(seat, cards);
       if (this.lastPlay === null) return this.iPlay(seat, smallestFallback(p.hand));
       return this.iPass(seat);

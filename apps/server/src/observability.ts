@@ -13,7 +13,9 @@ export type OpsEvent =
   | 'player.disconnect'
   | 'player.reconnect'
   /** 快速匹配成桌（fillBots=true 时为超时补机路径，可 grep match.form） */
-  | 'match.form';
+  | 'match.form'
+  /** 机器人决策（叫分/出牌/过），可 grep bot.decision */
+  | 'bot.decision';
 
 export interface OpsLogFields {
   event: OpsEvent;

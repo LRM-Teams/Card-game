@@ -76,15 +76,60 @@ export function estimateBidStrength(hand: readonly Card[]): BidStrength {
   return 0;
 }
 
-/** 普通档叫地主：强度 ≥1 则 claim。 */
+/** 普通档叫地主：强度 ≥2 才 claim（中等手力偏 pass，演示不全叫）。 */
 export function botBidByDifficulty(
   hand: readonly Card[],
   difficulty: BotDifficulty = 'normal',
 ): BidChoice {
   const strength = estimateBidStrength(hand);
-  if (difficulty === 'easy') return strength >= 2 ? 'claim' : 'pass';
+  if (difficulty === 'easy') return strength >= 3 ? 'claim' : 'pass';
   if (difficulty === 'hard') return strength >= 1 ? 'claim' : 'pass';
-  return strength >= 1 ? 'claim' : 'pass';
+  return strength >= 2 ? 'claim' : 'pass';
+}
+
+/** 可观测决策类型（LRM-523）。 */
+export type BotDecisionKind = 'bid_claim' | 'bid_pass' | 'lead' | 'beat' | 'bomb' | 'pass';
+
+export interface BotPlayDecision {
+  kind: Exclude<BotDecisionKind, 'bid_claim' | 'bid_pass'>;
+  /** 出牌；pass 时为 null */
+  cards: Card[] | null;
+  /** 人类可读理由 */
+  reason: string;
+  bidStrength?: undefined;
+}
+
+export interface BotBidDecision {
+  kind: 'bid_claim' | 'bid_pass';
+  choice: BidChoice;
+  strength: BidStrength;
+  power: number;
+  reason: string;
+}
+
+export function decideBidByDifficulty(
+  hand: readonly Card[],
+  difficulty: BotDifficulty = 'normal',
+): BotBidDecision {
+  const power = evaluateHandPower(hand);
+  const strength = estimateBidStrength(hand);
+  const choice = botBidByDifficulty(hand, difficulty);
+  if (choice === 'claim') {
+    return {
+      kind: 'bid_claim',
+      choice,
+      strength,
+      power,
+      reason: `strength=${strength} power=${power.toFixed(1)} → claim`,
+    };
+  }
+  return {
+    kind: 'bid_pass',
+    choice,
+    strength,
+    power,
+    reason: `strength=${strength} power=${power.toFixed(1)} → pass`,
+  };
 }
 
 function makeRocket(hand: readonly Card[]): Card[] | null {
@@ -348,26 +393,39 @@ function pickBomb(groups: Map<number, Card[]>): Card[] | null {
 }
 
 /**
- * 普通档出牌。
- * @returns Card[] 出牌；null = 不要
+ * 普通档出牌（带可解释 kind/reason，LRM-523）。
  */
-export function botChoosePlayByDifficulty(
+export function decidePlayByDifficulty(
   hand: readonly Card[],
   prev: Hand | null,
   difficulty: BotDifficulty = 'normal',
-): Card[] | null {
+): BotPlayDecision {
   if (!prev) {
     const lead = chooseLead(hand, difficulty);
-    return lead && canPlay(null, lead) ? lead : null;
+    if (lead && canPlay(null, lead)) {
+      const h = identifyHand(lead);
+      return {
+        kind: 'lead',
+        cards: lead,
+        reason: h ? `lead_${h.type}_main${h.mainRank}` : 'lead',
+      };
+    }
+    return { kind: 'pass', cards: null, reason: 'lead_failed' };
   }
 
   const groups = groupByRank(hand);
   const avoidSplit = difficulty !== 'easy';
 
   const same = findSameTypeBeat(groups, prev, avoidSplit);
-  if (same && canPlay(prev, same)) return same;
+  if (same && canPlay(prev, same)) {
+    const h = identifyHand(same);
+    return {
+      kind: 'beat',
+      cards: same,
+      reason: h ? `beat_${prev.type}_with_${h.type}_main${h.mainRank}` : 'beat_same_type',
+    };
+  }
 
-  // 跟不上同型时：普通档仅在手牌很少或上家是炸弹时才炸（避免无谓炸单）
   const shouldBomb =
     difficulty === 'easy'
       ? false
@@ -377,18 +435,35 @@ export function botChoosePlayByDifficulty(
 
   if (shouldBomb && prev.type !== HandType.ROCKET) {
     const bomb = pickBomb(groups);
-    if (bomb && canPlay(prev, bomb)) return bomb;
+    if (bomb && canPlay(prev, bomb)) {
+      return { kind: 'bomb', cards: bomb, reason: `bomb_over_${prev.type}` };
+    }
     if (hasRocket(hand)) {
       const rocket = makeRocket(hand);
-      if (rocket && canPlay(prev, rocket)) return rocket;
+      if (rocket && canPlay(prev, rocket)) {
+        return { kind: 'bomb', cards: rocket, reason: `rocket_over_${prev.type}` };
+      }
     }
   }
 
-  // 兜底：王炸可压非王炸（避免死局）——仅当手牌 ≤6
   if (difficulty !== 'easy' && hand.length <= 6 && prev.type !== HandType.ROCKET && hasRocket(hand)) {
     const rocket = makeRocket(hand);
-    if (rocket && canPlay(prev, rocket)) return rocket;
+    if (rocket && canPlay(prev, rocket)) {
+      return { kind: 'bomb', cards: rocket, reason: 'rocket_endgame' };
+    }
   }
 
-  return null;
+  return { kind: 'pass', cards: null, reason: `cannot_beat_${prev.type}` };
+}
+
+/**
+ * 普通档出牌。
+ * @returns Card[] 出牌；null = 不要
+ */
+export function botChoosePlayByDifficulty(
+  hand: readonly Card[],
+  prev: Hand | null,
+  difficulty: BotDifficulty = 'normal',
+): Card[] | null {
+  return decidePlayByDifficulty(hand, prev, difficulty).cards;
 }
