@@ -162,9 +162,9 @@ export function Lobby() {
       data-theme="narrative-pixel"
     >
       <div className="np-lobby__viewport" ref={viewportRef}>
-        {/* LRM-417 hotfix: bake approved Narrative Pixel v3 full scene.
-            Placeholder geometric far/mid/fg layers are intentionally not stacked —
-            they made the live lobby look like CSS blockout vs the DM-approved art. */}
+        {/* LRM-579: caozs2-locked Narrative Pixel v3 full bake is the live visual bar.
+            True far/mid/fg/lighting plates live in public/narrative-pixel for optional
+            parallax wiring (see wire-list-lrm-579) — do not swap bake for placeholders. */}
         <img
           className="np-lobby__layer np-lobby__layer--full"
           src={narrativePixelScene.full}

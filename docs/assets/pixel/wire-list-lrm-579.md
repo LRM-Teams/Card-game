@@ -1,37 +1,84 @@
-# LRM-579 大厅场景接线清单（小雅 → 小林）
+# LRM-579 室外大厅接线清单（小雅 → 小林）
 
-> 锁定基准：曹总确认 attachment `019f92b9` = `scene-full-1920x1080.png`  
-> **禁止**再叠几何色块 far/mid/fg 或旧 `NarrativeSceneElements` 占位精灵。
+> 曹总锁定基准：`scene-full-1920x1080.png`（附件 019f92b9）  
+> 约束：**可见背景必须以全场景 bake 为准**，禁止几何色块层顶替；分层包仅用于视差/增强，不得偏离 bake。
 
-## 当前正确接线（已在 PR #116）
+## 运行时主视觉（已接线）
 
-| 项 | 路径 / 代码 | 说明 |
+| z | 资产 | 路径 | 说明 |
+|---|---|---|---|
+| 3 | 全场景 bake | `narrative-pixel/scene/scene-full-1920x1080.png` | `Lobby.tsx` 当前主层 `np-lobby__layer--full` |
+| — | 640×360 伴生 | `narrative-pixel/scene/ddz-street-scene-v3-640x360.png` | 低带宽/缩略 |
+
+## 真视差分层包（入库，待接线）
+
+| z | 资产 | 路径 | 滚动 | 说明 |
+|---|---|---|---|---|
+| 1 | far | `scene/layer-far-bg-1920x1080.png` | `--np-parallax-x * 0.3` | 由 bake 派生的远景（天空/远山） |
+| 2 | mid | `scene/layer-mid-buildings-1920x1080.png` | `* 0.6` | bake 派生建筑层（天空透明） |
+| 4 | lighting | `lighting/layer-lighting-1920x1080.png` | 无 / 微动 | `mix-blend-mode: screen; opacity: .55` |
+| 5 | fg | `scene/layer-fg-occluder-1920x1080.png` | `* 1.2` | bake 派生前景遮挡 |
+
+**接线建议（可选增强，须经曹总过目）：**
+
+1. 保留 `layer--full` 为可读主层（验收基准）。
+2. 若开视差：在 full **下方**叠 far/mid，full 保持不透明；或 full 改半透明仅作 QA——**上线默认仍是 full bake**。
+3. fg/lighting 可叠在 full 之上做轻微遮挡/光晕，透明度保守（≤0.35），避免糊掉 CTA。
+
+TS 路径已在 `narrativePixelAssets.ts` → `narrativePixelScene.layers`。
+
+## 元素包（优先 20 项，manifest 已录）
+
+见 `docs/assets/narrative-pixel/lobby-v3-elements-manifest.json`。
+
+大厅摆放参考：`narrativeSceneLayout.ts` → `narrativeLobbyScenePlacements`。
+
+| id | sprite | 目录 |
 |---|---|---|
-| 全场景 bake | `public/narrative-pixel/scene/scene-full-1920x1080.png` | 唯一可见场景层 |
-| 原生栅格 | `scene/ddz-street-scene-v3-640x360.png` | 640×360 companion |
-| 同款备份 | `scene/ddz-street-scene-v3-1920x1080.png` | 与 bake 同内容 |
-| Lobby | `apps/client/src/components/Lobby.tsx` | 只渲染 `narrativePixelScene.full` |
-| 资产常量 | `apps/client/src/lib/narrativePixelAssets.ts` | `narrativePixelScene.full` |
-| 热点 | `narrativePixelHotspots` | 电视/站牌/登记簿 % 定位不变 |
+| B01 | `building_teahouse_main` | buildings/ |
+| B03 | `building_left_apartment` | buildings/ |
+| B04 | `building_right_apartment` | buildings/ |
+| B14 | `power_pole` | buildings/ |
+| P01 | `sign_teahouse_neon` | props/ |
+| P09 | `lantern_hanging` | props/ |
+| P06 | `card_table_outdoor` | props/ |
+| P07 | `card_stack` | props/ |
+| P05 | `traffic_cone` | props/ |
+| P03 | `bottle_crate_stack` | props/ |
+| V08 | `hanging_laundry` | props/ |
+| P27 | `poster_peeling` | props/ |
+| B17 | `fence_wood` | props/ |
+| C05 | `npc_bicycle` / `bicycle_parked` | characters/ · props/ |
+| C03 | `npc_card_players` | characters/ |
+| C02 | `npc_old_man_walk` | characters/ |
+| C04 | `npc_cat_walk` | characters/ |
+| V12 | `bush_foreground` | characters/ |
 
-## 分层策略（防漂移）
+`NarrativeSceneElements` 可按 placements 叠层；**默认大厅仍只渲 bake**，元素层留给交互动画/局部增强。
 
-| 层 | 文件 | 状态 |
-|---|---|---|
-| full | `scene-full-1920x1080.png` | **锁定 bake**（SHA256 对齐 019f92b9） |
-| mid | `layer-mid-buildings-1920x1080.png` | = full bake 副本（备用，非叠画） |
-| far / fg / lighting | 透明 1920×1080 | 占位清空，**勿再启用叠层** |
+## 世界化 UI 热点（勿改偏）
 
-视差可后续从 bake 无损拆层；未拆前保持单 bake。
+沿用 `narrativePixelHotspots`：
 
-## 元素包
+| 热点 | 用途 |
+|---|---|
+| tvStart | 开始游戏 |
+| stationBoard | 房间码 |
+| ledger | 昵称/头像 |
 
-旧 `props/` `buildings/` 等几何占位精灵 **不要重新挂回大厅**。  
-真元素包须从锁定 bake 裁切/generate2dsprite 对齐后另提 PR，过目后再接线。
+## Manifest / 校验
 
-## 验收
+```bash
+# 从仓库根
+python docs/assets/narrative-pixel/asset_validator.py
+```
 
-- [ ] `pnpm --filter @card-game/client build` PASS
-- [ ] `/` 大厅视觉 = 锁定 bake（非色块）
-- [ ] 开始游戏 / 创建 / 加入 可用
-- [ ] 合 main 后 89：tip/bundle/health + 1920/390 截图回 LRM-579
+- 分层：`lobby-v3-layers-manifest.json`
+- 元素：`lobby-v3-elements-manifest.json`
+- 场景锁：`lobby-scene-manifest-lrm-579.json`
+- 预览：`docs/assets/previews/lrm-579/`
+
+## 验收截图
+
+- 1920×1080 / 390×844 整页与锁定 bake 场景密度一致、主 CTA 可读
+- 曹总书面 OK 前不合 main；OK 后合入并滚 89

@@ -34,3 +34,6 @@ npm-debug.log*
 apps/client/test-results/
 apps/client/playwright-report/
 apps/client/blob-report/
+
+# LRM-579 raw imagegen intermediates
+docs/assets/narrative-pixel/gen-raw/
