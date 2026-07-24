@@ -1,0 +1,54 @@
+{
+  "version": "v1",
+  "issue": "LRM-527",
+  "clips": {
+    "bid": {
+      "duration_s": 0.18,
+      "formats": [
+        "ogg",
+        "mp3"
+      ],
+      "path": "narrative-pixel/audio/bid"
+    },
+    "play": {
+      "duration_s": 0.14,
+      "formats": [
+        "ogg",
+        "mp3"
+      ],
+      "path": "narrative-pixel/audio/play"
+    },
+    "bomb": {
+      "duration_s": 0.32,
+      "formats": [
+        "ogg",
+        "mp3"
+      ],
+      "path": "narrative-pixel/audio/bomb"
+    },
+    "spring": {
+      "duration_s": 0.5,
+      "formats": [
+        "ogg",
+        "mp3"
+      ],
+      "path": "narrative-pixel/audio/spring"
+    },
+    "win": {
+      "duration_s": 0.35,
+      "formats": [
+        "ogg",
+        "mp3"
+      ],
+      "path": "narrative-pixel/audio/win"
+    },
+    "lose": {
+      "duration_s": 0.22,
+      "formats": [
+        "ogg",
+        "mp3"
+      ],
+      "path": "narrative-pixel/audio/lose"
+    }
+  }
+}
