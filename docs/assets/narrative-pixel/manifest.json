@@ -2,7 +2,7 @@
   "version": "v3.3",
   "approved": "2026-07-23",
   "issue": "LRM-417",
-  "issues": ["LRM-417", "LRM-520", "LRM-522"],
+  "issues": ["LRM-417", "LRM-520", "LRM-522", "LRM-579"],
   "license": "docs/assets/narrative-pixel/LICENSE.md",
   "followUp": "LRM-466",
   "totalElements": 88,
@@ -45,5 +45,13 @@
     "settle_assets": 6,
     "fx_assets": 6,
     "state_groups": 2
+  },
+  "lobby_scene_restore": {
+    "issue": "LRM-579",
+    "manifest": "lobby-scene-manifest-lrm-579.json",
+    "wire_list": "docs/assets/pixel/wire-list-lrm-579.md",
+    "lockedBaselineAttachmentId": "019f92b9-1068-717e-bfc1-8dcd90410229",
+    "mode": "baked_scene_mode",
+    "pr": 116
   }
 }

@@ -1,0 +1,42 @@
+{
+  "issue": "LRM-579",
+  "version": "v3-locked-bake",
+  "lockedBaselineAttachmentId": "019f92b9-1068-717e-bfc1-8dcd90410229",
+  "caozs2WrittenOkAt": "2026-07-24T06:04:24Z",
+  "mode": "baked_scene_mode",
+  "note": "Single full bake is the only visible lobby scene. Geometric stack layers removed. Do not reintroduce placeholder sprites.",
+  "scene": {
+    "full": "apps/client/public/narrative-pixel/scene/scene-full-1920x1080.png",
+    "native640": "apps/client/public/narrative-pixel/scene/ddz-street-scene-v3-640x360.png",
+    "backup1920": "apps/client/public/narrative-pixel/scene/ddz-street-scene-v3-1920x1080.png",
+    "sha256_full": "390b588890e5f89f88005c85114d943fd80b4922584d1b2cacb6f9fbde792d1b",
+    "width": 1920,
+    "height": 1080
+  },
+  "layers": {
+    "mid": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-mid-buildings-1920x1080.png",
+      "role": "bake_copy_unused_in_lobby"
+    },
+    "far": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-far-bg-1920x1080.png",
+      "role": "transparent_disabled"
+    },
+    "fg": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-fg-occluder-1920x1080.png",
+      "role": "transparent_disabled"
+    },
+    "lighting": {
+      "path": "apps/client/public/narrative-pixel/lighting/layer-lighting-1920x1080.png",
+      "role": "transparent_disabled"
+    }
+  },
+  "client": {
+    "lobby": "apps/client/src/components/Lobby.tsx",
+    "assets": "apps/client/src/lib/narrativePixelAssets.ts",
+    "wireList": "docs/assets/pixel/wire-list-lrm-579.md"
+  },
+  "validator": {
+    "rule": "full bake sha256 must match locked baseline; no geometric blockout layers as visible product"
+  }
+}
