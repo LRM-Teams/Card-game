@@ -4,7 +4,7 @@ import type { Card, Seat } from '@card-game/rules';
 import { botBid, botChoosePlay, botDouble, botReveal } from '../src/game/bot';
 import { GameRoom } from '../src/game/GameRoom';
 import type { MatchFormed } from '../src/matchQueue';
-import { RoomRegistry } from '../src/registry';
+import { normalizeRoomId, RoomRegistry } from '../src/registry';
 import { IdentityStore } from '../src/identity';
 
 /** 构造一张最小 Card（用于白盒构造判定场景）。 */
@@ -161,6 +161,20 @@ describe('GameRoom · 叫地主（抢地主 A，规则在 game-rules.resolveBidd
   });
 });
 
+describe('normalizeRoomId · 分享链接归一', () => {
+  it('去空白与前导 #，空串视为未提供', () => {
+    expect(normalizeRoomId(undefined)).toBeUndefined();
+    expect(normalizeRoomId('')).toBeUndefined();
+    expect(normalizeRoomId('   ')).toBeUndefined();
+    expect(normalizeRoomId('###')).toBeUndefined();
+    expect(normalizeRoomId(' room-ab ')).toBe('room-ab');
+    expect(normalizeRoomId('#room-ab')).toBe('room-ab');
+    expect(normalizeRoomId(' ##room-ab ')).toBe('room-ab');
+    expect(normalizeRoomId('# room-ab')).toBe('room-ab');
+    expect(normalizeRoomId(' #  room-ab  ')).toBe('room-ab');
+  });
+});
+
 describe('RoomRegistry · 房间加入 / 断线重连', () => {
   it('指定不存在的 roomId 时拒绝加入，不隐式创建好友房', () => {
     const registry = new RoomRegistry();
@@ -168,6 +182,37 @@ describe('RoomRegistry · 房间加入 / 断线重连', () => {
     expect(res.result.ok).toBe(false);
     if (!res.result.ok) expect(res.result.code).toBe('room_not_found');
     expect(registry.get('missing-room')).toBeUndefined();
+  });
+
+  it('进房失败写出 [ops] room.join_reject + code', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(' '));
+    });
+    const registry = new RoomRegistry();
+    registry.join(mkHuman('A'), 'socket-a', '#missing-lrm528');
+    const a = registry.join(mkHuman('A', 'g-a'), 'socket-a');
+    registry.join(mkHuman('B', 'g-b'), 'socket-b', a.room.roomId);
+    registry.join(mkHuman('C', 'g-c'), 'socket-c', a.room.roomId);
+    registry.join(mkHuman('D', 'g-d'), 'socket-d', a.room.roomId);
+
+    const failNotFound = logs.find(
+      (l) => l.includes('[ops]') && l.includes('room.join_reject') && l.includes('room_not_found'),
+    );
+    const failFull = logs.find(
+      (l) => l.includes('[ops]') && l.includes('room.join_reject') && l.includes('room_full'),
+    );
+    expect(failNotFound).toBeTruthy();
+    expect(failFull).toBeTruthy();
+
+    await a.room.start();
+    registry.join(mkHuman('E', 'g-e'), 'socket-e', a.room.roomId);
+    const failStarted = logs.find(
+      (l) =>
+        l.includes('[ops]') && l.includes('room.join_reject') && l.includes('game_already_started'),
+    );
+    expect(failStarted).toBeTruthy();
+    spy.mockRestore();
   });
 
   it('房间号带 # / 空白时规范化后仍可重连', async () => {

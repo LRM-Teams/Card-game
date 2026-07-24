@@ -24,7 +24,7 @@ import { opsLog } from './observability';
 /** 房间号规范化：去空白、去前导 #（好友房链接复制常见）。 */
 export function normalizeRoomId(roomId?: string): string | undefined {
   if (roomId == null) return undefined;
-  const trimmed = roomId.trim().replace(/^#+/, '');
+  const trimmed = roomId.trim().replace(/^#+/, '').trim();
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
@@ -84,6 +84,24 @@ export class RoomRegistry {
     return this.matchQueue.waiterSocketIds();
   }
 
+  /** 进房失败写 [ops] room.join_reject，便于 grep 错误路径。 */
+  private logJoinReject(
+    roomId: string,
+    code: string,
+    phase: string | undefined,
+    kind: JoinOutcome['kind'],
+  ): void {
+    opsLog({
+      event: 'room.join_reject',
+      roomId,
+      code,
+      phase,
+      kind,
+      humanCount: this.rooms.get(roomId)?.humanCount,
+      playerCount: this.rooms.get(roomId)?.playerCount,
+    });
+  }
+
   /** 真人加入；返回落座的房间/座位/事件流。失败时 seat=-1、result 为错误。 */
   join(
     profile: GuestProfile,
@@ -93,6 +111,7 @@ export class RoomRegistry {
     const normalizedRoomId = normalizeRoomId(roomId);
     let room = normalizedRoomId ? this.rooms.get(normalizedRoomId) : undefined;
     if (normalizedRoomId && !room) {
+      this.logJoinReject(normalizedRoomId, 'room_not_found', undefined, 'join');
       return {
         room: new GameRoom(normalizedRoomId, this.aiAdapter),
         seat: -1 as Seat,
@@ -137,6 +156,7 @@ export class RoomRegistry {
     if (seat === null) {
       // 满员：对局中优先提示「已开局」，等待态提示「已满」
       if (room.phase !== GamePhase.WAITING) {
+        this.logJoinReject(room.roomId, 'game_already_started', room.phase, kind);
         return {
           room,
           seat: -1 as Seat,
@@ -144,6 +164,7 @@ export class RoomRegistry {
           kind,
         };
       }
+      this.logJoinReject(room.roomId, 'room_full', room.phase, kind);
       return {
         room,
         seat: -1 as Seat,
@@ -157,7 +178,10 @@ export class RoomRegistry {
       avatarId: profile.avatarId,
       beans: profile.beans,
     });
-    if (!result.ok) return { room, seat: -1 as Seat, result, kind };
+    if (!result.ok) {
+      this.logJoinReject(room.roomId, result.code, room.phase, kind);
+      return { room, seat: -1 as Seat, result, kind };
+    }
     this.bindSeat(room.roomId, seat, socketId);
     opsLog({
       event: 'room.join',

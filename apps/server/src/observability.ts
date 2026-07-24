@@ -8,6 +8,8 @@ import { join, resolve } from 'node:path';
 export type OpsEvent =
   | 'room.create'
   | 'room.join'
+  /** 进房被拒（满员/不存在/已开局/重复 join），可 grep room.join_reject */
+  | 'room.join_reject'
   | 'game.start'
   | 'game.settle'
   | 'player.disconnect'

@@ -247,6 +247,14 @@ export function createGame(io: IoServer): RoomRegistry {
       if (action.type === 'join') {
         // 同一 socket 已在房内时拒绝重复 join（重连走新连接；防呆双发）
         if (bindings.has(socket.id)) {
+          const bound = bindings.get(socket.id)!;
+          opsLog({
+            event: 'room.join_reject',
+            roomId: bound.roomId,
+            code: 'already_in_room',
+            seat: bound.seat,
+            kind: 'join',
+          });
           fail(socket, 'already_in_room', '已在房间内，无需重复加入');
           return;
         }
@@ -266,13 +274,19 @@ export function createGame(io: IoServer): RoomRegistry {
         apply(room.roomId, result.events);
         scheduleDisconnectGrace(room, room.roomId);
         // 私房满 3 真人 → 自动纯人开局（也可房主手动 start）
+        // setImmediate：让同 tick 已入队的并发 join 先落座/满员拒绝，再开局
         if (room.phase === GamePhase.WAITING && room.humanCount >= 3) {
-          runRoomAction(room.roomId, async () => {
-            const started = await room.maybeAutoStartWhenFull();
-            if (!started?.ok) return;
-            logGameStart(room);
-            apply(room.roomId, started.events);
-            await pumpBots(room, room.roomId);
+          const rid = room.roomId;
+          setImmediate(() => {
+            runRoomAction(rid, async () => {
+              const live = registry.get(rid);
+              if (!live || live.phase !== GamePhase.WAITING) return;
+              const started = await live.maybeAutoStartWhenFull();
+              if (!started?.ok) return;
+              logGameStart(live);
+              apply(rid, started.events);
+              await pumpBots(live, rid);
+            });
           });
         }
         return;
