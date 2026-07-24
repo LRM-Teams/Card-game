@@ -13,25 +13,25 @@ export const narrativePixelScene = {
 } as const;
 
 export const narrativePixelUi = {
-  tvStart: `${NP_BASE}/ui/ui-tv-start-200x140.png`,
-  stationBoard: `${NP_BASE}/ui/ui-station-board-280x100.png`,
-  ledgerPanel: `${NP_BASE}/ui/ui-ledger-panel-128x96.png`,
+  tvStart: `${NP_BASE}/ui/ui-tv-start-brass.png`,
+  stationBoard: `${NP_BASE}/ui/ui-station-board-wood.png`,
+  ledgerPanel: `${NP_BASE}/ui/ui-ledger-book.png`,
 } as const;
 
 export const narrativePixelCharacters = {
   row: `${NP_BASE}/characters/sprites-characters-row-512x128.png`,
 } as const;
 
-/** 世界化 UI 热点 — 百分比定位（left/top/width/height） */
+/** 世界化 UI 热点 — 底部控制台摆位（框体比例对齐器物素材，避免 letterbox 露馅） */
 export const narrativePixelHotspots = {
-  /** 旧电视 = 开始游戏 CTA */
-  tvStart: { left: 58, top: 42, width: 12, height: 14 },
-  /** 木质站牌 = 房间码 */
-  stationBoard: { left: 6, top: 62, width: 18, height: 10 },
-  /** 登记簿 = 昵称/头像 */
-  ledger: { left: 68, top: 68, width: 28, height: 22 },
+  /** 黄铜屏框 = 开始游戏 CTA（视觉中心主按钮） */
+  tvStart: { left: 39, top: 50, width: 22, height: 44 },
+  /** 木质站牌 = 房间码（左下） */
+  stationBoard: { left: 4, top: 56, width: 22, height: 38 },
+  /** 登记簿 = 昵称/头像（右下） */
+  ledger: { left: 74, top: 52, width: 22, height: 42 },
   /** 茶馆门口牌桌区（装饰，无交互） */
-  cardTable: { left: 38, top: 52, width: 22, height: 18 },
+  cardTable: { left: 38, top: 48, width: 22, height: 12 },
 } as const;
 
 export type NarrativePixelHotspot = keyof typeof narrativePixelHotspots;
