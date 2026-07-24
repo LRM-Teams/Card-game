@@ -18,13 +18,15 @@ import {
 import { npTotalElements, npUiStates, npErrorLabel, readNpDemoError } from '../lib/narrativePixelElements';
 import { PlayerAvatar } from './PlayerAvatar';
 import { GuideSpot } from './GuideSpot';
+import {
+  clearInviteFromUrl,
+  inviteJoinErrorLabel,
+  isInviteJoinError,
+  parseInviteRoomId,
+} from '../lib/invite';
 
 function readRoomQuery(): string {
-  try {
-    return new URLSearchParams(window.location.search).get('room')?.trim() ?? '';
-  } catch {
-    return '';
-  }
+  return parseInviteRoomId();
 }
 
 function hotspotStyle(
@@ -52,6 +54,7 @@ export function Lobby() {
   const dismissError = useGameStore((s) => s.dismissError);
   const beans = useGameStore((s) => s.beans);
   const roomId = useGameStore((s) => s.roomId);
+  const mySeat = useGameStore((s) => s.mySeat);
   const guideActive = useOnboardingStore((s) => s.active);
   const seenIdentity = useOnboardingStore((s) => s.seenIdentity);
   const seenStart = useOnboardingStore((s) => s.seenStart);
@@ -64,7 +67,19 @@ export function Lobby() {
   const [assetFailed, setAssetFailed] = useState(false);
   const npDemo = readNpDemoError();
   const deepLinkPending = useRef(Boolean(readRoomQuery()));
-  const deepLinkDone = useRef(false);
+  const deepLinkTriggered = useRef(false);
+
+  useEffect(() => {
+    const syncInviteFromUrl = () => {
+      const id = parseInviteRoomId();
+      if (!id) return;
+      setRoomCode(id);
+      deepLinkPending.current = true;
+    };
+    syncInviteFromUrl();
+    window.addEventListener('hashchange', syncInviteFromUrl);
+    return () => window.removeEventListener('hashchange', syncInviteFromUrl);
+  }, []);
 
   const trimmedNick = normalizeDisplayName(identity.displayName);
   const trimmedRoomCode = roomCode.trim().replace(/^#+/, '');
@@ -74,8 +89,8 @@ export function Lobby() {
   const showStartGuide = guideActive && seenIdentity && !seenStart && !matching;
 
   useEffect(() => {
-    if (roomId && !matching) navigate({ to: '/room' });
-  }, [roomId, matching, navigate]);
+    if (roomId != null && mySeat != null && !matching) navigate({ to: '/room' });
+  }, [roomId, mySeat, matching, navigate]);
 
   useEffect(() => {
     if (!matching || matchFillDeadlineAt == null) {
@@ -91,21 +106,24 @@ export function Lobby() {
   }, [matching, matchFillDeadlineAt]);
 
   useEffect(() => {
-    if (!deepLinkPending.current || deepLinkDone.current || !canJoinRoom || roomId) return;
-    deepLinkDone.current = true;
+    if (!deepLinkPending.current || deepLinkTriggered.current || !canJoinRoom || roomId) return;
+    deepLinkTriggered.current = true;
     saveIdentity(identity);
     join(identity, trimmedRoomCode);
     navigate({ to: '/room' });
-    try {
-      const url = new URL(window.location.href);
-      if (url.searchParams.has('room')) {
-        url.searchParams.delete('room');
-        window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
-      }
-    } catch {
-      /* ignore */
-    }
   }, [canJoinRoom, roomId, identity, trimmedRoomCode, join, navigate]);
+
+  useEffect(() => {
+    if (!roomId || !deepLinkPending.current) return;
+    deepLinkPending.current = false;
+    clearInviteFromUrl();
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!deepLinkPending.current || !lastError || !isInviteJoinError(lastError.code)) return;
+    deepLinkPending.current = false;
+    clearInviteFromUrl();
+  }, [lastError]);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -142,12 +160,16 @@ export function Lobby() {
 
   const connecting = npDemo === 'connecting' || status === 'connecting';
   const disconnected = npDemo === 'disconnect' || (status !== 'connected' && !connecting);
-  const apiError = npDemo === 'api' || (!!lastError && !disconnected);
+  const inviteJoinError =
+    lastError && isInviteJoinError(lastError.code) ? lastError : null;
+  const apiError = npDemo === 'api' || (!!lastError && !disconnected && !inviteJoinError);
   const showAssetError = npDemo === 'asset' || assetFailed;
-  const stampError = apiError || showAssetError;
-  const stampLabel = apiError
-    ? npErrorLabel(lastError?.message ?? '', '操作失败')
-    : npErrorLabel('', '资源加载失败');
+  const stampError = apiError || showAssetError || !!inviteJoinError;
+  const stampLabel = inviteJoinError
+    ? inviteJoinErrorLabel(inviteJoinError.code, inviteJoinError.message)
+    : apiError
+      ? npErrorLabel(lastError?.message ?? '', '操作失败')
+      : npErrorLabel('', '资源加载失败');
   const connLabel = connecting ? '连接中…' : '未连接';
   const tvFrame = connecting
     ? npUiStates.tvLoading()
