@@ -18,16 +18,18 @@ body.app--game-page::before {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   image-rendering: pixelated;
 }
 
 .np-game__viewport {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
+  /* 绝对铺满 .np-game：子层全是 absolute 时，相对 flex 会塌成 0 → E2E hidden */
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
   overflow: hidden;
   background: var(--ddz-np-shadow, #16181c);
 }
@@ -176,15 +178,20 @@ body.app--game-page::before {
     radial-gradient(ellipse 70% 55% at 50% 42%, rgba(12, 10, 8, 0.45), transparent 72%);
 }
 
-.table-offline-wrap {
+/* 对局壳铺满 content：保证绝对定位 playfield 有确定高度 */
+.table-game-shell {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
+.table-game-shell .np-game,
 .table-offline-wrap .np-game {
   flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
 /* —— 对局页 diegetic UI（与大厅同思路：器物框材质，不是扁平网页块） —— */
