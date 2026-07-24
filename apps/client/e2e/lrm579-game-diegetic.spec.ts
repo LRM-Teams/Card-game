@@ -23,12 +23,13 @@ async function seedSkipGuide(page: Page) {
 
 test.describe.configure({ mode: 'serial' });
 
-test('LRM-579 game diegetic UI — turn + reveal dual viewport', async ({ browser }) => {
+test('LRM-579 game elements redraw — clean dual viewport shots', async ({ browser }) => {
   fs.mkdirSync(outDir, { recursive: true });
 
-  for (const [scene, fileBase] of [
-    ['turn', 'game-play'],
-    ['reveal', 'game-bid'],
+  for (const [scene, fileBase, btn] of [
+    ['cards', 'game-cards', '对手牌背'],
+    ['turn', 'game-play', '出牌'],
+    ['settle', 'game-settle', '再来一局'],
   ] as const) {
     for (const [suffix, vp] of [
       ['1920x1080', { width: 1920, height: 1080 }],
@@ -37,18 +38,23 @@ test('LRM-579 game diegetic UI — turn + reveal dual viewport', async ({ browse
       const ctx = await browser.newContext({ viewport: vp });
       const p = await ctx.newPage();
       await seedSkipGuide(p);
-      await p.goto(`/fx-demo?scene=${scene}`);
+      await p.goto(`/fx-demo?scene=${scene}&clean=1`);
       await expect(p.locator('.np-game[data-theme="narrative-pixel"]')).toBeVisible({
         timeout: 15_000,
       });
-      await expect(
-        p.getByRole('button', { name: scene === 'turn' ? '出牌' : '明牌', exact: true }),
-      ).toBeVisible();
+      await expect(p.locator('.fx-demo[data-clean="1"]')).toBeVisible();
+      await expect(p.locator('.fx-demo-bar')).toBeHidden();
+      if (scene === 'cards') {
+        await expect(p.locator('img.card-back-art, img.card-front-art').first()).toBeVisible();
+      } else if (scene === 'settle') {
+        await expect(p.getByRole('button', { name: '再来一局', exact: true })).toBeVisible();
+      } else {
+        await expect(p.getByRole('button', { name: '出牌', exact: true })).toBeVisible();
+      }
       await p.waitForTimeout(500);
-      await p.screenshot({
-        path: path.join(outDir, `${fileBase}-${suffix}.png`),
-        fullPage: false,
-      });
+      // 只截对局视口，避免顶栏/页脚「乱码感」
+      const vpEl = p.locator('.np-game__viewport');
+      await vpEl.screenshot({ path: path.join(outDir, `${fileBase}-${suffix}.png`) });
       await ctx.close();
     }
   }

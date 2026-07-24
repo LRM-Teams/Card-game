@@ -105,6 +105,9 @@ function readScene(): FxDemoScene {
  */
 export function FxDemo() {
   const [scene, setScene] = useState<FxDemoScene>(readScene);
+  const cleanPreview =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('clean') === '1';
   const [dealKey, setDealKey] = useState(1);
   const [fxTick, setFxTick] = useState(1);
   /** LRM-196：选中抬起演示（模拟提示命中） */
@@ -178,7 +181,7 @@ export function FxDemo() {
   );
 
   return (
-    <div className="fx-demo" data-scene={scene}>
+    <div className="fx-demo" data-scene={scene} data-clean={cleanPreview ? '1' : undefined}>
       <header className="fx-demo-bar">
         <h1>UI / 动效演示</h1>
         <div className="btn-row">
@@ -257,27 +260,36 @@ export function FxDemo() {
         <div className="table fx-demo-table" data-fx="turn">
           <p className="fx-demo-caption">轮到谁金色脉冲 · {MOTION.turnPulseMs}ms · 局部、无全屏泛光</p>
           <div className="fx-demo-seats">
-            <div className="seat-badge">
+            <div className="seat-badge farmer">
               <div className="avatar">
-                <PlayerAvatar kind="player" />
+                <img className="pixel-art" src={PIXEL.characters.farmer} alt="" aria-hidden />
               </div>
-              <div className="seat-name">上家</div>
+              <img className="role-icon pixel-art" src={PIXEL.ui.badgeFarmer} alt="" aria-hidden />
+              <div className="seat-name">上家 · 农民</div>
             </div>
-            <div className="seat-badge active turn-pulse">
+            <div className="seat-badge active turn-pulse landlord">
               <div className="avatar">
-                <PlayerAvatar kind="player" />
+                <img className="pixel-art" src={PIXEL.characters.landlord} alt="" aria-hidden />
               </div>
-              <div className="seat-name">当前行动</div>
+              <img className="role-icon pixel-art" src={PIXEL.ui.badgeLandlord} alt="" aria-hidden />
+              <div className="seat-name">当前行动 · 地主</div>
               <div className="seat-count">剩 12</div>
             </div>
-            <div className="seat-badge">
+            <div className="seat-badge farmer">
               <div className="avatar">
-                <PlayerAvatar kind="player" />
+                <img className="pixel-art" src={PIXEL.characters.farmer} alt="" aria-hidden />
               </div>
-              <div className="seat-name">下家</div>
+              <img className="role-icon pixel-art" src={PIXEL.ui.badgeFarmer} alt="" aria-hidden />
+              <div className="seat-name">下家 · 农民</div>
             </div>
           </div>
           <div className="turn-line mine">👉 轮到你出牌</div>
+          <HandView
+            cards={DEMO_HAND.slice(0, 8)}
+            selected={['d12', 'd8']}
+            onToggle={() => undefined}
+            dealKey={1}
+          />
           <div className="btn-row">
             <button type="button" className="btn">
               不出
@@ -403,7 +415,22 @@ export function FxDemo() {
             <SettleCoins win />
             <img className="result-badge pixel-art" src={PIXEL.ui.victoryBadge} alt="" aria-hidden="true" />
             <h2 className="result-title">你赢了</h2>
-            <p className="result-meta">农民胜 · 单注 8</p>
+            <div className="result-identity">
+              <img
+                className="result-identity-img pixel-art"
+                src={PIXEL.characters.landlord}
+                alt=""
+                aria-hidden="true"
+              />
+              <img
+                className="role-icon pixel-art"
+                src={PIXEL.ui.badgeLandlord}
+                alt=""
+                aria-hidden="true"
+                style={{ width: 40, height: 40 }}
+              />
+              <p className="result-meta">地主胜 · 单注 8</p>
+            </div>
             <MultiplierBreakdownView variant="settle" multiplier={8} breakdown={DEMO_BREAKDOWN} />
             <ul className="score-list" aria-label="本局得分">
               <li><span>你</span><span className="score-val plus">+16</span></li>
