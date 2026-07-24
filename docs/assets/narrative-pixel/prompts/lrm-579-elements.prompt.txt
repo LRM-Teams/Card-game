@@ -1,0 +1,12 @@
+LRM-579 element generation prompts (reference: caozs2-locked scene-full-1920x1080).
+
+prop-pack-compact-a: 2x2 magenta — lantern, traffic cone, beer crates, bicycle; match v3 bake style.
+prop-pack-compact-b: 2x2 magenta — outdoor tea table, card stack, peeling poster, wood fence.
+char-pack-street: 2x2 magenta — card players group, walking old man, calico cat, foreground bush.
+building-teahouse-main: isolated teahouse with 老街茶馆 sign + lanterns on #FF00FF.
+building-left-apartment: left facade with laundry + 国营冰棍 mural on #FF00FF.
+building-right-apartment: right facade with 18 plate + 安全用电 slogan on #FF00FF.
+building-power-pole: tall utility pole with wire tangle on #FF00FF.
+
+Layers: derived from locked bake pixels via scripts/derive_lobby_v3_layers.py (no new art direction).
+hanging_laundry + sign_teahouse_neon: cropped from locked bake.

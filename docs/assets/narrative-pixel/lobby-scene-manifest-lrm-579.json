@@ -1,0 +1,45 @@
+{
+  "issue": "LRM-579",
+  "version": "v3-locked-bake+true-layers",
+  "lockedBaselineAttachmentId": "019f92b9-1068-717e-bfc1-8dcd90410229",
+  "caozs2WrittenOkAt": "2026-07-24T06:04:24Z",
+  "mode": "baked_scene_mode_with_derived_parallax_pack",
+  "note": "Visible lobby = full bake only. True far/mid/fg/lighting derived from bake for optional parallax; element pack matching bake style. Do not reintroduce geometric placeholders.",
+  "scene": {
+    "full": "apps/client/public/narrative-pixel/scene/scene-full-1920x1080.png",
+    "native640": "apps/client/public/narrative-pixel/scene/ddz-street-scene-v3-640x360.png",
+    "backup1920": "apps/client/public/narrative-pixel/scene/ddz-street-scene-v3-1920x1080.png",
+    "sha256_full": "390b588890e5f89f88005c85114d943fd80b4922584d1b2cacb6f9fbde792d1b",
+    "width": 1920,
+    "height": 1080
+  },
+  "layers": {
+    "far": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-far-bg-1920x1080.png",
+      "role": "derived_parallax_far"
+    },
+    "mid": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-mid-buildings-1920x1080.png",
+      "role": "derived_parallax_mid"
+    },
+    "fg": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-fg-occluder-1920x1080.png",
+      "role": "derived_parallax_fg"
+    },
+    "lighting": {
+      "path": "apps/client/public/narrative-pixel/lighting/layer-lighting-1920x1080.png",
+      "role": "derived_glow"
+    }
+  },
+  "elements_manifest": "docs/assets/narrative-pixel/lobby-v3-elements-manifest.json",
+  "layers_manifest": "docs/assets/narrative-pixel/lobby-v3-layers-manifest.json",
+  "client": {
+    "lobby": "apps/client/src/components/Lobby.tsx",
+    "assets": "apps/client/src/lib/narrativePixelAssets.ts",
+    "wireList": "docs/assets/pixel/wire-list-lrm-579.md"
+  },
+  "validator": {
+    "cmd": "python docs/assets/narrative-pixel/asset_validator.py",
+    "rule": "full bake + true layers + element pack; no geometric blockout as visible product"
+  }
+}

@@ -11,7 +11,6 @@ import {
   saveIdentity,
   type GuestIdentity,
 } from '../lib/session';
-import { NarrativeSceneElements } from './NarrativeSceneElements';
 import {
   narrativePixelHotspots,
   narrativePixelScene,
@@ -163,36 +162,16 @@ export function Lobby() {
       data-theme="narrative-pixel"
     >
       <div className="np-lobby__viewport" ref={viewportRef}>
+        {/* LRM-579: caozs2-locked Narrative Pixel v3 full bake is the live visual bar.
+            True far/mid/fg/lighting plates live in public/narrative-pixel for optional
+            parallax wiring (see wire-list-lrm-579) — do not swap bake for placeholders. */}
         <img
-          className="np-lobby__layer np-lobby__layer--far"
-          src={narrativePixelScene.layers.far}
+          className="np-lobby__layer np-lobby__layer--full"
+          src={narrativePixelScene.full}
           alt=""
           aria-hidden
           draggable={false}
           onError={onSceneAssetError}
-        />
-        <img
-          className="np-lobby__layer np-lobby__layer--mid"
-          src={narrativePixelScene.layers.mid}
-          alt=""
-          aria-hidden
-          draggable={false}
-          onError={onSceneAssetError}
-        />
-        <NarrativeSceneElements />
-        <img
-          className="np-lobby__layer np-lobby__layer--light"
-          src={narrativePixelScene.layers.lighting}
-          alt=""
-          aria-hidden
-          draggable={false}
-        />
-        <img
-          className="np-lobby__layer np-lobby__layer--fg"
-          src={narrativePixelScene.layers.fg}
-          alt=""
-          aria-hidden
-          draggable={false}
         />
 
         {matching ? (
@@ -214,6 +193,8 @@ export function Lobby() {
           </div>
         ) : (
           <div className="np-lobby__hud">
+            {/* 底部控制台台面：把交互沉到画面下缘，对齐参考站仪表盘思路 */}
+            <div className="np-lobby__dock" aria-hidden />
             <GuideSpot
               show={showIdentityGuide}
               title="先设昵称和头像"
@@ -234,10 +215,7 @@ export function Lobby() {
                 <div className="np-hotspot__body">
                   <div className="np-identity">
                     <PlayerAvatar kind="player" avatarId={identity.avatarId} />
-                    <div>
-                      <div className="np-beans">豆子 {beans ?? identity.beans}</div>
-                      <div className="np-hint">游客 ID 本地保存</div>
-                    </div>
+                    <div className="np-beans">豆子 {beans ?? identity.beans}</div>
                   </div>
                   <label className="np-field">
                     <span>昵称</span>
@@ -253,9 +231,9 @@ export function Lobby() {
                       <span className="np-hint warn">昵称需 2–12 个字符</span>
                     )}
                   </label>
-                  <div className="np-field">
+                  <div className="np-field np-field--avatars">
                     <span>头像</span>
-                    <div className="np-avatar-picker">
+                    <div className="np-avatar-picker" role="listbox" aria-label="选择头像">
                       {BUILTIN_AVATARS.map((id) => (
                         <button
                           key={id}

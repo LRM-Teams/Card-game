@@ -579,7 +579,8 @@ function GameTableFrame({
   return (
     <>
       <ConnectionBanner status={status} />
-      <div className={offline ? 'table-offline-wrap' : undefined}>
+      {/* 始终用 flex 铺满壳：playfield 绝对定位后，无高度链会导致 .np-game 塌成 0 → E2E hidden */}
+      <div className={offline ? 'table-game-shell table-offline-wrap' : 'table-game-shell'}>
         <NarrativeGameScene>{children}</NarrativeGameScene>
       </div>
     </>

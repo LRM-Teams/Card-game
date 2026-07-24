@@ -2,8 +2,8 @@
   "props": {
     "sign_teahouse_neon": {
       "path": "narrative-pixel/props/sign_teahouse_neon.png",
-      "width": 64,
-      "height": 64
+      "width": 469,
+      "height": 117
     },
     "sign_mahjong_faded": {
       "path": "narrative-pixel/props/sign_mahjong_faded.png",
@@ -12,8 +12,8 @@
     },
     "lantern_hanging": {
       "path": "narrative-pixel/props/lantern_hanging.png",
-      "width": 80,
-      "height": 80
+      "width": 120,
+      "height": 223
     },
     "crate_wood": {
       "path": "narrative-pixel/props/crate_wood.png",
@@ -27,18 +27,18 @@
     },
     "traffic_cone": {
       "path": "narrative-pixel/props/traffic_cone.png",
-      "width": 56,
-      "height": 48
+      "width": 153,
+      "height": 221
     },
     "card_table_outdoor": {
       "path": "narrative-pixel/props/card_table_outdoor.png",
-      "width": 48,
-      "height": 72
+      "width": 223,
+      "height": 184
     },
     "card_stack": {
       "path": "narrative-pixel/props/card_stack.png",
-      "width": 72,
-      "height": 56
+      "width": 221,
+      "height": 183
     },
     "chair_stool": {
       "path": "narrative-pixel/props/chair_stool.png",
@@ -47,23 +47,23 @@
     },
     "bottle_crate_stack": {
       "path": "narrative-pixel/props/bottle_crate_stack.png",
-      "width": 64,
-      "height": 80
+      "width": 221,
+      "height": 204
     },
     "bicycle_parked": {
       "path": "narrative-pixel/props/bicycle_parked.png",
-      "width": 64,
-      "height": 64
+      "width": 224,
+      "height": 153
     },
     "cat_sit": {
       "path": "narrative-pixel/props/cat_sit.png",
-      "width": 64,
-      "height": 72
+      "width": 214,
+      "height": 120
     },
     "poster_peeling": {
       "path": "narrative-pixel/props/poster_peeling.png",
-      "width": 80,
-      "height": 80
+      "width": 169,
+      "height": 221
     },
     "graffiti_faded": {
       "path": "narrative-pixel/props/graffiti_faded.png",
@@ -92,8 +92,8 @@
     },
     "hanging_laundry": {
       "path": "narrative-pixel/props/hanging_laundry.png",
-      "width": 48,
-      "height": 56
+      "width": 263,
+      "height": 200
     },
     "flower_box": {
       "path": "narrative-pixel/props/flower_box.png",
@@ -117,42 +117,42 @@
     },
     "fence_wood": {
       "path": "narrative-pixel/props/fence_wood.png",
-      "width": 72,
-      "height": 48
+      "width": 223,
+      "height": 199
     }
   },
   "buildings": {
     "building_teahouse_main": {
       "path": "narrative-pixel/buildings/building_teahouse_main.png",
-      "width": 120,
-      "height": 130
+      "width": 454,
+      "height": 339
     },
     "building_left_apartment": {
       "path": "narrative-pixel/buildings/building_left_apartment.png",
-      "width": 120,
-      "height": 130
+      "width": 287,
+      "height": 456
     },
     "building_right_apartment": {
       "path": "narrative-pixel/buildings/building_right_apartment.png",
-      "width": 200,
-      "height": 130
+      "width": 279,
+      "height": 458
     },
     "power_pole": {
       "path": "narrative-pixel/buildings/power_pole.png",
-      "width": 120,
-      "height": 190
+      "width": 197,
+      "height": 458
     }
   },
   "characters": {
     "npc_old_man_walk": {
       "path": "narrative-pixel/characters/npc_old_man_walk.png",
-      "width": 32,
-      "height": 48
+      "width": 110,
+      "height": 219
     },
     "npc_card_players": {
       "path": "narrative-pixel/characters/npc_card_players.png",
-      "width": 48,
-      "height": 80
+      "width": 219,
+      "height": 128
     },
     "npc_player_idle": {
       "path": "narrative-pixel/characters/npc_player_idle.png",
@@ -161,13 +161,13 @@
     },
     "npc_cat_walk": {
       "path": "narrative-pixel/characters/npc_cat_walk.png",
-      "width": 48,
-      "height": 64
+      "width": 214,
+      "height": 120
     },
     "bush_foreground": {
       "path": "narrative-pixel/characters/bush_foreground.png",
-      "width": 32,
-      "height": 80
+      "width": 223,
+      "height": 143
     },
     "bush_large": {
       "path": "narrative-pixel/characters/bush_large.png",
@@ -191,8 +191,8 @@
     },
     "npc_bicycle": {
       "path": "narrative-pixel/characters/npc_bicycle.png",
-      "width": 64,
-      "height": 48
+      "width": 224,
+      "height": 153
     },
     "npc_scooter": {
       "path": "narrative-pixel/characters/npc_scooter.png",
@@ -447,11 +447,6 @@
       "path": "narrative-pixel/ui/states/spinner_frame_2.png",
       "width": 80,
       "height": 60
-    },
-    "ui_error_stamp": {
-      "path": "narrative-pixel/ui/states/ui_error_stamp.png",
-      "width": 48,
-      "height": 24
     }
   }
 }

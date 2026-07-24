@@ -1,0 +1,130 @@
+{
+  "version": "v3-locked-elements",
+  "issue": "LRM-579",
+  "source_bake": "apps/client/public/narrative-pixel/scene/scene-full-1920x1080.png",
+  "constraint": "match caozs2 locked Narrative Pixel v3 bake; no geometric placeholders",
+  "elements": {
+    "building_teahouse_main": {
+      "path": "narrative-pixel/buildings/building_teahouse_main.png",
+      "width": 454,
+      "height": 339,
+      "bytes": 272904
+    },
+    "building_left_apartment": {
+      "path": "narrative-pixel/buildings/building_left_apartment.png",
+      "width": 287,
+      "height": 456,
+      "bytes": 275219
+    },
+    "building_right_apartment": {
+      "path": "narrative-pixel/buildings/building_right_apartment.png",
+      "width": 279,
+      "height": 458,
+      "bytes": 248940
+    },
+    "power_pole": {
+      "path": "narrative-pixel/buildings/power_pole.png",
+      "width": 197,
+      "height": 458,
+      "bytes": 63278
+    },
+    "lantern_hanging": {
+      "path": "narrative-pixel/props/lantern_hanging.png",
+      "width": 120,
+      "height": 223,
+      "bytes": 34926
+    },
+    "traffic_cone": {
+      "path": "narrative-pixel/props/traffic_cone.png",
+      "width": 153,
+      "height": 221,
+      "bytes": 41121
+    },
+    "bottle_crate_stack": {
+      "path": "narrative-pixel/props/bottle_crate_stack.png",
+      "width": 221,
+      "height": 204,
+      "bytes": 77264
+    },
+    "bicycle_parked": {
+      "path": "narrative-pixel/props/bicycle_parked.png",
+      "width": 224,
+      "height": 153,
+      "bytes": 65449
+    },
+    "card_table_outdoor": {
+      "path": "narrative-pixel/props/card_table_outdoor.png",
+      "width": 223,
+      "height": 184,
+      "bytes": 59504
+    },
+    "card_stack": {
+      "path": "narrative-pixel/props/card_stack.png",
+      "width": 221,
+      "height": 183,
+      "bytes": 82012
+    },
+    "poster_peeling": {
+      "path": "narrative-pixel/props/poster_peeling.png",
+      "width": 169,
+      "height": 221,
+      "bytes": 87492
+    },
+    "fence_wood": {
+      "path": "narrative-pixel/props/fence_wood.png",
+      "width": 223,
+      "height": 199,
+      "bytes": 88997
+    },
+    "npc_card_players": {
+      "path": "narrative-pixel/characters/npc_card_players.png",
+      "width": 219,
+      "height": 128,
+      "bytes": 47097
+    },
+    "npc_old_man_walk": {
+      "path": "narrative-pixel/characters/npc_old_man_walk.png",
+      "width": 110,
+      "height": 219,
+      "bytes": 29589
+    },
+    "npc_cat_walk": {
+      "path": "narrative-pixel/characters/npc_cat_walk.png",
+      "width": 214,
+      "height": 120,
+      "bytes": 37269
+    },
+    "bush_foreground": {
+      "path": "narrative-pixel/characters/bush_foreground.png",
+      "width": 223,
+      "height": 143,
+      "bytes": 52088
+    },
+    "cat_sit": {
+      "path": "narrative-pixel/props/cat_sit.png",
+      "width": 214,
+      "height": 120,
+      "bytes": 37269
+    },
+    "npc_bicycle": {
+      "path": "narrative-pixel/characters/npc_bicycle.png",
+      "width": 224,
+      "height": 153,
+      "bytes": 65449
+    },
+    "hanging_laundry": {
+      "path": "narrative-pixel/props/hanging_laundry.png",
+      "width": 263,
+      "height": 200,
+      "bytes": 24401
+    },
+    "sign_teahouse_neon": {
+      "path": "narrative-pixel/props/sign_teahouse_neon.png",
+      "width": 469,
+      "height": 117,
+      "bytes": 18165
+    }
+  },
+  "count": 20,
+  "layers_manifest": "docs/assets/narrative-pixel/lobby-v3-layers-manifest.json"
+}

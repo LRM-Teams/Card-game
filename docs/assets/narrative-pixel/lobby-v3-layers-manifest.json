@@ -1,0 +1,73 @@
+{
+  "version": "v3-locked-layers",
+  "issue": "LRM-579",
+  "source": "caozs2-locked scene-full-1920x1080 (019f92b9)",
+  "constraint": "no visual drift from locked bake; layers derived from bake pixels",
+  "canvas": [
+    1920,
+    1080
+  ],
+  "depth_bands": {
+    "far_end": 420,
+    "mid_end": 780,
+    "fg_start": 620
+  },
+  "layers": {
+    "layer-far-bg-1920x1080.png": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-far-bg-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "mode": "RGBA",
+      "bytes": 467895
+    },
+    "layer-mid-buildings-1920x1080.png": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-mid-buildings-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "mode": "RGBA",
+      "bytes": 1040237
+    },
+    "layer-fg-occluder-1920x1080.png": {
+      "path": "apps/client/public/narrative-pixel/scene/layer-fg-occluder-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "mode": "RGBA",
+      "bytes": 697890
+    },
+    "layer-lighting-1920x1080.png": {
+      "path": "apps/client/public/narrative-pixel/lighting/layer-lighting-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "mode": "RGBA",
+      "bytes": 184708
+    },
+    "layered-preview-1920x1080.png": {
+      "path": "docs/assets/previews/lrm-579/layered-preview-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "mode": "RGB",
+      "bytes": 738012
+    },
+    "bake-reference-1920x1080.png": {
+      "path": "docs/assets/previews/lrm-579/bake-reference-1920x1080.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "mode": "RGB",
+      "bytes": 666877
+    }
+  },
+  "runtime_primary": "apps/client/public/narrative-pixel/scene/scene-full-1920x1080.png",
+  "note": "Lobby keeps full bake as visible bar; far/mid/fg/lighting are true parallax plates for wiring"
+}

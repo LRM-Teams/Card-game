@@ -41,32 +41,10 @@ export const narrativeLobbyScenePlacements: ScenePlacement[] = [
 /** @deprecated 使用 narrativeLobbyScenePlacements */
 export const narrativeScenePlacements = narrativeLobbyScenePlacements;
 
-/** 室内·对局页装饰元素（茶馆牌桌环境，角色站位参考 concept-indoor-game） */
+/** 室内·对局页装饰元素 — 只保留成品精灵；chair_stool/pot_plant 仍是绿框占位图，勿挂上桌 */
 export const narrativeGameScenePlacements: ScenePlacement[] = [
-  // 墙面装饰 z=5
-  { id: 'G01', category: 'tiles', sprite: 'window_lit_56x72', left: 6, top: 7, width: 10, z: 5 },
-  { id: 'G02', category: 'tiles', sprite: 'window_lit_56x72', left: 83, top: 6, width: 11, z: 5 },
-  { id: 'G03', category: 'props', sprite: 'sign_mahjong_faded', left: 12, top: 22, width: 9, z: 6 },
-  { id: 'G04', category: 'props', sprite: 'poster_peeling', left: 78, top: 20, width: 4, z: 6 },
-  // 吊灯 z=8
+  { id: 'G04', category: 'props', sprite: 'poster_peeling', left: 78, top: 18, width: 5, z: 6 },
   { id: 'G05', category: 'props', sprite: 'lantern_hanging', left: 48, top: 2, width: 4, z: 8 },
-  { id: 'G06', category: 'tiles', sprite: 'lantern_glow', left: 46, top: 6, width: 8, z: 7 },
-  // 两侧置物架 z=10
-  { id: 'G07', category: 'tiles', sprite: 'wood_plank', left: 3, top: 65, width: 8, z: 10 },
-  { id: 'G08', category: 'tiles', sprite: 'wood_plank', left: 89, top: 63, width: 7, z: 10 },
-  { id: 'G09', category: 'props', sprite: 'bottle_crate_stack', left: 4, top: 58, width: 6, z: 11 },
-  { id: 'G10', category: 'tiles', sprite: 'tea_cup', left: 5, top: 64, width: 2, z: 12 },
-  { id: 'G11', category: 'tiles', sprite: 'beer_bottle', left: 90, top: 66, width: 2, z: 12 },
-  { id: 'G12', category: 'props', sprite: 'pot_plant', left: 91, top: 58, width: 4, z: 11 },
-  // 角色站位（装饰 NPC，与真实座位错开） z=15
-  { id: 'G13', category: 'characters', sprite: 'npc_player_idle', left: 8, top: 38, width: 5, z: 15 },
-  { id: 'G14', category: 'characters', sprite: 'npc_old_man_walk', left: 86, top: 36, width: 5, z: 15, flip: true },
-  { id: 'G15', category: 'characters', sprite: 'npc_shadow', left: 9, top: 44, width: 4, z: 14 },
-  { id: 'G16', category: 'characters', sprite: 'npc_shadow', left: 87, top: 42, width: 4, z: 14 },
-  // 凳椅 z=12
-  { id: 'G17', category: 'props', sprite: 'chair_stool', left: 14, top: 72, width: 3, z: 12 },
-  { id: 'G18', category: 'props', sprite: 'chair_stool', left: 83, top: 72, width: 3, z: 12 },
-  // 前景 dust z=20
-  { id: 'G19', category: 'tiles', sprite: 'dust_particle', left: 42, top: 12, width: 1, z: 20 },
-  { id: 'G20', category: 'tiles', sprite: 'dust_particle', left: 55, top: 10, width: 1, z: 20 },
+  { id: 'G09', category: 'props', sprite: 'bottle_crate_stack', left: 3, top: 56, width: 7, z: 11 },
+  { id: 'G14', category: 'characters', sprite: 'npc_old_man_walk', left: 86, top: 34, width: 6, z: 15, flip: true },
 ];

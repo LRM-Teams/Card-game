@@ -2993,6 +2993,16 @@ body::before {
   gap: 12px;
   margin-bottom: 16px;
 }
+
+/* 评审截图：?clean=1 隐藏调试条与说明文案，只留对局视口 */
+.fx-demo[data-clean='1'] .fx-demo-bar,
+.fx-demo[data-clean='1'] .fx-demo-caption {
+  display: none !important;
+}
+
+.fx-demo[data-clean='1'] .np-game {
+  min-height: calc(100dvh - 48px);
+}
 .fx-demo-bar h1 {
   margin: 0;
   font-size: var(--ddz-text-lg);

@@ -18,16 +18,18 @@ body.app--game-page::before {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   image-rendering: pixelated;
 }
 
 .np-game__viewport {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
+  /* 绝对铺满 .np-game：子层全是 absolute 时，相对 flex 会塌成 0 → E2E hidden */
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
   overflow: hidden;
   background: var(--ddz-np-shadow, #16181c);
 }
@@ -44,49 +46,443 @@ body.app--game-page::before {
 
 .np-game__layer--wall {
   z-index: 0;
-}
-
-.np-game__layer--light {
-  z-index: 2;
-  mix-blend-mode: screen;
-  opacity: 0.72;
-}
-
-.np-game .np-scene-elements {
-  z-index: 1;
+  object-fit: cover;
+  /* 偏上裁切：少露桌下空地板，让毡面+底部仪表盘吃满下缘 */
+  object-position: 50% 32%;
 }
 
 .np-game__playfield {
-  position: relative;
+  /* 绝对铺满视口：避免 height:100% 在 flex 下塌成内容高，导致下半屏空茶馆桌 */
+  position: absolute;
+  inset: 0;
   z-index: 3;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: stretch;
   width: 100%;
   height: 100%;
   min-height: 0;
   pointer-events: none;
+  padding-bottom: 0;
 }
 
 .np-game__playfield > * {
   pointer-events: auto;
 }
 
-.table-offline-wrap {
+/*
+ * 对局壳：场景台面为主，不再叠一块巨大空椭圆。
+ * 手牌+按钮沉成底部厚仪表盘，填掉「下面太空」。
+ */
+.np-game .table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  justify-content: flex-start;
+  gap: 8px;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 16px 28px 0;
+  overflow: visible;
+}
+
+.np-game .table::before,
+.np-game .table::after {
+  display: none;
+}
+
+.np-game .fx-demo-table {
+  min-height: 100%;
+  height: 100%;
+  padding-bottom: 0;
+}
+
+/* 底部仪表盘：手牌区起势 */
+.np-game .hand {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  margin-top: auto;
+  margin-bottom: 0;
+  width: 100%;
+  max-width: none;
+  padding: 22px 20px 6px;
+  min-height: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 12, 8, 0) 0%,
+      rgba(22, 14, 10, 0.55) 28%,
+      rgba(18, 12, 8, 0.88) 100%
+    );
+  border-top: 2px solid rgba(196, 142, 42, 0.42);
+  box-shadow: inset 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.np-game .hand::before {
+  left: 8%;
+  right: 8%;
+  bottom: 4px;
+  opacity: 0.55;
+}
+
+/* fx-demo 出牌行 / 正式 controls 共用底部厚台 */
+.np-game .hand + .btn-row,
+.np-game .controls {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 10px 20px 16px;
+  border-radius: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28, 18, 12, 0.72) 0%,
+      rgba(16, 10, 6, 0.92) 55%,
+      rgba(10, 6, 4, 0.96) 100%
+    );
+  border-top: 1px solid rgba(196, 142, 42, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 150, 0.08),
+    0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.np-game .controls {
+  flex-direction: column;
+}
+
+.np-game .btn-row,
+.np-game .hand + .btn-row {
+  flex-direction: row;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* 结算页：保留可读卡片，仍贴底 */
+.np-game .table.settled {
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(12, 10, 8, 0.45), transparent 72%);
+}
+
+/* 对局壳铺满 content：保证绝对定位 playfield 有确定高度 */
+.table-game-shell {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
+.table-game-shell .np-game,
 .table-offline-wrap .np-game {
   flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+/* —— 对局页 diegetic UI（与大厅同思路：器物框材质，不是扁平网页块） —— */
+
+/* 座位名牌 = 木牌 */
+.np-game .seat-badge {
+  border-radius: 3px;
+  border: 2px solid rgba(168, 120, 48, 0.62);
+  background:
+    linear-gradient(180deg, rgba(92, 62, 28, 0.92) 0%, rgba(42, 28, 14, 0.95) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 150, 0.22),
+    0 6px 14px rgba(0, 0, 0, 0.4);
+  color: #f6e2b0;
+}
+
+.np-game .seat-badge.active,
+.np-game .seat-badge.is-turn,
+.np-game .seat-badge.turn-pulse {
+  border-color: rgba(232, 168, 72, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(80, 48, 8, 0.55),
+    0 0 16px rgba(255, 196, 96, 0.35),
+    inset 0 1px 0 rgba(255, 230, 170, 0.35);
+}
+
+/* 回合提示 = 茶馆小木签 */
+.np-game .turn-line {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.5);
+  background: linear-gradient(180deg, rgba(60, 40, 20, 0.88), rgba(28, 18, 10, 0.9));
+  color: #ffe6a8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.np-game .turn-line.mine {
+  border-color: rgba(232, 168, 72, 0.75);
+  color: #fff0c8;
+}
+
+/* 叫分/明牌/加倍面板 = 木质器物框（站牌素材垫底） */
+.np-game .bid-cta-panel {
+  position: relative;
+  isolation: isolate;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #f6e2b0;
+  padding: 28px 40px 24px;
+  min-width: min(340px, 92vw);
+}
+
+.np-game .bid-cta-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(28, 18, 10, 0.35), rgba(18, 12, 8, 0.55)),
+    url('/narrative-pixel/ui/ui-station-board-wood.png') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+
+.np-game .bid-cta-panel::after {
+  display: none;
+}
+
+.np-game .bid-cta-title {
+  color: #ffe6a8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.np-game .bid-cta-sub {
+  color: rgba(255, 228, 176, 0.7);
+}
+
+/* 出牌控件 = 底部仪表盘台面（与 .hand + .btn-row 同厚） */
+.np-game .controls {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding: 10px 20px 16px;
+  border-radius: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28, 18, 12, 0.72) 0%,
+      rgba(16, 10, 6, 0.92) 55%,
+      rgba(10, 6, 4, 0.96) 100%
+    );
+  border-top: 1px solid rgba(196, 142, 42, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 150, 0.08),
+    0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.np-game .hint {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.55);
+  background:
+    linear-gradient(180deg, rgba(255, 244, 214, 0.14), rgba(40, 28, 14, 0.82));
+  color: #ffe6a8;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.15);
+}
+
+.np-game .hint.ok {
+  color: #b8f0a0;
+}
+
+.np-game .hint.warn {
+  color: #ffd078;
+}
+
+/* 通用按钮 → 木质/黄铜器物，覆盖扁平网页块 */
+.np-game .btn {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.7);
+  background: linear-gradient(180deg, #c9a05a 0%, #8a6230 55%, #5a3c18 100%);
+  color: #1c1408;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  min-height: 40px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 180, 0.35),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.25);
+}
+
+.np-game .btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.np-game .btn.primary,
+.np-game .btn.primary.cta {
+  border-color: rgba(210, 160, 70, 0.85);
+  /* 覆盖 styles.css 的 pixel btn 底图 */
+  background-image: none;
+  background-color: transparent;
+  background:
+    linear-gradient(180deg, rgba(42, 28, 12, 0.45) 0%, rgba(18, 12, 8, 0.7) 100%),
+    linear-gradient(180deg, #c8963a 0%, #7a5218 100%);
+  background-blend-mode: soft-light, normal;
+  color: #ffe6a8;
+  text-shadow:
+    0 0 10px rgba(255, 196, 96, 0.4),
+    0 1px 0 rgba(0, 0, 0, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(60, 36, 8, 0.7),
+    inset 0 1px 0 rgba(255, 220, 150, 0.35),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.np-game .btn.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow:
+    0 0 14px rgba(255, 196, 96, 0.35),
+    inset 0 1px 0 rgba(255, 230, 170, 0.4),
+    0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+.np-game .btn.bid-pass,
+.np-game .btn.secondary {
+  border-color: rgba(140, 100, 48, 0.65);
+  background: linear-gradient(180deg, #a88850 0%, #6a4824 60%, #3e2a14 100%);
+  color: #f6e2b0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 150, 0.2),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.np-game .btn.bid-pass:hover:not(:disabled),
+.np-game .btn.secondary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.np-game .btn.ghost {
+  border-color: rgba(168, 120, 48, 0.45);
+  background: rgba(28, 18, 10, 0.55);
+  color: #ffe6a8;
+}
+
+/* 表情入口也走木牌 */
+.np-game .emote-chat-trigger {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.65);
+  background: linear-gradient(180deg, #c9a05a 0%, #5a3c18 100%);
+  color: #1c1408;
+}
+
+.np-game .emote-chat-panel {
+  border-radius: 4px;
+  border: 2px solid rgba(168, 120, 48, 0.65);
+  background: linear-gradient(180deg, rgba(72, 48, 24, 0.96), rgba(28, 18, 10, 0.97));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  color: #f6e2b0;
+}
+
+/* 结算卡 = 登记簿质感 */
+.np-game .table.settled,
+.np-game .result-card {
+  border-radius: 4px;
+  border: 3px solid rgba(168, 120, 48, 0.7);
+  background:
+    linear-gradient(180deg, rgba(255, 244, 214, 0.08), transparent 40%),
+    linear-gradient(180deg, rgba(56, 38, 20, 0.95), rgba(22, 14, 8, 0.97));
+  box-shadow:
+    inset 0 0 0 2px rgba(200, 150, 58, 0.18),
+    0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.np-game .seat-badge .avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid rgba(168, 120, 48, 0.55);
+  background: rgba(20, 14, 8, 0.65);
+}
+
+.np-game .seat-badge .avatar img,
+.np-game .seat-badge .avatar .pixel-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+}
+
+.np-game .seat-badge .role-icon {
+  width: 28px;
+  height: 28px;
+  margin-top: 4px;
+  image-rendering: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+.np-game .result-identity-img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid rgba(200, 150, 58, 0.55);
+  image-rendering: auto;
+}
+
+.np-game .meta-corner {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.45);
+  background: rgba(28, 18, 10, 0.72);
+  color: #f6e2b0;
 }
 
 @media (max-width: 680px) {
   .np-game__layer--light {
     opacity: 0.58;
+  }
+
+  .np-game .table {
+    padding: 10px 10px 0;
+  }
+
+  .np-game .hand {
+    padding: 16px 8px 4px;
+  }
+
+  .np-game .hand + .btn-row,
+  .np-game .controls {
+    width: 100%;
+    padding: 8px 8px 14px;
+  }
+
+  .np-game .btn {
+    min-height: 36px;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+
+  .np-game .btn.primary.cta {
+    min-width: 96px;
+  }
+
+  .np-game .bid-cta-panel {
+    padding: 22px 18px 18px;
+    max-width: 96vw;
+    min-width: 0;
   }
 }
 

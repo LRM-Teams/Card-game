@@ -113,56 +113,99 @@ body.app--lobby-page .content {
   pointer-events: auto;
 }
 
+/* 底部控制台：暗木半透明台面，让场景透上来（参考站仪表盘思路） */
+.np-lobby__dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  z-index: 9;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 10, 8, 0) 0%,
+      rgba(18, 14, 10, 0.55) 28%,
+      rgba(22, 16, 12, 0.82) 100%
+    );
+  border-top: 2px solid rgba(196, 142, 42, 0.22);
+  box-shadow: inset 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
 .np-hotspot {
   position: absolute;
   box-sizing: border-box;
 }
 
 .np-hotspot__frame {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: auto;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.55));
+  z-index: 1;
 }
 
 .np-hotspot__body {
   position: absolute;
-  inset: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 8%;
   justify-content: center;
+  box-sizing: border-box;
 }
 
-/* 电视 = 开始游戏 */
+/* 黄铜屏 = 开始游戏：控件落在屏幕凹槽 */
 .np-hotspot--tv .np-hotspot__body {
+  left: 18%;
+  right: 18%;
+  top: 22%;
+  bottom: 28%;
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 18%;
+  justify-content: center;
+  padding: 0;
 }
 
 .np-btn-tv {
-  width: 88%;
-  min-height: 36px;
-  border: 2px solid rgba(255, 204, 108, 0.45);
-  border-radius: 4px;
-  background: linear-gradient(180deg, rgba(255, 204, 108, 0.92), rgba(196, 142, 42, 0.95));
-  color: var(--ddz-np-ink);
-  font-size: clamp(11px, 2.2vw, 15px);
+  width: 100%;
+  min-height: 44px;
+  border: 2px solid rgba(210, 160, 70, 0.75);
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, rgba(42, 28, 12, 0.55) 0%, rgba(18, 12, 8, 0.75) 100%),
+    linear-gradient(180deg, #c8963a 0%, #7a5218 100%);
+  background-blend-mode: soft-light, normal;
+  color: #ffe6a8;
+  font-size: clamp(13px, 2.4vw, 18px);
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
+  text-shadow:
+    0 0 10px rgba(255, 196, 96, 0.45),
+    0 1px 0 rgba(0, 0, 0, 0.65);
   cursor: pointer;
   box-shadow:
-    0 0 12px rgba(255, 204, 108, 0.35),
-    inset 0 2px 0 rgba(255, 255, 255, 0.45);
-  transition: transform 100ms ease, filter 150ms ease;
+    0 0 0 1px rgba(60, 36, 8, 0.7),
+    inset 0 1px 0 rgba(255, 220, 150, 0.35),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 100ms ease, filter 150ms ease, box-shadow 150ms ease;
 }
 
 .np-btn-tv:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.12);
   transform: translateY(-1px);
+  box-shadow:
+    0 0 16px rgba(255, 196, 96, 0.4),
+    inset 0 1px 0 rgba(255, 230, 170, 0.45),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.4),
+    0 6px 14px rgba(0, 0, 0, 0.45);
 }
 
 .np-btn-tv:active:not(:disabled) {
@@ -174,9 +217,14 @@ body.app--lobby-page .content {
   cursor: not-allowed;
 }
 
-/* 站牌 = 房间码 */
+/* 木质站牌 = 房间码：控件落在木板心 */
 .np-hotspot--station .np-hotspot__body {
-  padding: 22% 10% 12%;
+  left: 14%;
+  right: 14%;
+  top: 18%;
+  bottom: 16%;
+  gap: 8px;
+  padding: 0;
 }
 
 .np-field {
@@ -186,20 +234,27 @@ body.app--lobby-page .content {
 }
 
 .np-field span {
-  font-size: 10px;
-  color: var(--ddz-np-muted);
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  color: rgba(255, 228, 176, 0.78);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
 }
 
 .np-field input {
   width: 100%;
-  padding: 6px 8px;
-  border: 2px solid rgba(148, 118, 68, 0.55);
-  border-radius: 3px;
-  background: rgba(251, 236, 196, 0.88);
-  color: var(--ddz-np-ink);
-  font-size: 12px;
+  padding: 8px 10px;
+  border: 2px solid rgba(120, 88, 40, 0.7);
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, rgba(48, 34, 18, 0.88), rgba(28, 20, 12, 0.92));
+  color: #f6e2b0;
+  font-size: 13px;
   font-family: inherit;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.np-field input::placeholder {
+  color: rgba(246, 226, 176, 0.4);
 }
 
 .np-field input:focus {
@@ -208,25 +263,31 @@ body.app--lobby-page .content {
 
 .np-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   margin-top: 4px;
 }
 
 .np-btn-wood {
   flex: 1;
-  min-height: 30px;
-  border: 2px solid rgba(148, 118, 68, 0.5);
-  border-radius: 3px;
-  background: linear-gradient(180deg, rgba(188, 152, 88, 0.9), rgba(108, 88, 52, 0.95));
-  color: var(--ddz-np-ink);
-  font-size: 11px;
-  font-weight: 700;
+  min-height: 34px;
+  border: 2px solid rgba(168, 120, 48, 0.65);
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, #c9a05a 0%, #8a6230 55%, #5a3c18 100%);
+  color: #1c1408;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   cursor: pointer;
-  transition: filter 150ms ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 180, 0.35),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+  transition: filter 150ms ease, transform 100ms ease;
 }
 
 .np-btn-wood:hover:not(:disabled) {
-  filter: brightness(1.06);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
 }
 
 .np-btn-wood:disabled {
@@ -234,53 +295,111 @@ body.app--lobby-page .content {
   cursor: not-allowed;
 }
 
-/* 登记簿 = 身份 */
+/* 登记簿 = 身份：控件落在书页上 */
 .np-hotspot--ledger .np-hotspot__body {
-  padding: 18% 8% 10%;
-  background: rgba(251, 236, 196, 0.08);
-  border-radius: 4px;
+  left: 12%;
+  right: 12%;
+  top: 14%;
+  bottom: 12%;
+  gap: 4px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.np-hotspot--ledger .np-field span {
+  color: rgba(72, 48, 24, 0.78);
+  text-shadow: none;
+}
+
+.np-hotspot--ledger .np-field input {
+  border-color: rgba(120, 88, 48, 0.45);
+  background: rgba(255, 244, 214, 0.72);
+  color: #3a2814;
+  box-shadow: inset 0 1px 3px rgba(80, 50, 20, 0.18);
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.np-hotspot--ledger .np-field input::placeholder {
+  color: rgba(90, 64, 36, 0.4);
+}
+
+.np-hotspot--ledger .np-hint {
+  color: rgba(90, 64, 36, 0.62);
+}
+
+.np-hotspot--ledger .np-beans {
+  color: #8a5218;
+  text-shadow: none;
+  font-size: 11px;
+}
+
+.np-hotspot--ledger .np-identity {
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.np-hotspot--ledger .np-identity .avatar-silhouette {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px;
+  min-height: 28px;
 }
 
 .np-identity {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .np-beans {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ddz-np-lamp-300);
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffd078;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .np-hint {
-  font-size: 9px;
-  color: var(--ddz-np-muted);
+  font-size: 10px;
+  color: rgba(255, 228, 176, 0.62);
   line-height: 1.4;
 }
 
 .np-hint.warn {
-  color: #e8a070;
+  color: #c06030;
 }
 
 .np-avatar-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  max-width: 100%;
 }
 
 .np-avatar-pick {
-  padding: 2px;
-  border: 2px solid transparent;
+  padding: 1px;
+  border: 2px solid rgba(168, 120, 48, 0.35);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 244, 214, 0.35);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 32px;
+}
+
+.np-avatar-pick .avatar-silhouette {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px;
+  min-height: 22px;
 }
 
 .np-avatar-pick.selected {
-  border-color: var(--ddz-np-lamp-500);
-  box-shadow: 0 0 8px rgba(232, 168, 72, 0.35);
+  border-color: #c8963a;
+  box-shadow: 0 0 8px rgba(200, 150, 58, 0.35);
 }
 
 /* 匹配态 — 电视雪花 */
@@ -403,24 +522,137 @@ body.app--lobby-page .content {
   line-height: 1.55;
 }
 
+/* LRM-579 AC#2：窄屏勿再锁 16:9 条带 + 灰底；场景须铺满可视区（cover 裁切，锚点茶馆）。 */
+/* 同时守底部仪表盘：左站牌 / 中开始 / 右登记簿 */
 @media (max-width: 720px) {
-  .np-hotspot--ledger {
-    left: 4% !important;
-    top: 58% !important;
-    width: 92% !important;
-    height: 36% !important;
+  body.app--lobby-page .app {
+    max-width: none;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body.app--lobby-page .topnav {
+    flex: 0 0 auto;
+    padding-inline: 12px;
+  }
+
+  body.app--lobby-page .content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.app--lobby-page .foot {
+    display: none;
+  }
+
+  .np-lobby {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: none;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .np-lobby__viewport {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    height: auto;
+    aspect-ratio: auto;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .np-lobby__layer--full {
+    object-fit: cover;
+    /* 1920×1080 bake → 竖屏 cover：横向裁切，纵向锚在茶馆招牌/街道 */
+    object-position: 50% 42%;
+  }
+
+  .np-tips {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 12;
+    margin: 0;
+    padding: 10px 12px 14px;
+    background: linear-gradient(180deg, transparent, rgba(22, 24, 28, 0.78));
+    pointer-events: none;
+  }
+
+  .np-lobby__dock {
+    height: 52%;
   }
 
   .np-hotspot--station {
-    left: 4% !important;
-    top: 28% !important;
-    width: 44% !important;
+    left: 1% !important;
+    top: 52% !important;
+    width: 30% !important;
+    height: 44% !important;
   }
 
   .np-hotspot--tv {
-    left: 52% !important;
-    top: 28% !important;
-    width: 44% !important;
+    left: 31% !important;
+    top: 46% !important;
+    width: 38% !important;
+    height: 50% !important;
+  }
+
+  .np-hotspot--ledger {
+    left: 69% !important;
+    top: 52% !important;
+    width: 30% !important;
+    height: 44% !important;
+  }
+
+  .np-hotspot--tv .np-hotspot__body {
+    left: 16%;
+    right: 16%;
+    top: 20%;
+    bottom: 26%;
+  }
+
+  .np-hotspot--station .np-hotspot__body,
+  .np-hotspot--ledger .np-hotspot__body {
+    left: 12%;
+    right: 12%;
+    top: 16%;
+    bottom: 14%;
+  }
+
+  .np-btn-tv {
+    min-height: 40px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+
+  .np-btn-wood {
+    min-height: 32px;
+    font-size: 11px;
+  }
+
+  .np-field span,
+  .np-hint {
+    font-size: 9px;
+  }
+
+  .np-field input {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .np-avatar-picker {
+    max-height: 48px;
+    overflow: hidden;
   }
 }
 
