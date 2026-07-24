@@ -1612,11 +1612,12 @@ body::before {
 }
 .hand {
   position: relative;
-  padding: 36px 8px 14px;
+  /* 顶部留足选中抬起（~34px），避免 overflow 裁掉牌面角标 */
+  padding: 48px 8px 14px;
   min-height: 188px;
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   align-items: flex-end;
   perspective: 1200px;
   scrollbar-width: thin;
@@ -1626,7 +1627,8 @@ body::before {
   /* 吃掉舞台下方余白，把手牌+底栏整体下沉 */
   margin-top: auto;
   min-height: var(--ddz-vp-hand-min);
-  padding: 28px 6px 0;
+  padding: 48px 6px 8px;
+  overflow-y: visible;
 }
 .hand::before {
   content: '';
@@ -1646,12 +1648,14 @@ body::before {
   --card-lift: 0px;
   transform: translateY(var(--card-lift));
   transform-origin: 50% 100%;
-  margin-left: clamp(-20px, -17px, -14px);
+  /* 少叠一点：右侧牌少盖左侧角标/点数可读区 */
+  margin-left: clamp(-12px, -10px, -8px);
   transition: transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out;
 }
 .hand .card:hover:not(:disabled) {
   --card-lift: -14px;
   transform: translateY(var(--card-lift));
+  z-index: 8;
 }
 .hand .card.is-selected,
 .hand .card.is-selected:hover:not(:disabled) {
@@ -1659,7 +1663,7 @@ body::before {
   transform: translateY(var(--card-lift));
   border-color: var(--ddz-gold-500);
   box-shadow: var(--ddz-glow-gold), 0 14px 20px rgba(0, 0, 0, 0.38);
-  z-index: 5;
+  z-index: 12;
 }
 .hand .card:first-child {
   margin-left: 0;
@@ -2747,9 +2751,9 @@ body::before {
     width: 100%;
     max-width: 100%;
     min-height: 96px;
-    padding: 18px 2px 10px;
+    padding: 40px 2px 10px;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
@@ -2777,7 +2781,8 @@ body::before {
     width: var(--ddz-card-mobile-w);
     height: 50px;
     flex: 0 0 auto;
-    margin-left: clamp(-24px, var(--hand-fit-gap), -8px);
+    /* 手机叠放：夹紧负间距，避免右牌完全盖住左牌点数 */
+    margin-left: clamp(-16px, var(--hand-fit-gap), -6px);
     --card-lift: 0px;
   }
   .hand .card:first-child {
@@ -2786,11 +2791,13 @@ body::before {
   .hand .card:hover:not(:disabled) {
     --card-lift: -12px;
     transform: translateY(var(--card-lift));
+    z-index: 8;
   }
   .hand .card.is-selected,
   .hand .card.is-selected:hover:not(:disabled) {
     --card-lift: -28px;
     transform: translateY(var(--card-lift));
+    z-index: 12;
   }
   /* 操作条：文档流底部固定感，但不盖住手牌命中区 */
   .controls {
