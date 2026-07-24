@@ -435,3 +435,144 @@ body.app--lobby-page .content {
     animation: none;
   }
 }
+
+/* LRM-526 叙事像素邀请弹层 — --ddz-np-* */
+.np-invite-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(22, 24, 28, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.np-invite {
+  width: min(100%, 420px);
+  max-height: min(88vh, 560px);
+  overflow: auto;
+  padding: 16px;
+  border: 2px solid rgba(232, 168, 72, 0.38);
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--ddz-np-slate-700) 0%, var(--ddz-np-shadow) 100%);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+  color: rgba(255, 236, 196, 0.92);
+  image-rendering: pixelated;
+}
+
+.np-invite__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.np-invite__title {
+  margin: 0;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 800;
+  color: var(--ddz-np-lamp-300);
+  letter-spacing: 0.04em;
+}
+
+.np-invite__close {
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(148, 118, 68, 0.45);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--ddz-np-lamp-300);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.np-invite__hint {
+  margin: 0 0 12px;
+  color: var(--ddz-np-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.np-invite__code {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(232, 168, 72, 0.22);
+}
+
+.np-invite__code-label,
+.np-invite__link-label {
+  color: var(--ddz-np-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.np-invite__code code {
+  overflow: hidden;
+  color: var(--ddz-np-lamp-300);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.np-invite__code-short {
+  color: var(--ddz-np-lamp-500);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.np-invite__link {
+  margin-bottom: 12px;
+}
+
+.np-invite__link-value {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(148, 118, 68, 0.35);
+  color: rgba(255, 236, 196, 0.88);
+  font-size: 11px;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.np-invite__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.np-invite__cta {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.np-invite__toast {
+  margin: 10px 0 0;
+  text-align: center;
+  color: var(--ddz-np-lamp-500);
+  font-size: 11px;
+}
+
+@media (min-width: 520px) {
+  .np-invite-backdrop {
+    align-items: center;
+  }
+
+  .np-invite {
+    border-radius: 6px;
+  }
+}

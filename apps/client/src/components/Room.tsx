@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { GamePhase } from '@card-game/rules';
 import { useGameStore } from '../store/gameStore';
-import { shortRoomLabel } from '../lib/invite';
+import { shortRoomLabel, isInviteJoinError } from '../lib/invite';
 import { InviteSheet } from './InviteSheet';
 import {
   DISPLAY_NAME_MAX,
@@ -40,6 +40,11 @@ export function Room() {
       navigate({ to: '/game' });
     }
   }, [phase, navigate]);
+
+  useEffect(() => {
+    if (mySeat != null || !lastError || !isInviteJoinError(lastError.code)) return;
+    navigate({ to: '/' });
+  }, [mySeat, lastError, navigate]);
 
   const players = snapshot?.players ?? [];
   const seats = [0, 1, 2].map((seat) => players.find((p) => p.seat === seat) ?? null);

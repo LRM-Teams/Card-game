@@ -5,17 +5,19 @@ import { buildInviteLink, shortRoomLabel, tryWebShare } from '../lib/invite';
 type CopyKind = 'id' | 'link' | null;
 
 /**
- * 私房邀请弹层（LRM-385）：房间号 + 链接复制 + Web Share。
- * 使用现有 --ddz-* token，无竞品美术资产。
+ * 私房邀请弹层（LRM-385 / LRM-526）：房间号 + 链接复制 + Web Share。
+ * narrative 变体使用 --ddz-np-* 叙事像素 token。
  */
 export function InviteSheet({
   roomId,
   open,
   onClose,
+  variant = 'narrative',
 }: {
   roomId: string;
   open: boolean;
   onClose: () => void;
+  variant?: 'classic' | 'narrative';
 }) {
   const [copied, setCopied] = useState<CopyKind>(null);
   const [shareHint, setShareHint] = useState<string | null>(null);
@@ -68,51 +70,71 @@ export function InviteSheet({
     }
   };
 
+  const root = variant === 'narrative' ? 'np-invite' : 'invite-sheet';
+
   return (
-    <div className="invite-sheet-backdrop" onClick={onClose} role="presentation">
+    <div className={`${root}-backdrop`} onClick={onClose} role="presentation">
       <div
-        className="invite-sheet"
+        className={root}
         role="dialog"
         aria-labelledby="invite-sheet-title"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="invite-sheet__head">
-          <h2 id="invite-sheet-title" className="invite-sheet__title">
+        <header className={`${root}__head`}>
+          <h2 id="invite-sheet-title" className={`${root}__title`}>
             邀请好友同桌
           </h2>
-          <button type="button" className="invite-sheet__close" onClick={onClose} aria-label="关闭">
+          <button type="button" className={`${root}__close`} onClick={onClose} aria-label="关闭">
             ×
           </button>
         </header>
 
-        <p className="invite-sheet__hint">把房间号或链接发给好友，打开即可加入本房（满 3 人自动开局）。</p>
+        <p className={`${root}__hint`}>把房间号或链接发给好友，打开即可加入本房（满 3 人自动开局）。</p>
 
-        <div className="invite-sheet__code" data-testid="invite-room-code">
-          <span className="invite-sheet__code-label">房间号</span>
+        <div className={`${root}__code`} data-testid="invite-room-code">
+          <span className={`${root}__code-label`}>房间号</span>
           <code>{roomId}</code>
-          <span className="invite-sheet__code-short">{shortRoomLabel(roomId)}</span>
+          <span className={`${root}__code-short`}>{shortRoomLabel(roomId)}</span>
         </div>
 
-        <div className="invite-sheet__link">
-          <span className="invite-sheet__link-label">邀请链接</span>
-          <p className="invite-sheet__link-value">{shareLink}</p>
+        <div className={`${root}__link`}>
+          <span className={`${root}__link-label`}>邀请链接</span>
+          <p className={`${root}__link-value`} data-testid="invite-share-link">
+            {shareLink}
+          </p>
         </div>
 
-        <div className="invite-sheet__actions">
-          <button type="button" className="btn invite-sheet__btn" onClick={copyRoomId}>
+        <div className={`${root}__actions`}>
+          <button
+            type="button"
+            className={variant === 'narrative' ? 'np-btn-wood' : 'btn invite-sheet__btn'}
+            onClick={copyRoomId}
+          >
             {copied === 'id' ? '已复制' : '复制房间号'}
           </button>
-          <button type="button" className="btn invite-sheet__btn" onClick={copyLink}>
+          <button
+            type="button"
+            className={variant === 'narrative' ? 'np-btn-wood' : 'btn invite-sheet__btn'}
+            onClick={copyLink}
+          >
             {copied === 'link' ? '已复制' : '复制链接'}
           </button>
-          <button type="button" className="btn primary invite-sheet__btn" onClick={shareInvite}>
+          <button
+            type="button"
+            className={
+              variant === 'narrative'
+                ? 'np-btn-tv np-invite__cta'
+                : 'btn primary invite-sheet__btn'
+            }
+            onClick={shareInvite}
+          >
             {canWebShare ? '分享邀请' : '复制并分享'}
           </button>
         </div>
 
         {(shareHint || copied === 'link') && (
-          <p className="invite-sheet__toast" role="status" aria-live="polite">
+          <p className={`${root}__toast`} role="status" aria-live="polite">
             {shareHint ?? '链接已复制'}
           </p>
         )}
