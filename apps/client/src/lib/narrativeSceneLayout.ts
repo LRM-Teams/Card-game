@@ -41,13 +41,10 @@ export const narrativeLobbyScenePlacements: ScenePlacement[] = [
 /** @deprecated 使用 narrativeLobbyScenePlacements */
 export const narrativeScenePlacements = narrativeLobbyScenePlacements;
 
-/** 室内·对局页装饰元素 — 只保留成品精灵，去掉灰绿占位块（避免「乱码模块」感） */
+/** 室内·对局页装饰元素 — 只保留成品精灵；chair_stool/pot_plant 仍是绿框占位图，勿挂上桌 */
 export const narrativeGameScenePlacements: ScenePlacement[] = [
   { id: 'G04', category: 'props', sprite: 'poster_peeling', left: 78, top: 18, width: 5, z: 6 },
   { id: 'G05', category: 'props', sprite: 'lantern_hanging', left: 48, top: 2, width: 4, z: 8 },
   { id: 'G09', category: 'props', sprite: 'bottle_crate_stack', left: 3, top: 56, width: 7, z: 11 },
-  { id: 'G12', category: 'props', sprite: 'pot_plant', left: 90, top: 56, width: 5, z: 11 },
   { id: 'G14', category: 'characters', sprite: 'npc_old_man_walk', left: 86, top: 34, width: 6, z: 15, flip: true },
-  { id: 'G17', category: 'props', sprite: 'chair_stool', left: 14, top: 72, width: 3, z: 12 },
-  { id: 'G18', category: 'props', sprite: 'chair_stool', left: 83, top: 72, width: 3, z: 12 },
 ];
