@@ -8,6 +8,7 @@ import { audio } from './lib/audio';
 import './styles.css';
 import './narrative-lobby.css';
 import './narrative-game.css';
+import './narrative-invite.css';
 
 const queryClient = new QueryClient();
 

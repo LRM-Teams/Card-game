@@ -17,6 +17,7 @@ import {
   narrativePixelScene,
 } from '../lib/narrativePixelAssets';
 import { npTotalElements, npUiStates, npErrorLabel, readNpDemoError } from '../lib/narrativePixelElements';
+import { npInviteErrorLabel } from '../lib/inviteErrors';
 import { PlayerAvatar } from './PlayerAvatar';
 import { GuideSpot } from './GuideSpot';
 
@@ -146,8 +147,9 @@ export function Lobby() {
   const apiError = npDemo === 'api' || (!!lastError && !disconnected);
   const showAssetError = npDemo === 'asset' || assetFailed;
   const stampError = apiError || showAssetError;
+  const inviteError = npInviteErrorLabel(lastError?.code, lastError?.message);
   const stampLabel = apiError
-    ? npErrorLabel(lastError?.message ?? '', '操作失败')
+    ? inviteError ?? npErrorLabel(lastError?.message ?? '', '操作失败')
     : npErrorLabel('', '资源加载失败');
   const connLabel = connecting ? '连接中…' : '未连接';
   const tvFrame = connecting
