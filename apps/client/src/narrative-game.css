@@ -84,9 +84,268 @@ body.app--game-page::before {
   flex: 1 1 auto;
 }
 
+/* —— 对局页 diegetic UI（与大厅同思路：器物框材质，不是扁平网页块） —— */
+
+.np-game .table {
+  /* 让牌桌控件吃进茶馆室内，少一块「悬浮玻璃」感 */
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(12, 10, 8, 0.28), transparent 70%),
+    transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.np-game .table::before,
+.np-game .table::after {
+  opacity: 0.35;
+}
+
+/* 座位名牌 = 木牌 */
+.np-game .seat-badge {
+  border-radius: 3px;
+  border: 2px solid rgba(168, 120, 48, 0.62);
+  background:
+    linear-gradient(180deg, rgba(92, 62, 28, 0.92) 0%, rgba(42, 28, 14, 0.95) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 150, 0.22),
+    0 6px 14px rgba(0, 0, 0, 0.4);
+  color: #f6e2b0;
+}
+
+.np-game .seat-badge.active,
+.np-game .seat-badge.is-turn,
+.np-game .seat-badge.turn-pulse {
+  border-color: rgba(232, 168, 72, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(80, 48, 8, 0.55),
+    0 0 16px rgba(255, 196, 96, 0.35),
+    inset 0 1px 0 rgba(255, 230, 170, 0.35);
+}
+
+/* 回合提示 = 茶馆小木签 */
+.np-game .turn-line {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.5);
+  background: linear-gradient(180deg, rgba(60, 40, 20, 0.88), rgba(28, 18, 10, 0.9));
+  color: #ffe6a8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.np-game .turn-line.mine {
+  border-color: rgba(232, 168, 72, 0.75);
+  color: #fff0c8;
+}
+
+/* 叫分/明牌/加倍面板 = 木质器物框（站牌素材垫底） */
+.np-game .bid-cta-panel {
+  position: relative;
+  isolation: isolate;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #f6e2b0;
+  padding: 28px 40px 24px;
+  min-width: min(340px, 92vw);
+}
+
+.np-game .bid-cta-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(28, 18, 10, 0.35), rgba(18, 12, 8, 0.55)),
+    url('/narrative-pixel/ui/ui-station-board-wood.png') center / 100% 100% no-repeat;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+
+.np-game .bid-cta-panel::after {
+  display: none;
+}
+
+.np-game .bid-cta-title {
+  color: #ffe6a8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.np-game .bid-cta-sub {
+  color: rgba(255, 228, 176, 0.7);
+}
+
+/* 出牌控件 = 底部仪表盘台面 */
+.np-game .controls {
+  width: min(920px, 96%);
+  margin-inline: auto;
+  padding: 10px 14px 12px;
+  border-radius: 4px 4px 0 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 14, 10, 0) 0%,
+      rgba(22, 16, 12, 0.72) 28%,
+      rgba(18, 12, 8, 0.9) 100%
+    );
+  border-top: 2px solid rgba(196, 142, 42, 0.28);
+  box-shadow: inset 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.np-game .hint {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.55);
+  background:
+    linear-gradient(180deg, rgba(255, 244, 214, 0.14), rgba(40, 28, 14, 0.82));
+  color: #ffe6a8;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.15);
+}
+
+.np-game .hint.ok {
+  color: #b8f0a0;
+}
+
+.np-game .hint.warn {
+  color: #ffd078;
+}
+
+/* 通用按钮 → 木质/黄铜器物，覆盖扁平网页块 */
+.np-game .btn {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.7);
+  background: linear-gradient(180deg, #c9a05a 0%, #8a6230 55%, #5a3c18 100%);
+  color: #1c1408;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  min-height: 40px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 180, 0.35),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.25);
+}
+
+.np-game .btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.np-game .btn.primary,
+.np-game .btn.primary.cta {
+  border-color: rgba(210, 160, 70, 0.85);
+  /* 覆盖 styles.css 的 pixel btn 底图 */
+  background-image: none;
+  background-color: transparent;
+  background:
+    linear-gradient(180deg, rgba(42, 28, 12, 0.45) 0%, rgba(18, 12, 8, 0.7) 100%),
+    linear-gradient(180deg, #c8963a 0%, #7a5218 100%);
+  background-blend-mode: soft-light, normal;
+  color: #ffe6a8;
+  text-shadow:
+    0 0 10px rgba(255, 196, 96, 0.4),
+    0 1px 0 rgba(0, 0, 0, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(60, 36, 8, 0.7),
+    inset 0 1px 0 rgba(255, 220, 150, 0.35),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.np-game .btn.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow:
+    0 0 14px rgba(255, 196, 96, 0.35),
+    inset 0 1px 0 rgba(255, 230, 170, 0.4),
+    0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+.np-game .btn.bid-pass,
+.np-game .btn.secondary {
+  border-color: rgba(140, 100, 48, 0.65);
+  background: linear-gradient(180deg, #a88850 0%, #6a4824 60%, #3e2a14 100%);
+  color: #f6e2b0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 150, 0.2),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.np-game .btn.bid-pass:hover:not(:disabled),
+.np-game .btn.secondary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.np-game .btn.ghost {
+  border-color: rgba(168, 120, 48, 0.45);
+  background: rgba(28, 18, 10, 0.55);
+  color: #ffe6a8;
+}
+
+/* 表情入口也走木牌 */
+.np-game .emote-chat-trigger {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.65);
+  background: linear-gradient(180deg, #c9a05a 0%, #5a3c18 100%);
+  color: #1c1408;
+}
+
+.np-game .emote-chat-panel {
+  border-radius: 4px;
+  border: 2px solid rgba(168, 120, 48, 0.65);
+  background: linear-gradient(180deg, rgba(72, 48, 24, 0.96), rgba(28, 18, 10, 0.97));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  color: #f6e2b0;
+}
+
+/* 结算卡 = 登记簿质感 */
+.np-game .table.settled,
+.np-game .result-card {
+  border-radius: 4px;
+  border: 3px solid rgba(168, 120, 48, 0.7);
+  background:
+    linear-gradient(180deg, rgba(255, 244, 214, 0.08), transparent 40%),
+    linear-gradient(180deg, rgba(56, 38, 20, 0.95), rgba(22, 14, 8, 0.97));
+  box-shadow:
+    inset 0 0 0 2px rgba(200, 150, 58, 0.18),
+    0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.np-game .result-title {
+  color: #ffe6a8;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.np-game .meta-corner {
+  border-radius: 2px;
+  border: 2px solid rgba(168, 120, 48, 0.45);
+  background: rgba(28, 18, 10, 0.72);
+  color: #f6e2b0;
+}
+
 @media (max-width: 680px) {
   .np-game__layer--light {
     opacity: 0.58;
+  }
+
+  .np-game .controls {
+    width: 100%;
+    padding: 8px 8px 10px;
+  }
+
+  .np-game .btn {
+    min-height: 36px;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+
+  .np-game .btn.primary.cta {
+    min-width: 96px;
+  }
+
+  .np-game .bid-cta-panel {
+    padding: 22px 18px 18px;
+    max-width: 96vw;
+    min-width: 0;
   }
 }
 
