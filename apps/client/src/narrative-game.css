@@ -67,6 +67,11 @@ body.app--game-page::before {
   padding-bottom: 0;
 }
 
+/* 对局道具层压在墙光之上、牌桌 UI 之下，避免人物踩到手牌 */
+.np-game .np-scene-elements {
+  z-index: 1;
+}
+
 .np-game__playfield > * {
   pointer-events: auto;
 }
@@ -107,7 +112,7 @@ body.app--game-page::before {
 /* 底部仪表盘：手牌区起势；顶垫 ≥ 选中抬起，避免牌面被 dock 裁切 */
 .np-game .hand {
   position: relative;
-  z-index: 2;
+  z-index: 5;
   flex: 0 0 auto;
   margin-top: auto;
   margin-bottom: 0;
