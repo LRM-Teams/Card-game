@@ -30,6 +30,7 @@ curl -sS http://127.0.0.1:8088/health | jq .
 | --- | --- |
 | `room.create` | 新建私房 / 匹配房 |
 | `room.join` | 真人入座 |
+| `room.join_reject` | 进房被拒（`code`: `room_not_found` / `room_full` / `game_already_started` / `already_in_room`） |
 | `game.start` | 开局（发牌进入叫地主） |
 | `game.settle` | 结算（含 winnerSeat / scores） |
 | `player.disconnect` | 真人断线（座位保留，等重连） |
@@ -136,6 +137,7 @@ ckpt 切换（无需改代码，重启推理进程即可）：
 | Socket 连不上 | 浏览器 Network 看 `/socket.io`；nginx 须透传 `Upgrade`/`Connection`（`deploy/nginx-8088.conf`） |
 | 对局卡住 / 疑似断线 | `docker logs ddz --since 30m \| grep '\[ops\]'`，按 `roomId` 查是否有 `player.reconnect` / 是否缺 `game.settle` |
 | 重连回归烟测 | `SERVER_URL=http://127.0.0.1:3000 node apps/server/scripts/reconnect-smoke.cjs`（覆盖重连手牌一致、`room_not_found`、`game_already_started`） |
+| 私房分享/边界烟测（LRM-528） | `SERVER_URL=http://127.0.0.1:3000 node apps/server/scripts/private-room-smoke.cjs`（深链 `#roomId`、已开局 `game_already_started`、同 guest 接管；现网把 URL 换成 `http://82.157.184.89:8088`）。错误路径：`docker logs ddz --since 30m \| grep '\[ops\]' \| grep room.join_reject`。WAITING `room_full` 由服务端单测覆盖 |
 | 版本对不上 | 对比频道回帖 tip 与 `curl …/health` 的 `commit`、`bundle`；不一致则重滚 |
 | DouZero 探活失败 | 训模冻结期正常；确认不卡局即可。解冻后查 8765 进程与 `DOUZERO_*_CKPT` |
 
