@@ -91,6 +91,7 @@ export function CardView({
 export function OpponentBackFan({ count, align = 'center' }: { count: number; align?: 'left' | 'right' | 'center' }) {
   const n = Math.max(0, Math.min(count, 10));
   if (n <= 0) return null;
+  const hidden = count - n;
   return (
     <div
       className={`opponent-back-fan align-${align}`}
@@ -100,6 +101,7 @@ export function OpponentBackFan({ count, align = 'center' }: { count: number; al
       {Array.from({ length: n }, (_, i) => (
         <CardView key={i} faceDown small style={{ zIndex: i + 1 } as CSSProperties} />
       ))}
+      {hidden > 0 ? <span className="opponent-back-more">+{hidden}</span> : null}
     </div>
   );
 }
