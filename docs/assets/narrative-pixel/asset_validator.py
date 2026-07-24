@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""LRM-579 Narrative Pixel v3 lobby asset validator.
+"""Narrative Pixel asset validator (lobby layers + LRM-527 audio).
 
-Checks locked bake + derived layers + element pack against manifests.
+Checks locked bake + derived layers + element pack against manifests,
+plus narrative-pixel audio clips.
 Exit 0 on PASS, 1 on FAIL.
 """
 from __future__ import annotations
@@ -19,16 +20,28 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[3]
 PUBLIC = ROOT / "apps/client/public/narrative-pixel"
 DOCS = ROOT / "docs/assets/narrative-pixel"
+AUDIO = PUBLIC / "audio"
 
 MIN_LAYER_BYTES = 80_000
 MIN_ELEMENT_BYTES = 8_000
 MIN_BAKE_BYTES = 200_000
 CANVAS = (1920, 1080)
+REQUIRED_AUDIO = ["bid", "play", "bomb", "spring", "win", "lose"]
 
 
 def fail(msg: str, errors: list[str]) -> None:
     errors.append(msg)
     print(f"[ERROR] {msg}")
+
+
+def check_audio(errors: list[str]) -> None:
+    for name in REQUIRED_AUDIO:
+        for ext in ("ogg", "mp3"):
+            p = AUDIO / f"{name}.{ext}"
+            if not p.is_file() or p.stat().st_size < 200:
+                fail(f"missing/empty audio: {p.relative_to(ROOT)}", errors)
+            else:
+                print(f"[CHECK] audio {p.name} {p.stat().st_size} bytes")
 
 
 def main() -> int:
@@ -117,6 +130,9 @@ def main() -> int:
                     break
             if not found:
                 fail(f"catalog missing {key}", errors)
+
+    # LRM-527 audio clips
+    check_audio(errors)
 
     print("=" * 60)
     print(f"[SCAN] layers_manifest={layers_meta.get('version')} elements={len(elements)}")

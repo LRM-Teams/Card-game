@@ -115,3 +115,23 @@
 | 概念场景 A | `docs/assets/previews/lrm-417/concept-outdoor-lobby-1920.svg` |
 | 概念场景 B | `docs/assets/previews/lrm-417/concept-indoor-game-1920.svg` |
 | 过渡参考 | `docs/doudizhu-pixel-ui-spec.md`（Modern Pixel，仅对局组件参考） |
+
+## 13. 音效（LRM-527）
+
+| 参数 | 上限 |
+|---|---|
+| 单条时长 | ≤0.55s（春天 ≤0.55s） |
+| 峰值 | ≤-3 dBFS（生成器归一化 0.98） |
+| 体积 | ogg ≤24KB / mp3 ≤32KB per clip |
+| 格式 | ogg 主 + mp3 fallback |
+
+| ID | 用途 | 动效对齐 |
+|---|---|---|
+| bid | 叫分 | — |
+| play | 出牌 | 飞牌 260ms |
+| bomb | 炸弹 | burst 420ms |
+| spring | 春天 | 语音错开 700ms |
+| win | 胜利 | settle-pop 180ms |
+| lose | 失败 | settle-pop 180ms |
+
+路径：`narrative-pixel/audio/` · manifest：`docs/assets/narrative-pixel/audio-manifest.json`
