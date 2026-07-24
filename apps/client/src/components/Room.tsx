@@ -13,6 +13,8 @@ import {
 } from '../lib/session';
 import { PlayerAvatar } from './PlayerAvatar';
 import { PlayerKindBadge } from './PlayerKindBadge';
+import { npInviteErrorLabel } from '../lib/inviteErrors';
+import { npUiStates } from '../lib/narrativePixelElements';
 
 /**
  * 房间：展示 3 个座位（真人 / 空位 / 机器人补位）与等人状态。
@@ -60,20 +62,22 @@ export function Room() {
     updateDisplayName(normalized);
   };
 
+  const inviteError = npInviteErrorLabel(lastError?.code, lastError?.message);
+
   return (
-    <div className="panel room">
+    <div className="panel room np-room" data-theme="narrative-pixel">
       <h1 className="title">房间 {roomId ? `#${roomId.slice(0, 6)}` : ''}</h1>
       <p className="subtitle">3 人桌 · 真人对战 · 当前 {humans}/3 真人</p>
 
       {roomId && (
-        <div className="room-invite-bar">
-          <div className="room-invite-bar__meta">
-            <span className="room-invite-bar__label">房间 {shortRoomLabel(roomId)}</span>
-            <span className="room-invite-bar__humans">{humans}/3 真人</span>
+        <div className="np-room-invite-bar">
+          <div className="np-room-invite-bar__meta">
+            <span className="np-room-invite-bar__label">房间 {shortRoomLabel(roomId)}</span>
+            <span className="np-room-invite-bar__humans">{humans}/3 真人</span>
           </div>
           <button
             type="button"
-            className="btn primary room-invite-bar__cta"
+            className="btn primary np-room-invite-bar__cta"
             data-testid="room-invite-open"
             onClick={() => setInviteOpen(true)}
           >
@@ -84,7 +88,14 @@ export function Room() {
 
       {roomId && <InviteSheet roomId={roomId} open={inviteOpen} onClose={() => setInviteOpen(false)} />}
 
-      {lastError && (
+      {inviteError && (
+        <div className="np-room-error" role="alert" onClick={dismissError}>
+          <img className="np-room-error__stamp" src={npUiStates.errorStamp()} alt="" aria-hidden />
+          <span>{inviteError}</span>
+        </div>
+      )}
+
+      {lastError && !inviteError && (
         <div className="hint warn lobby-error" onClick={dismissError}>
           操作失败：{lastError.message}（{lastError.code}）
         </div>

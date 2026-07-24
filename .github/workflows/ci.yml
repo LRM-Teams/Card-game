@@ -46,7 +46,7 @@ jobs:
         run: pnpm --filter @card-game/client exec playwright install chromium --with-deps
 
       - name: E2E narrative full loop
-        run: pnpm --filter @card-game/client exec playwright test e2e/narrative-full-loop.spec.ts
+        run: pnpm --filter @card-game/client exec playwright test e2e/narrative-full-loop.spec.ts e2e/lrm526-narrative-invite.spec.ts
         env:
           CI: true
           E2E_BASE_URL: http://127.0.0.1:3099
