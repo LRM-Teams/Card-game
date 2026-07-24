@@ -11,7 +11,6 @@ import {
   saveIdentity,
   type GuestIdentity,
 } from '../lib/session';
-import { NarrativeSceneElements } from './NarrativeSceneElements';
 import {
   narrativePixelHotspots,
   narrativePixelScene,
@@ -163,36 +162,16 @@ export function Lobby() {
       data-theme="narrative-pixel"
     >
       <div className="np-lobby__viewport" ref={viewportRef}>
+        {/* LRM-417 hotfix: bake approved Narrative Pixel v3 full scene.
+            Placeholder geometric far/mid/fg layers are intentionally not stacked —
+            they made the live lobby look like CSS blockout vs the DM-approved art. */}
         <img
-          className="np-lobby__layer np-lobby__layer--far"
-          src={narrativePixelScene.layers.far}
+          className="np-lobby__layer np-lobby__layer--full"
+          src={narrativePixelScene.full}
           alt=""
           aria-hidden
           draggable={false}
           onError={onSceneAssetError}
-        />
-        <img
-          className="np-lobby__layer np-lobby__layer--mid"
-          src={narrativePixelScene.layers.mid}
-          alt=""
-          aria-hidden
-          draggable={false}
-          onError={onSceneAssetError}
-        />
-        <NarrativeSceneElements />
-        <img
-          className="np-lobby__layer np-lobby__layer--light"
-          src={narrativePixelScene.layers.lighting}
-          alt=""
-          aria-hidden
-          draggable={false}
-        />
-        <img
-          className="np-lobby__layer np-lobby__layer--fg"
-          src={narrativePixelScene.layers.fg}
-          alt=""
-          aria-hidden
-          draggable={false}
         />
 
         {matching ? (
