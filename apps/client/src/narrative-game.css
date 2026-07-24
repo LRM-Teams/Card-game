@@ -104,7 +104,7 @@ body.app--game-page::before {
   padding-bottom: 0;
 }
 
-/* 底部仪表盘：手牌区起势 */
+/* 底部仪表盘：手牌区起势；顶垫 ≥ 选中抬起，避免牌面被 dock 裁切 */
 .np-game .hand {
   position: relative;
   z-index: 2;
@@ -113,8 +113,9 @@ body.app--game-page::before {
   margin-bottom: 0;
   width: 100%;
   max-width: none;
-  padding: 22px 20px 6px;
+  padding: 48px 16px 10px;
   min-height: 0;
+  overflow: visible;
   background:
     linear-gradient(
       180deg,
