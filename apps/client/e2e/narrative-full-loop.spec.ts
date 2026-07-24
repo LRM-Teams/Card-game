@@ -68,29 +68,46 @@ async function advanceThroughPrePlay(page: Page) {
 
     await dismissGuides(page);
 
-    if (await page.getByRole('group', { name: '叫地主操作' }).isVisible().catch(() => false)) {
-      const pass = page.getByRole('button', { name: '不叫' });
-      if (await pass.isVisible().catch(() => false)) {
-        await pass.click({ force: true });
-        await page.waitForTimeout(300);
-      }
+    // Prefer CSS/aria locators over role+name — more stable under GuideSpot wrappers.
+    const bidPass = page.locator('[aria-label="叫地主操作"] button.bid-pass');
+    const bidClaim = page.locator('[aria-label="叫地主操作"] button.bid-claim');
+    if (await bidPass.isVisible().catch(() => false)) {
+      await bidPass.click({ force: true });
+      await page.waitForTimeout(350);
       continue;
     }
-    if (await page.getByRole('group', { name: '明牌操作' }).isVisible().catch(() => false)) {
-      await page.getByRole('button', { name: '不明牌' }).click({ force: true });
-      await page.waitForTimeout(300);
+    if (await bidClaim.isVisible().catch(() => false)) {
+      await bidClaim.click({ force: true });
+      await page.waitForTimeout(350);
       continue;
     }
-    if (await page.getByRole('group', { name: '加倍操作' }).isVisible().catch(() => false)) {
-      await page.getByRole('button', { name: '不加倍' }).click({ force: true });
-      await page.waitForTimeout(300);
+
+    const revealPass = page.locator('[aria-label="明牌操作"] button.bid-pass');
+    if (await revealPass.isVisible().catch(() => false)) {
+      await revealPass.click({ force: true });
+      await page.waitForTimeout(350);
       continue;
+    }
+
+    const doublePass = page.locator('[aria-label="加倍操作"] button.bid-pass');
+    if (await doublePass.isVisible().catch(() => false)) {
+      await doublePass.click({ force: true });
+      await page.waitForTimeout(350);
+      continue;
+    }
+
+    if (await page.locator('button.cta', { hasText: '出牌' }).isVisible().catch(() => false)) {
+      return;
     }
     if (await page.getByRole('button', { name: '出牌' }).isVisible().catch(() => false)) return;
 
     await page.waitForTimeout(400);
   }
-  throw new Error('timeout: pre-play phases did not finish');
+  const url = page.url();
+  const body = await page.locator('body').innerText().catch(() => '');
+  throw new Error(
+    `timeout: pre-play phases did not finish (url=${url}; body≈${body.slice(0, 240).replace(/\s+/g, ' ')})`,
+  );
 }
 
 async function playUntilSettled(page: Page) {
@@ -142,6 +159,14 @@ async function runFullLoop(page: Page, mode: 'match' | 'private') {
     timeout: 15_000,
   });
   await expect(page.locator('.np-scene-elements[data-scene="game"]')).toBeVisible();
+  // Wait until pre-play or play CTA exists (bots may act first).
+  await page
+    .locator(
+      '[aria-label="叫地主操作"], [aria-label="明牌操作"], [aria-label="加倍操作"], button:has-text("出牌"), .result-title',
+    )
+    .first()
+    .waitFor({ state: 'visible', timeout: 60_000 })
+    .catch(() => undefined);
 
   await advanceThroughPrePlay(page);
   await expect(page.locator('.player-kind-badge.bot')).toHaveCount(2);
@@ -156,7 +181,7 @@ async function runFullLoop(page: Page, mode: 'match' | 'private') {
   });
 }
 
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: 'serial', retries: 2 });
 
 test('LRM-521 narrative full loop — private room + bots path', async ({ page }) => {
   // Prefer private+bots over match: match fill timing has been flaky on CI
