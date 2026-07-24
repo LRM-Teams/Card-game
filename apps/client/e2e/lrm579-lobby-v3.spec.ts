@@ -55,13 +55,27 @@ test('LRM-579 lobby uses locked v3 bake — dual viewport screenshots', async ({
     const src = await full.getAttribute('src');
     expect(src).toContain('scene-full-1920x1080.png');
     await expect(p.getByRole('button', { name: '开始游戏' })).toBeVisible();
+    await expect
+      .poll(async () => full.evaluate((el) => (el as HTMLImageElement).naturalWidth))
+      .toBeGreaterThan(0);
     await p.waitForTimeout(600);
-    const scroll = await p.evaluate(() => ({
-      docH: document.documentElement.scrollHeight,
-      winH: window.innerHeight,
-    }));
+    const metrics = await p.evaluate(() => {
+      const viewport = document.querySelector('.np-lobby__viewport');
+      const r = viewport?.getBoundingClientRect();
+      return {
+        docH: document.documentElement.scrollHeight,
+        winH: window.innerHeight,
+        vpH: r?.height ?? 0,
+        vpW: r?.width ?? 0,
+      };
+    });
     if (vp.width === 1920) {
-      expect(scroll.docH).toBeLessThanOrEqual(scroll.winH + 2);
+      expect(metrics.docH).toBeLessThanOrEqual(metrics.winH + 2);
+    }
+    if (vp.width === 390) {
+      // Scene must fill most of the phone viewport — not a thin 16:9 strip over gray body.
+      expect(metrics.vpH).toBeGreaterThan(metrics.winH * 0.7);
+      expect(metrics.vpW).toBeGreaterThan(metrics.winH * 0.4);
     }
     await p.screenshot({ path: path.join(outDir, name), fullPage: false });
     await ctx.close();

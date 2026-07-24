@@ -403,7 +403,72 @@ body.app--lobby-page .content {
   line-height: 1.55;
 }
 
+/* LRM-579 AC#2：窄屏勿再锁 16:9 条带 + 灰底；场景须铺满可视区（cover 裁切，锚点茶馆）。 */
 @media (max-width: 720px) {
+  body.app--lobby-page .app {
+    max-width: none;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body.app--lobby-page .topnav {
+    flex: 0 0 auto;
+    padding-inline: 12px;
+  }
+
+  body.app--lobby-page .content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.app--lobby-page .foot {
+    display: none;
+  }
+
+  .np-lobby {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: none;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .np-lobby__viewport {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    height: auto;
+    aspect-ratio: auto;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .np-lobby__layer--full {
+    object-fit: cover;
+    /* 1920×1080 bake → 竖屏 cover：横向裁切，纵向锚在茶馆招牌/街道 */
+    object-position: 50% 42%;
+  }
+
+  .np-tips {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 12;
+    margin: 0;
+    padding: 10px 12px 14px;
+    background: linear-gradient(180deg, transparent, rgba(22, 24, 28, 0.78));
+    pointer-events: none;
+  }
+
   .np-hotspot--ledger {
     left: 4% !important;
     top: 58% !important;
