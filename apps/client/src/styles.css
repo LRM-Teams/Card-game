@@ -1655,7 +1655,6 @@ body::before {
 .hand .card:hover:not(:disabled) {
   --card-lift: -14px;
   transform: translateY(var(--card-lift));
-  z-index: 8;
 }
 .hand .card.is-selected,
 .hand .card.is-selected:hover:not(:disabled) {
@@ -1663,7 +1662,6 @@ body::before {
   transform: translateY(var(--card-lift));
   border-color: var(--ddz-gold-500);
   box-shadow: var(--ddz-glow-gold), 0 14px 20px rgba(0, 0, 0, 0.38);
-  z-index: 12;
 }
 .hand .card:first-child {
   margin-left: 0;
@@ -2781,8 +2779,8 @@ body::before {
     width: var(--ddz-card-mobile-w);
     height: 50px;
     flex: 0 0 auto;
-    /* 手机叠放：夹紧负间距，避免右牌完全盖住左牌点数 */
-    margin-left: clamp(-16px, var(--hand-fit-gap), -6px);
+    /* 手机叠放：负间距上限收紧，配合左高右低 z-index 露出角标 */
+    margin-left: clamp(-10px, var(--hand-fit-gap), -4px);
     --card-lift: 0px;
   }
   .hand .card:first-child {
@@ -2791,13 +2789,12 @@ body::before {
   .hand .card:hover:not(:disabled) {
     --card-lift: -12px;
     transform: translateY(var(--card-lift));
-    z-index: 8;
+    /* 不写死 z-index：叠放顺序由 HandView 左高右低 inline 控制 */
   }
   .hand .card.is-selected,
   .hand .card.is-selected:hover:not(:disabled) {
     --card-lift: -28px;
     transform: translateY(var(--card-lift));
-    z-index: 12;
   }
   /* 操作条：文档流底部固定感，但不盖住手牌命中区 */
   .controls {

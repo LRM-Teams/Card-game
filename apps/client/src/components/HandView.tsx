@@ -56,7 +56,10 @@ export function HandView({ cards, selected, onToggle, dealKey = 0, muted = false
             style={
               {
                 '--card-offset': offset,
-                zIndex: selected.includes(c.id) ? index + 20 : index + 1,
+                /* 左高右低：角标在左上，右侧牌不得盖住左侧可读区（Frank / LRM-579） */
+                zIndex: selected.includes(c.id)
+                  ? count - index + 40
+                  : count - index,
                 animationDelay: delay,
               } as CSSProperties
             }
